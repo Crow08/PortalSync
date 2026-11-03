@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -64,7 +66,8 @@ public class SecurityConfig implements WebMvcConfigurer {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.cors(Customizer.withDefaults())
         .authorizeHttpRequests(a -> a.requestMatchers("/api/**").fullyAuthenticated().anyRequest().permitAll())
-        .httpBasic(Customizer.withDefaults())
+        // 401 without WWW-Authenticate: otherwise the browser opens its native login dialog on a failed login
+        .httpBasic(b -> b.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .csrf(AbstractHttpConfigurer::disable);
     return http.build();
   }
