@@ -234,6 +234,31 @@ body #app-theme-container.auth-page {
   }
 }
 
+/* Dropdowns (select and autocomplete) in the style of the menus: panel surface, border, rounded corners and rows. */
+.graphite-theme {
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel {
+    --mat-select-panel-background-color: var(--ps-panel);
+    --mat-autocomplete-background-color: var(--ps-panel);
+    --mat-autocomplete-container-shape: 12px;
+    --mat-option-label-text-color: var(--ps-text);
+    --mat-option-label-text-font: var(--ps-font);
+    --mat-option-label-text-size: 13px;
+    --mat-option-hover-state-layer-color: var(--ps-raise);
+    --mat-option-focus-state-layer-color: var(--ps-raise);
+    --mat-option-selected-state-layer-color: var(--ps-raise);
+    --mat-option-selected-state-label-text-color: var(--ps-accent);
+    border: 1px solid var(--ps-line);
+    border-radius: 12px;
+    padding: 4px;
+
+    .mat-mdc-option {
+      min-height: 40px;
+      border-radius: 8px;
+    }
+  }
+}
+
 /* Dialogs in the style of the panels of the app, rendered in the overlay container. */
 .graphite-theme .mat-mdc-dialog-container {
   --mat-dialog-container-color: var(--ps-panel);
