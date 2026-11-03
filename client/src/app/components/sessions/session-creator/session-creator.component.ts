@@ -1,9 +1,10 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Playlist } from '../../../models/playlist';
 import { Router } from '@angular/router';
 import { HttpHelperService } from '../../../services/http-helper.service';
 import { SessionService } from '../../../services/session.service';
+import { AuthenticationService } from '../../../services/authentication.service';
 
 @Component({
     selector: 'app-session-creator',
@@ -24,10 +25,12 @@ export class SessionCreatorComponent {
     private router: Router,
     private formBuilder: UntypedFormBuilder,
     private httpHelperService: HttpHelperService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private authenticationService: AuthenticationService
   ) {
     this.sessionForm = this.formBuilder.group({
-      name: ['', Validators.required],
+      // empty: the name of the chosen playlist is used, without a playlist the name of the user
+      name: [''],
       // empty: the lobby starts without a playlist
       playlist: [''],
     });
@@ -42,6 +45,22 @@ export class SessionCreatorComponent {
     return this.getField['playlist'].value !== '';
   }
 
+  /** The name of the chosen playlist, empty when the lobby starts without one. */
+  get playlistName(): string {
+    const id = this.getField['playlist'].value;
+    return this.playlists.find((playlist) => playlist.id === id)?.name ?? '';
+  }
+
+  /** The name used when none is typed in: the name of the chosen playlist, else the name of the user. */
+  get defaultName(): string {
+    return this.playlistName || this.authenticationService.currentUserValue?.username || '';
+  }
+
+  /** The name typed in, else the default name. */
+  private get lobbyName(): string {
+    return String(this.getField['name'].value ?? '').trim() || this.defaultName;
+  }
+
   // convenience getter for easy access to form fields
   get getField(): { [key: string]: AbstractControl } {
     return this.sessionForm.controls;
@@ -51,15 +70,16 @@ export class SessionCreatorComponent {
     this.submitted = true;
     this.error = '';
 
-    // stop here if form is invalid
-    if (this.sessionForm.invalid) {
+    // stop here without a name: neither typed in nor a default
+    if (!this.lobbyName) {
+      this.error = 'Enter a name for the lobby.';
       return;
     }
 
     this.loading = true;
 
     this.httpHelperService
-      .post('/api/v1/sessions/', this.getField['name'].value)
+      .post('/api/v1/sessions/', this.lobbyName)
       .then((sessionId) => (this.startWithPlaylist ? this.addSongs(Number(sessionId)) : this.finished(Number(sessionId))))
       .catch((error) => this.failed(error));
   }
