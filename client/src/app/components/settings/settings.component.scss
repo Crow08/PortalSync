@@ -104,3 +104,28 @@ mat-button-toggle-group ::ng-deep .mat-button-toggle-label-content {
   padding: 0 7px;
   font-size: 15px;
 }
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    color: var(--ps-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .hint {
+    margin: 0;
+  }
+}
+
+.hint.error {
+  color: var(--mat-sys-error, #f2b8b5);
+}
+
+.hint.success {
+  color: var(--ps-ok);
+}

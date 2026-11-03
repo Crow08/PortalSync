@@ -60,6 +60,27 @@ export class AuthenticationService {
       );
   }
 
+  /** Changes the password of the logged in user and keeps the session with the new credentials. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    const current = this.currentUserSubject.value;
+    return this.http
+      .put<void>(
+        `${environment.dbServer}/api/v1/users/password`,
+        { currentPassword, newPassword },
+        { headers: this.getAuthHeaderForCurrentUser() }
+      )
+      .pipe(
+        map(() => {
+          if (current) {
+            const user = new User(current.id, current.username, newPassword, window.btoa(current.username + ':' + newPassword));
+            user.admin = current.admin;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            this.currentUserSubject.next(user);
+          }
+        })
+      );
+  }
+
   logout(): void {
     // remove user from local storage to log user out
     localStorage.removeItem('currentUser');

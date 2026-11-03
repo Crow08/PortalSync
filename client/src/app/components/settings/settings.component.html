@@ -95,4 +95,37 @@
       </p>
     </div>
   </section>
+
+  <section class="panel">
+    <h2>Account</h2>
+    <form (ngSubmit)="changePassword()" class="password-form">
+      <h3 id="password-label">Change password</h3>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Current password</mat-label>
+        <input [(ngModel)]="currentPassword" autocomplete="current-password" matInput name="currentPassword" type="password"/>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>New password</mat-label>
+        <input [(ngModel)]="newPassword" autocomplete="new-password" matInput name="newPassword" type="password"/>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Repeat new password</mat-label>
+        <input [(ngModel)]="repeatPassword" autocomplete="new-password" matInput name="repeatPassword" type="password"/>
+      </mat-form-field>
+      @if (repeatPassword && newPassword !== repeatPassword) {
+        <p class="hint error">The passwords do not match.</p>
+      }
+      @if (passwordError) {
+        <p class="hint error">{{ passwordError }}</p>
+      }
+      @if (passwordChanged) {
+        <p class="hint success">Password changed.</p>
+      }
+      <div class="buttons">
+        <button [disabled]="!passwordFormValid || passwordBusy" color="primary" mat-flat-button type="submit">
+          Change password
+        </button>
+      </div>
+    </form>
+  </section>
 </div>
