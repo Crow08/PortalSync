@@ -1,7 +1,8 @@
 <h1 class="page-title">Import from Spotify</h1>
 @if (!loggedIn) {
   <p class="notice" role="status">
-    You are not logged in to Spotify. <a routerLink="/settings">Log in in the settings</a> first.
+    You are not logged in to Spotify. <a routerLink="/settings">Log in in the settings</a> first, or just run a function
+    below and the login opens.
   </p>
 }
 
@@ -13,7 +14,7 @@
         <input [(ngModel)]="query" aria-label="Title, artist or album" autocomplete="off" matInput name="query"
           placeholder="Title, artist or album"/>
       </mat-form-field>
-      <button [disabled]="!loggedIn || searching || !query.trim()" color="primary" mat-flat-button type="submit">Search</button>
+      <button [disabled]="searching || !query.trim()" color="primary" mat-flat-button type="submit">Search</button>
     </form>
     @if (searchError) {
       <p class="error" role="alert">{{ searchError }}</p>
@@ -68,7 +69,7 @@
       app read the songs of playlists you created or collaborate on.
     </p>
     <div class="row">
-      <button (click)="loadPlaylists()" [disabled]="!loggedIn || loadingPlaylists || !!importing" mat-stroked-button type="button">
+      <button (click)="loadPlaylists()" [disabled]="loadingPlaylists || !!importing" mat-stroked-button type="button">
         {{ playlistsLoaded ? 'Reload my playlists' : 'Show my playlists' }}
       </button>
       @if (loadingPlaylists) {
@@ -102,7 +103,7 @@
         <input [(ngModel)]="playlistLink" aria-label="The link of a playlist" autocomplete="off" matInput name="link"
           placeholder="Or the link of a playlist"/>
       </mat-form-field>
-      <button [disabled]="!loggedIn || !playlistLink.trim() || !!importing" mat-stroked-button type="submit">Look up</button>
+      <button [disabled]="!playlistLink.trim() || !!importing" mat-stroked-button type="submit">Look up</button>
     </form>
     @if (linkedPlaylist; as playlist) {
       <div class="track">

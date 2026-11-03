@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { distinctUntilChanged, pairwise } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
 import { Media } from '../models/media';
@@ -17,6 +18,8 @@ import { UserStatus } from '../models/userStatus';
 import { ClockSyncService } from './clock-sync.service';
 import { SessionService } from './session.service';
 import { SpotifyPlayerService } from './spotify-player.service';
+import { SpotifyService } from './spotify.service';
+import { SpotifyLoginDialogComponent } from '../components/dialog/spotify-login-dialog/spotify-login-dialog.component';
 import { PlayerState } from '../models/playerState';
 
 /** A start later than this (ms) is compensated by starting further into the media. */
@@ -74,6 +77,8 @@ export class PlayerEngineService {
   /** Media whose thumbnails and chapters were requested. */
   private seekBarMediaId = -1;
   private inSession = false;
+  /** The Spotify login dialog was shown in this session: it is not shown again for every Spotify song. */
+  private spotifyLoginPrompted = false;
 
   constructor(
     private httpHelperService: HttpHelperService,
@@ -84,7 +89,9 @@ export class PlayerEngineService {
     private autoplayService: AutoplayService,
     private userStatusService: UserStatusService,
     private clockSyncService: ClockSyncService,
-    private spotifyPlayer: SpotifyPlayerService
+    private spotifyPlayer: SpotifyPlayerService,
+    private spotifyService: SpotifyService,
+    private dialog: MatDialog
   ) {
     this.mediaService.mediaEndedSubject.subscribe(() => this.publishCommand(`end/${this.currentMedia.id}`));
     this.mediaService.timeUpdate.subscribe(() => this.correctDrift());
@@ -131,6 +138,7 @@ export class PlayerEngineService {
   private resetSession(): void {
     this.wsService.unsubscribeFromSessionTopic();
     this.userStatusService.setJoined(false);
+    this.spotifyLoginPrompted = false;
     this.clearPlaybackAnchor();
     this.mediaService.stop();
     this.playerState = PlayerState.STOP;
@@ -200,6 +208,7 @@ export class PlayerEngineService {
     // from now on the commands of the session go to the Spotify player (and fail without it)
     this.mediaService.activateSpotifyMode();
     if (!(await this.spotifyPlayer.connect())) {
+      this.promptSpotifyLogin();
       return this.spotifyUnavailable(media, startMediaTime, this.spotifyPlayer.error.value);
     }
     if (this.autoplayService.blocked.value) {
@@ -211,6 +220,15 @@ export class PlayerEngineService {
     if (!(await this.mediaService.loadSpotify(song.uri, startMediaTime / 1000))) {
       return this.spotifyUnavailable(media, startMediaTime, 'The Spotify track could not be loaded');
     }
+  }
+
+  /** Offers the Spotify login (once per session) when the track can not be played because the user is not logged in. */
+  private promptSpotifyLogin(): void {
+    if (this.spotifyLoginPrompted || this.spotifyService.loggedIn || this.spotifyService.canRestore) {
+      return;
+    }
+    this.spotifyLoginPrompted = true;
+    this.dialog.open(SpotifyLoginDialogComponent);
   }
 
   /** The others must not wait for a client that can not play the media: it reports ready right away. */

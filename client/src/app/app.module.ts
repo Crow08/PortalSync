@@ -28,6 +28,7 @@ import { GenreComponent } from './components/input/genre/genre.component';
 import { PlaylistComponent } from './components/input/playlist/playlist.component';
 import { AddObjectButtonComponent } from './components/util/add-object-button/add-object-button.component';
 import { AddToPlaylistDialogComponent } from './components/dialog/add-to-playlist-dialog/add-to-playlist-dialog.component';
+import { SpotifyLoginDialogComponent } from './components/dialog/spotify-login-dialog/spotify-login-dialog.component';
 import { YesNoDialogComponent } from './components/dialog/yes-no-dialog/yes-no-dialog.component';
 import { EditSongDialogComponent } from './components/dialog/edit-song-dialog/edit-song-dialog.component';
 import { MiniPlayerComponent } from './components/player/mini-player/mini-player.component';
@@ -62,6 +63,7 @@ import { InviteComponent } from './components/invite/invite.component';
         AddObjectButtonComponent,
         AddToPlaylistDialogComponent,
         YesNoDialogComponent,
+        SpotifyLoginDialogComponent,
         EditSongDialogComponent,
         MiniPlayerComponent,
         RoomComponent,

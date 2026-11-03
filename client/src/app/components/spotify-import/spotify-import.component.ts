@@ -1,5 +1,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SpotifyLoginDialogComponent } from '../dialog/spotify-login-dialog/spotify-login-dialog.component';
 import { SpotifyApiError, SpotifyPlaylist, SpotifyService, SpotifyTrack } from '../../services/spotify.service';
 import { HttpHelperService } from '../../services/http-helper.service';
 import { GenericDataObject } from '../../models/genericDataObject';
@@ -38,7 +40,8 @@ export class SpotifyImportComponent {
   constructor(
     private spotifyService: SpotifyService,
     private httpHelperService: HttpHelperService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   get loggedIn(): boolean {
@@ -49,8 +52,17 @@ export class SpotifyImportComponent {
     return this.results.length < this.total;
   }
 
+  /** Opens the Spotify login dialog and returns false when the user is not logged in. */
+  private requireLogin(): boolean {
+    if (this.loggedIn) {
+      return true;
+    }
+    this.dialog.open(SpotifyLoginDialogComponent);
+    return false;
+  }
+
   async search(): Promise<void> {
-    if (!this.query.trim()) {
+    if (!this.query.trim() || !this.requireLogin()) {
       return;
     }
     this.results = [];
@@ -93,6 +105,9 @@ export class SpotifyImportComponent {
   }
 
   async loadPlaylists(): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
     this.loadingPlaylists = true;
     this.playlistError = '';
     try {
@@ -106,6 +121,9 @@ export class SpotifyImportComponent {
   }
 
   async lookUpPlaylist(): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
     this.playlistError = '';
     this.linkedPlaylist = null;
     try {
@@ -117,6 +135,9 @@ export class SpotifyImportComponent {
 
   /** Creates a playlist of the library with the name of the Spotify playlist and imports all its songs into it. */
   async importPlaylist(playlist: SpotifyPlaylist): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
     this.playlistError = '';
     this.importing = `Reading ${playlist.name}`;
     try {
@@ -178,7 +199,7 @@ export class SpotifyImportComponent {
     if (error instanceof SpotifyApiError) {
       switch (error.status) {
         case 401:
-          return 'You are not logged in to Spotify. Log in in the settings first.';
+          return 'You are not logged in to Spotify. Log in to Spotify again.';
         case 403:
           return (
             'Spotify refused the request. The account has to be one of the allowed users of the app, and for ' +

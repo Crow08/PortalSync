@@ -41,6 +41,9 @@ export class SpotifyConfig {
   redirectUri = '';
 }
 
+/** sessionStorage key: the page to return to after the Spotify login (the redirect URI itself can not carry it). */
+export const SPOTIFY_RETURN_URL_KEY = 'msc_spotifyReturnUrl';
+
 /** Before the token was kept per user of the app. */
 const LEGACY_REFRESH_TOKEN_KEY = 'msc_spotifyRefreshToken';
 

@@ -1,0 +1,15 @@
+<h2 class="title" mat-dialog-title>Log in to Spotify</h2>
+<mat-dialog-content>
+  <p class="message">
+    This function needs your Spotify account. After the login you come back to this page.
+  </p>
+  @if (checked && !authUrl) {
+    <p class="message">Spotify is not set up on this server (no Spotify client id).</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close type="button">Cancel</button>
+  @if (authUrl) {
+    <a (click)="rememberPage()" [href]="authUrl" color="primary" mat-flat-button>Login with Spotify</a>
+  }
+</mat-dialog-actions>
