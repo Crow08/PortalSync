@@ -1,0 +1,59 @@
+<h2 class="title" mat-dialog-title>Add to playlist</h2>
+<mat-dialog-content>
+  <p class="hint">{{ itemsLabel }} selected. Choose a playlist you can change or start a new one.</p>
+
+  <form (ngSubmit)="createPlaylist()" class="create">
+    <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+      <mat-label>New playlist</mat-label>
+      <input [(ngModel)]="newName" aria-label="Name of a new playlist" autocomplete="off" matInput name="newName"/>
+    </mat-form-field>
+    <button [disabled]="busy || !newName.trim()" mat-stroked-button type="submit">
+      <mat-icon>add</mat-icon>
+      Create
+    </button>
+  </form>
+
+  @if (playlists.length > 6) {
+    <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input [(ngModel)]="filter" aria-label="Find a playlist" autocomplete="off" matInput name="filter" placeholder="Find a playlist"
+        type="search"/>
+    </mat-form-field>
+  }
+
+  <div aria-label="Playlists" class="list" role="listbox">
+    @for (playlist of visiblePlaylists; track playlist.id) {
+      <button (click)="select(playlist)" [attr.aria-selected]="selected?.id === playlist.id" [class.on]="selected?.id === playlist.id"
+        class="item" role="option" type="button">
+        <mat-icon>playlist_play</mat-icon>
+        <span class="name">{{ playlist.name }}</span>
+        @if (playlist.publicOwnership) {
+          <span class="badge">Public</span>
+        }
+        @if (selected?.id === playlist.id) {
+          <mat-icon class="check">check</mat-icon>
+        }
+      </button>
+    } @empty {
+      <p class="empty">
+        @if (!loaded) {
+          Loading the playlists…
+        } @else if (playlists.length === 0) {
+          You have no playlist you can change yet. Create one above.
+        } @else {
+          No playlist matches.
+        }
+      </p>
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-dialog-close mat-button type="button">Cancel</button>
+  <button (click)="add()" [disabled]="!selected || busy" color="primary" mat-flat-button type="button">
+    @if (busy) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Add
+    }
+  </button>
+</mat-dialog-actions>

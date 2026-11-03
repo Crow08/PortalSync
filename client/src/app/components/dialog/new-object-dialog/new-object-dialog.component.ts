@@ -1,0 +1,41 @@
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+
+export class CreationDialogInputData {
+  displayName: string;
+  stringProperties: { displayName: string; key: string; value: string }[];
+
+  constructor(displayName: string, stringProperties: { displayName: string; key: string; value: string }[]) {
+    this.displayName = displayName;
+    this.stringProperties = stringProperties;
+  }
+}
+
+@Component({
+    selector: 'app-new-artist-dialog',
+    templateUrl: './new-object-dialog.component.html',
+    styleUrls: ['./new-object-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
+export class NewObjectDialogComponent {
+  constructor(
+    public dialogRef: MatDialogRef<NewObjectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: CreationDialogInputData
+  ) {}
+
+  onNoClick(): void {
+    this.dialogRef.close();
+  }
+
+  create(): void {
+    this.dialogRef.close(this.getData());
+  }
+
+  getData(): object {
+    return this.data.stringProperties.reduce((obj: any, prop) => {
+      obj[prop.key] = prop.value;
+      return obj;
+    }, {});
+  }
+}

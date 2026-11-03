@@ -1,0 +1,249 @@
+/* Design tokens of the redesign (graphite ground, one accent). These are the values of the default theme; every theme overrides them with the class theme-<id> (src/app/themes/themes.scss). New components use these instead of the Material themes. */
+:root {
+  --ps-bg: #080f1c;
+  --ps-panel: #101826;
+  --ps-raise: #192230;
+  --ps-line: #252e3d;
+  --ps-text: #e7ebf3;
+  --ps-muted: #a3afc1;
+  --ps-accent: #3fb4ff;
+  --ps-accent-ink: #031826;
+  --ps-glow: #262451;
+  --ps-danger: #ff8a8a;
+  --ps-video: #b794ff;
+  --ps-song: #ffbe5c;
+  --ps-ok: #4ade80;
+  --ps-font: Inter, system-ui, sans-serif;
+  --ps-mono: 'JetBrains Mono', monospace;
+}
+
+/* Global styles will take effect across all components */
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  color: white;
+}
+
+/* Solid surfaces on the graphite ground. */
+body #app-theme-container {
+  height: 100%;
+  width: 100%;
+  background: var(--ps-bg);
+
+  mat-card {
+    background: var(--ps-panel);
+  }
+
+  .mat-button-toggle-group {
+    background: var(--ps-panel);
+    border-color: var(--ps-line);
+  }
+
+  .mat-button-toggle-appearance-standard {
+    background: var(--ps-panel);
+    color: var(--ps-muted);
+  }
+
+  .mat-button-toggle-checked {
+    background: var(--ps-raise);
+    color: var(--ps-accent);
+  }
+}
+
+/* The picture behind the pages (see Background in the settings), under a dark layer so the text stays readable. The player
+   covers it with its own stage. */
+#app-theme-container #content {
+  background: linear-gradient(color-mix(in srgb, var(--ps-bg) 74%, transparent), color-mix(in srgb, var(--ps-bg) 74%, transparent)), var(--ps-bg-image, none) center / cover no-repeat;
+}
+
+/* Without a picture the ground is a gradient of the chosen theme with the brightness of the parrot picture: almost black at the top
+   and on the right, the lightest part (a tint of the accent) in the bottom left corner. */
+#app-theme-container.plain-background #content {
+  background:
+    radial-gradient(ellipse 90% 75% at 8% 100%, color-mix(in srgb, var(--ps-accent) 12%, var(--ps-bg)) 0%, transparent 100%),
+    linear-gradient(200deg, color-mix(in srgb, var(--ps-bg) 35%, #000) 0%, color-mix(in srgb, var(--ps-bg) 75%, #000) 100%);
+}
+
+/* Login and register: standalone page without header and navigation. */
+body #app-theme-container.auth-page {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'content';
+
+  #header,
+  #rail,
+  #footer {
+    display: none;
+  }
+}
+
+/* Menus in the style of the app, rendered in the overlay container (class ps-menu on the mat-menu). */
+.ps-menu.mat-mdc-menu-panel {
+  min-width: 180px;
+  border: 1px solid var(--ps-line);
+  border-radius: 12px;
+  background: var(--ps-panel);
+
+  .mat-mdc-menu-item {
+    min-height: 40px;
+    font-family: var(--ps-font);
+    font-size: 13px;
+
+    .mat-icon {
+      color: var(--ps-muted);
+    }
+
+    &:hover:not([disabled]),
+    &:focus-visible {
+      background: var(--ps-raise);
+    }
+
+    .mat-mdc-menu-item-text {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+  }
+
+  .mat-divider {
+    border-top-color: var(--ps-line);
+  }
+}
+
+/* The chapter menu of the room: a wider panel, the time and the title of the chapters, the current one highlighted. */
+.chapter-menu.mat-mdc-menu-panel {
+  min-width: 260px;
+  max-width: 420px;
+
+  .mat-mdc-menu-item {
+    &.current-chapter {
+      color: var(--ps-accent);
+      font-weight: 600;
+
+      .mat-icon {
+        color: var(--ps-accent);
+      }
+    }
+
+    .chapter-time {
+      flex: none;
+      margin-right: 12px;
+      color: var(--ps-muted);
+      font-family: var(--ps-mono);
+      font-size: 12px;
+    }
+
+    .chapter-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+/* Sliders in the style of the seek bar: a thin rounded track, the knob only shows on hover, press and keyboard focus. */
+.ps-slider.mat-mdc-slider {
+  // --ps-track and --ps-track-hover are the heights of the track, the class ps-slider-compact makes them smaller
+  --mat-slider-active-track-height: var(--ps-track, 5px);
+  --mat-slider-inactive-track-height: var(--ps-track, 5px);
+  --mat-slider-active-track-shape: 3px;
+  --mat-slider-inactive-track-shape: 3px;
+  --mat-slider-active-track-color: var(--ps-accent);
+  --mat-slider-inactive-track-color: #2c3240;
+  --mat-slider-handle-color: var(--ps-accent);
+  --mat-slider-hover-handle-color: var(--ps-accent);
+  --mat-slider-focus-handle-color: var(--ps-accent);
+  --mat-slider-hover-state-layer-color: transparent;
+  --mat-slider-focus-state-layer-color: transparent;
+  --mat-slider-ripple-color: transparent;
+
+  .mdc-slider__thumb {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .mdc-slider__thumb-knob {
+    box-shadow: 0 0 0 3px var(--ps-panel);
+  }
+
+  &:hover .mdc-slider__thumb,
+  &:active .mdc-slider__thumb,
+  &:has(input:focus-visible) .mdc-slider__thumb {
+    opacity: 1;
+  }
+
+  &:hover,
+  &:active,
+  &:has(input:focus-visible) {
+    --mat-slider-active-track-height: var(--ps-track-hover, 8px);
+    --mat-slider-inactive-track-height: var(--ps-track-hover, 8px);
+  }
+}
+
+/* The volume sliders: a thinner track and a smaller knob. */
+.ps-slider.ps-slider-compact.mat-mdc-slider {
+  --ps-track: 3px;
+  --ps-track-hover: 5px;
+  --mat-slider-handle-width: 14px;
+  --mat-slider-handle-height: 14px;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(33, 33, 33, 0.8);;
+
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* A line of text inside a menu, e.g. when there is nothing to choose. */
+.ps-menu .menu-hint {
+  display: block;
+  padding: 8px 16px;
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+/* Snackbars as small panels: a colored edge shows the kind (accent, ok, danger). */
+.graphite-theme .mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-color: var(--ps-raise);
+  --mat-snack-bar-supporting-text-color: var(--ps-text);
+  --mat-snack-bar-container-shape: 12px;
+  --mat-snack-bar-supporting-text-font: var(--ps-font);
+  --mat-snack-bar-supporting-text-size: 14px;
+  --mat-snack-bar-supporting-text-weight: 500;
+
+  .mdc-snackbar__surface {
+    border: 1px solid var(--ps-line);
+    border-left: 3px solid var(--ps-accent);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  &.http-error-notification .mdc-snackbar__surface {
+    border-left-color: var(--ps-danger);
+  }
+}
+
+/* Dialogs in the style of the panels of the app, rendered in the overlay container. */
+.graphite-theme .mat-mdc-dialog-container {
+  --mat-dialog-container-color: var(--ps-panel);
+  --mat-dialog-container-shape: 14px;
+  --mat-dialog-subhead-color: var(--ps-text);
+  --mat-dialog-supporting-text-color: var(--ps-text);
+  --mat-dialog-subhead-font: var(--ps-font);
+  --mat-dialog-supporting-text-font: var(--ps-font);
+
+  .mat-mdc-dialog-surface {
+    border: 1px solid var(--ps-line);
+  }
+}

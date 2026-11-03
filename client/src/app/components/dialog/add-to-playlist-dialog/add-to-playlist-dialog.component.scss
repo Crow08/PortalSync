@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  font-family: var(--ps-font);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  // the dialog is as wide as it is (see the open call), the list scrolls
+  min-width: 0;
+}
+
+.hint {
+  margin: 0;
+  color: var(--ps-muted);
+  font-size: 13px;
+}
+
+.create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .grow {
+    flex: 1;
+    min-width: 0;
+  }
+
+  button {
+    flex: none;
+    height: 56px;
+  }
+}
+
+.search {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ps-text);
+  font: 500 14px var(--ps-font);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &.on {
+    background: var(--ps-raise);
+  }
+
+  &.on {
+    box-shadow: inset 0 0 0 1px var(--ps-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: -2px;
+  }
+
+  .mat-icon {
+    flex: none;
+    color: var(--ps-muted);
+  }
+
+  .check {
+    color: var(--ps-accent);
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.badge {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--ps-raise);
+  color: var(--ps-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.item.on .badge {
+  background: var(--ps-panel);
+}
+
+.empty {
+  margin: 0;
+  padding: 10px;
+  color: var(--ps-muted);
+  font-size: 13px;
+}

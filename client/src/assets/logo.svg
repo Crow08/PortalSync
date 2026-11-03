@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PortalSync">
+  <rect width="64" height="64" rx="14" fill="#151820"/>
+  <ellipse cx="32" cy="12" rx="19" ry="4.5" fill="none" stroke="#ff9a1f" stroke-width="3"/>
+  <ellipse cx="32" cy="52" rx="19" ry="4.5" fill="none" stroke="#3fb4ff" stroke-width="3"/>
+  <path d="M-7 -10 L-7 10 L12 0Z" transform="translate(33 32) rotate(-16)" fill="#fff" stroke="#fff" stroke-width="4.5" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,223 @@
+<nav aria-label="Collections" class="collections">
+  <h2>Collections</h2>
+  <button (click)="selectCollection(null)" [class.on]="!activePlaylist" class="collection" type="button">
+    <mat-icon>all_inclusive</mat-icon>
+    <span class="name">All media</span>
+  </button>
+  <h2 class="group">Playlists</h2>
+  @for (playlist of playlists; track playlist.id) {
+    <button (click)="selectCollection(playlist)" [class.on]="activePlaylist?.id === playlist.id" class="collection" type="button">
+      <mat-icon>playlist_play</mat-icon>
+      <span class="name">{{ playlist.name }}</span>
+    </button>
+  } @empty {
+    <p class="hint">No playlists yet. Add media to a playlist and it shows up here.</p>
+  }
+</nav>
+
+<section class="library">
+  <div class="toolbar">
+    <mat-button-toggle-group (valueChange)="typeFilter = $event; resetScroll()" [value]="typeFilter" aria-label="Media type"
+      hideSingleSelectionIndicator>
+      <mat-button-toggle value="all">All</mat-button-toggle>
+      <mat-button-toggle value="VIDEO">Videos</mat-button-toggle>
+      <mat-button-toggle value="SONG">Songs</mat-button-toggle>
+    </mat-button-toggle-group>
+    <mat-form-field appearance="outline" class="sort" subscriptSizing="dynamic">
+      <mat-select (selectionChange)="resetScroll()" [(value)]="sortMode" aria-label="Sort by">
+        <mat-option value="title">Title A to Z</mat-option>
+        <mat-option value="recent">Recently added</mat-option>
+        @if (activePlaylist) {
+          <mat-option value="playlist">Playlist order</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="spacer"></div>
+    <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input (ngModelChange)="resetScroll()" [(ngModel)]="query" aria-label="Search" matInput
+        placeholder="Title, artist, series, genre" type="search"/>
+    </mat-form-field>
+    <a mat-stroked-button routerLink="/upload">
+      <mat-icon>upload</mat-icon>
+      Upload
+    </a>
+  </div>
+
+  @if (activePlaylist; as playlist) {
+    <div class="playlist-bar">
+      <div aria-label="Owners" class="owners" role="list">
+        <span class="label">Owners</span>
+        @for (owner of playlist.owners; track owner.id) {
+          <span class="owner" role="listitem">
+            <span aria-hidden="true" class="avatar">{{ owner.username.slice(0, 2).toUpperCase() }}</span>
+            {{ owner.username }}
+            @if (canManagePlaylist && playlist.owners.length > 1) {
+              <button (click)="removeOwner(owner)" [attr.aria-label]="'Remove ' + owner.username + ' as an owner'" class="remove"
+                type="button">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </span>
+        } @empty {
+          <span class="none">nobody</span>
+        }
+        @if (canManagePlaylist) {
+          <button (menuOpened)="loadUsers()" [matMenuTriggerFor]="ownerMenu" aria-label="Add an owner" mat-icon-button
+            title="Add an owner" type="button">
+            <mat-icon>person_add</mat-icon>
+          </button>
+          <mat-menu #ownerMenu="matMenu" class="ps-menu">
+            @for (candidate of ownerCandidates; track candidate.id) {
+              <button (click)="addOwner(candidate)" mat-menu-item type="button">
+                <mat-icon>person</mat-icon>
+                <span>{{ candidate.username }}</span>
+              </button>
+            } @empty {
+              <span class="menu-hint">Everyone is an owner already.</span>
+            }
+          </mat-menu>
+        }
+      </div>
+      <div class="access">
+        @if (canDeletePlaylist) {
+          <button (click)="deletePlaylist()" aria-label="Delete this playlist" mat-icon-button title="Delete this playlist"
+            type="button">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        @if (canManagePlaylist) {
+          <!-- (change) only fires on user input; (valueChange) also fires when the value is set while rendering -->
+          <mat-button-toggle-group (change)="setPublicOwnership($event.value === 'public')"
+            aria-label="Who can change this playlist" hideSingleSelectionIndicator
+            [value]="playlist.publicOwnership ? 'public' : 'private'">
+            <mat-button-toggle title="Only the owners can change this playlist" value="private">Private</mat-button-toggle>
+            <mat-button-toggle title="Everyone can add and remove songs" value="public">Public</mat-button-toggle>
+          </mat-button-toggle-group>
+        } @else {
+          <span class="access-chip">{{ playlist.publicOwnership ? 'Public: everyone can change it' : 'Read only' }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (!selection.isEmpty()) {
+    <div class="bulk" role="toolbar" aria-label="Selection">
+      <span>{{ selection.selected.length }} selected</span>
+      <div class="spacer"></div>
+      @if (inSession) {
+        <button (click)="addMediaListToQueue(selection.selected)" mat-button type="button">
+          <mat-icon>queue</mat-icon>
+          Add to queue
+        </button>
+      }
+      <button (click)="openPlaylistDialog(selection.selected)" mat-button type="button">
+        <mat-icon>playlist_add</mat-icon>
+        Add to playlist
+      </button>
+      @if (canEditPlaylist) {
+        <button (click)="removeFromPlaylist(selection.selected)" mat-button type="button">
+          <mat-icon>playlist_remove</mat-icon>
+          Remove from playlist
+        </button>
+      }
+      <button (click)="deleteSongs(selection.selected)" mat-button type="button">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+      <button (click)="selection.clear()" mat-button type="button">Clear</button>
+    </div>
+  }
+
+  @if (filtered.length > 0) {
+    <!-- only the visible rows are rendered, the library can hold thousands of items -->
+    <cdk-virtual-scroll-viewport [itemSize]="rowHeight" class="list">
+      <div *cdkVirtualFor="let media of filtered; trackBy: trackById" [class.on]="detail?.id === media.id" class="row">
+        <mat-checkbox (change)="toggleSelected(media)" [attr.aria-label]="'Select ' + media.title" [checked]="selection.isSelected(media)"
+          class="pick"></mat-checkbox>
+        <button (click)="showDetail(media)" class="open" type="button">
+          <span class="cover" [style.background]="gradient(media)">
+            <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+          </span>
+          <span class="titles">
+            <span class="title">{{ media.title }}</span>
+            @if (creator(media)) {
+              <span class="sub">{{ creator(media) }}</span>
+            }
+          </span>
+          <span class="kind" [class.video]="isVideo(media)">{{ isVideo(media) ? 'Video' : 'Song' }}</span>
+        </button>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  } @else {
+    <p class="empty">
+      @if (isLoadingResults) {
+        Loading the library…
+      } @else if (loadFailed) {
+        The library could not be loaded.
+        <button (click)="load()" mat-button type="button">Try again</button>
+      } @else if (items.length === 0) {
+        {{ activePlaylist ? 'This playlist is empty.' : 'The library is empty. Upload something first.' }}
+      } @else {
+        Nothing matches.
+      }
+    </p>
+  }
+
+  <div class="footer">
+    <button (click)="toggleAll()" [disabled]="filtered.length === 0" mat-button type="button">
+      {{ allSelected ? 'Deselect all' : 'Select all' }}
+    </button>
+    <div class="spacer"></div>
+    <span class="count">{{ filtered.length }} {{ filtered.length === 1 ? 'item' : 'items' }}@if (filtered.length !== items.length) {
+      <span> of {{ items.length }}</span>
+    }</span>
+  </div>
+</section>
+
+<aside class="detail">
+  @if (detail; as media) {
+    <div class="preview" [style.background]="gradient(media)">
+      <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+    </div>
+    <div class="head">
+      <span class="chip" [class.video]="isVideo(media)" [class.song]="!isVideo(media)">{{ isVideo(media) ? 'Video' : 'Song' }}</span>
+      <h2>{{ media.title }}</h2>
+      <p>{{ subtitle(media) }}</p>
+    </div>
+    <div class="actions">
+      @if (inSession) {
+        <button (click)="playMediaNow(media)" color="primary" mat-flat-button type="button">
+          <mat-icon>play_arrow</mat-icon>
+          Play now
+        </button>
+        <div class="pair">
+          <button (click)="playMediaNext(media)" mat-stroked-button type="button">Play next</button>
+          <button (click)="addMediaToQueue(media)" mat-stroked-button type="button">Add to queue</button>
+        </div>
+      } @else {
+        <p class="hint">Join a lobby to play this. <a routerLink="/">Lobbies</a></p>
+      }
+      <button (click)="openPlaylistDialog([media])" mat-stroked-button type="button">Add to playlist</button>
+      @if (canEditPlaylist) {
+        <button (click)="removeFromPlaylist([media])" mat-stroked-button type="button">Remove from this playlist</button>
+      }
+      <div class="pair">
+        @if (!isVideo(media)) {
+          <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">Edit</button>
+        }
+        <button (click)="deleteSong(media)" mat-stroked-button type="button">Delete</button>
+      </div>
+    </div>
+    <dl class="meta">
+      @for (row of details(media); track row.label) {
+        <div>
+          <dt>{{ row.label }}</dt>
+          <dd>{{ row.value }}</dd>
+        </div>
+      }
+    </dl>
+  } @else {
+    <p class="hint">Pick an item to see its details and play it.</p>
+  }
+</aside>

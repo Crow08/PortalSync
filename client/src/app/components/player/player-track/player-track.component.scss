@@ -1,0 +1,140 @@
+:host {
+  // width of the time display, the bar and the slider start behind it
+  --time-width: 8em;
+
+  .progress-wrapper {
+    position: relative;
+
+
+    .time-display {
+      width: var(--time-width);
+      display: inline-block;
+    }
+
+    // one segment per chapter with gaps in between
+    .segments {
+      position: absolute;
+      top: calc(0.5em - 1px);
+      left: var(--time-width);
+      width: calc(100% - var(--time-width));
+      display: flex;
+      gap: 3px;
+      height: 5px;
+      z-index: 0;
+      pointer-events: none;
+
+      .segment {
+        position: relative;
+        min-width: 2px;
+        overflow: hidden;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--ps-text) 14%, var(--ps-raise));
+      }
+
+      .fill {
+        height: 100%;
+        background: var(--ps-accent);
+      }
+
+      transition: height 0.15s ease, top 0.15s ease;
+
+      // the session is busy with a jump or the start
+      &.loading .segment {
+        animation: segment-pulse 1s ease-in-out infinite;
+      }
+    }
+
+    // thicker segments and the knob while the bar is hovered, focused or dragged
+    .overlay-slider:hover ~ .segments,
+    .overlay-slider:has(input:focus-visible) ~ .segments,
+    &.dragging .segments {
+      top: calc(0.5em - 2.5px);
+      height: 8px;
+    }
+
+    &.dragging .overlay-slider ::ng-deep .mdc-slider__thumb {
+      opacity: 1;
+    }
+
+    .overlay-slider {
+      position: absolute;
+      // above the segments, which must not cut the knob
+      z-index: 1;
+      top: -0.9em;
+      left: calc(var(--time-width) - 0.8em);
+      width: calc(100% - var(--time-width) + 0.5em);
+
+      // a ring in the color of the panel separates the knob from the segments below it
+      ::ng-deep .mdc-slider__thumb-knob {
+        box-shadow: 0 0 0 3px var(--ps-panel);
+      }
+
+      // the knob only shows while the bar is hovered, focused with the keyboard or dragged
+      ::ng-deep .mdc-slider__thumb {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+
+      &:hover ::ng-deep .mdc-slider__thumb,
+      &:has(input:focus-visible) ::ng-deep .mdc-slider__thumb {
+        opacity: 1;
+      }
+
+      ::ng-deep .mdc-slider__track--active_fill,
+      ::ng-deep .mdc-slider__track--inactive  {
+        background: transparent;
+        border: 0 !important; /* Removes border from active track */
+      }
+      ::ng-deep .mdc-slider__thumb {
+        --mat-slider-hover-state-layer-color: transparent;
+        --mat-slider-focus-state-layer-color: transparent;
+      }
+    }
+
+    // thumbnail and time of the hovered position, colours in the app-colors mixin (theme.scss)
+    .seek-preview {
+      position: absolute;
+      bottom: calc(100% + 0.5em);
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+
+      .seek-preview-image {
+        background-repeat: no-repeat;
+        border: 2px solid;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      }
+
+      .seek-preview-time {
+        margin-top: 0.25em;
+        padding: 0 0.5em;
+        border-radius: 4px;
+        font-size: 0.85em;
+        text-align: center;
+        max-width: 160px;
+
+        .seek-preview-chapter {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+
+  }
+}
+
+:host(.compact) {
+  --time-width: 4.5em;
+}
+
+@keyframes segment-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

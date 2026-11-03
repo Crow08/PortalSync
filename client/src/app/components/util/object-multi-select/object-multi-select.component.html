@@ -1,0 +1,33 @@
+@if (selectObjectData) {
+  <div>
+    <mat-form-field [appearance]="appearance">
+      <mat-label>{{selectObjectData.displayName}}:</mat-label>
+      <input [formControl]="objectControl" [matAutocomplete]="objectAC" [value]="inputText" matInput type="text">
+      <mat-autocomplete #objectAC="matAutocomplete" [displayWith]="display">
+        @for (option of filteredOptions | async ; track option) {
+          <mat-option [value]="option.id">
+            <div (click)="optionClicked($event, option)">
+              <mat-checkbox (change)="toggleSelection(option)" (click)="$event.stopPropagation()"
+                [checked]="isSelected(option)">
+                {{option.id}} - {{option.name}}
+              </mat-checkbox>
+            </div>
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+    <div class="selected-label">Selected</div>
+        <div id="chip-list">
+          <mat-chip-set>
+            @if (selectedOptions?.length === 0) {
+              <mat-chip>(None)</mat-chip>
+            }
+            @for (option of selectedOptions; track option) {
+              <mat-chip>
+                {{option.id}} - {{option.name}}
+              </mat-chip>
+            }
+          </mat-chip-set>
+        </div>
+      </div>
+    }

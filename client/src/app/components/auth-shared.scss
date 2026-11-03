@@ -1,0 +1,123 @@
+// Layout shared by the login and the register page: brand panel on the left, form on the right.
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: var(--ps-font);
+  color: var(--ps-text);
+}
+
+.auth {
+  display: flex;
+  flex-direction: row;
+  width: 720px;
+  max-width: 100%;
+  min-height: 460px;
+  border: 1px solid var(--ps-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ps-panel);
+  padding: 0;
+}
+
+.brand {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px;
+  border-right: 1px solid var(--ps-line);
+  background: radial-gradient(ellipse at 20% 100%, var(--ps-glow) 0, transparent 70%), var(--ps-panel);
+
+  img {
+    width: 100%;
+    aspect-ratio: 1;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 12px 0 0;
+    color: var(--ps-muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+form {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.error-text {
+  margin: 0;
+  color: var(--ps-danger);
+  font-size: 13px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+button[mat-flat-button] {
+  height: 42px;
+  font-weight: 600;
+}
+
+mat-spinner {
+  display: inline-block;
+}
+
+.hint {
+  margin: 0;
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .auth {
+    flex-direction: column;
+  }
+
+  .brand {
+    flex-basis: auto;
+    gap: 12px;
+    padding: 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ps-line);
+
+    img {
+      width: 140px;
+      align-self: center;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+  }
+
+  form {
+    padding: 24px 20px;
+  }
+}

@@ -1,0 +1,25 @@
+# Local seed data (real user names, password hashes, library). Not part of the repository.
+server/src/main/resources/data.sql
+
+# IDE and tooling (the shared run configurations are kept)
+.idea/*
+!.idea/runConfigurations/
+# holds the Spotify credentials of the developer, the template is Server_dev.xml.example
+.idea/runConfigurations/Server_dev.xml
+.claude/
+*.iml
+
+# Local scratch files
+.p1
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional background pictures (origin and license unknown), see client/src/assets/backgrounds/README.md
+client/src/assets/backgrounds/*
+!client/src/assets/backgrounds/README.md
+
+# Docker: local settings and the media library
+.env
+/media/

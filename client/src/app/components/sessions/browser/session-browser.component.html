@@ -1,0 +1,60 @@
+<div class="toolbar">
+  <mat-button-toggle-group (valueChange)="filter = $event" [value]="filter" aria-label="Filter lobbies" hideSingleSelectionIndicator>
+    <mat-button-toggle value="all">All</mat-button-toggle>
+    <mat-button-toggle value="mine">Mine</mat-button-toggle>
+    <mat-button-toggle value="video">Video</mat-button-toggle>
+    <mat-button-toggle value="song">Music</mat-button-toggle>
+  </mat-button-toggle-group>
+  <div class="spacer"></div>
+  <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+    <mat-icon matPrefix>search</mat-icon>
+    <input [(ngModel)]="query" aria-label="Find a lobby" matInput placeholder="Find a lobby" type="search"/>
+  </mat-form-field>
+</div>
+
+<div class="rooms">
+  @for (session of visibleSessions; track session.id) {
+    <article class="room-card">
+      <div class="cover" [style.background]="gradient(session)">
+        <div class="chips">
+          <span [attr.aria-label]="kind(session)" [title]="kind(session)" class="chip icon-chip kind-{{ kind(session).toLowerCase() }}"
+            role="img">
+            <mat-icon aria-hidden="true">{{ kindIcon(session) }}</mat-icon>
+          </span>
+          <span class="chip"><span class="dot state-{{ stateLabel(session).toLowerCase() }}"></span>{{ stateLabel(session) }}</span>
+          @if (owner(session)) {
+            <span class="chip owner-chip" [title]="'Owner: ' + owner(session)">
+              <mat-icon aria-hidden="true">person</mat-icon>
+              <span class="owner-name">{{ owner(session) }}</span>
+            </span>
+          }
+        </div>
+        @if (canDelete(session)) {
+          <button (click)="deleteSession(session, $event)" aria-label="Delete lobby" class="delete" title="Delete lobby"
+            type="button">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </div>
+      <div class="body">
+        <div class="titles">
+          <div class="name">{{ session.name }}</div>
+          <div class="now">Now: {{ nowPlaying(session) }}</div>
+        </div>
+        <div class="foot">
+          <div class="avatars">
+            @for (listener of listeners(session); track $index) {
+              <span [style.background]="listener.color" class="avatar">{{ listener.initials }}</span>
+            }
+          </div>
+          <span class="count">{{ session.users?.length ?? 0 }} listening</span>
+          <button (click)="openSession(session.id)" color="primary" mat-flat-button type="button">Join</button>
+        </div>
+      </div>
+    </article>
+  } @empty {
+    @if (loaded) {
+      <p class="empty">{{ sessions.length === 0 ? 'No lobbies yet. Start one on the right.' : 'No lobby matches.' }}</p>
+    }
+  }
+</div>

@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--ps-panel);
+  border: 1px solid var(--ps-line);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  header p {
+    margin: 2px 0 0;
+    color: var(--ps-muted);
+    font-size: 12px;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.error-text {
+  margin: 0;
+  color: var(--ps-danger);
+  font-size: 13px;
+}
+
+button[mat-flat-button] {
+  height: 42px;
+  font-weight: 600;
+}

@@ -1,0 +1,16 @@
+@if (selectObjectData) {
+  <div>
+    <mat-form-field [appearance]="appearance">
+      <mat-label>{{selectObjectData.displayName}}:</mat-label>
+      <input (change)="selectionChanged()" [formControl]="objectControl" [matAutocomplete]="objectAC" matInput
+        type="text" value="selectedOptions[0]?.name">
+      <mat-autocomplete #objectAC="matAutocomplete" (optionSelected)="selectionChanged()" [displayWith]="display">
+        @for (option of filteredOptions | async ; track option) {
+          <mat-option [value]="option.id">
+            {{option.id}} - {{option.name}}
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  </div>
+}

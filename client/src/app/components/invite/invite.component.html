@@ -1,0 +1,18 @@
+<section class="panel">
+  <header>
+    <h2>Invite someone</h2>
+    <p>The link lets one person register. It works for one hour.</p>
+  </header>
+  @if (!link) {
+    <button (click)="getInviteLink()" mat-stroked-button type="button">Create invite link</button>
+  } @else {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Invite link</mat-label>
+      <input [value]="link" aria-label="Invite link" matInput readonly type="text"/>
+    </mat-form-field>
+    <button [cdkCopyToClipboard]="link" mat-stroked-button type="button">
+      <mat-icon>file_copy</mat-icon>
+      Copy link
+    </button>
+  }
+</section>

@@ -1,0 +1,7 @@
+# TLS proxy in front of the server: one origin, the server serves the client (static/), /api and /ws.
+# Ports 80 and 443 have to be forwarded to this machine (HTTP-01 / TLS-ALPN challenge). Run: caddy run --config Caddyfile
+# Also used by the Docker setup (compose profile "tls") with PORTALSYNC_UPSTREAM=app:8080.
+# PORTALSYNC_DOMAIN is the host name (required), PORTALSYNC_UPSTREAM selects the server, default is the prod profile port.
+{$PORTALSYNC_DOMAIN} {
+	reverse_proxy {$PORTALSYNC_UPSTREAM:localhost:8080}
+}

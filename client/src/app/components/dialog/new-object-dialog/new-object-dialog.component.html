@@ -1,0 +1,15 @@
+<h2 class="title" mat-dialog-title>New {{ data.displayName }}</h2>
+<form (ngSubmit)="create()">
+  <mat-dialog-content>
+    @for (prop of data.stringProperties; track prop.key) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ prop.displayName }}</mat-label>
+        <input [(ngModel)]="prop.value" [name]="prop.key" autocomplete="off" matInput/>
+      </mat-form-field>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button (click)="onNoClick()" mat-button type="button">Cancel</button>
+    <button color="primary" mat-flat-button type="submit">Create</button>
+  </mat-dialog-actions>
+</form>

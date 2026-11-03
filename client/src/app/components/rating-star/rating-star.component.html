@@ -1,0 +1,9 @@
+<div (mouseleave)="hovered = 0" aria-label="Rating" class="rating" role="group">
+  @for (star of stars; track star) {
+    <button (click)="setRatingValue(star)" (mouseenter)="hovered = star" [attr.aria-label]="star + (star === 1 ? ' star' : ' stars')"
+      [class.extra]="star > 1" [class.filled]="star <= shown" [title]="title(star)" class="star" type="button">
+      <mat-icon>{{ star <= shown ? 'star' : 'star_outline' }}</mat-icon>
+    </button>
+  }
+  <span class="average" title="Average rating">({{ songRating }})</span>
+</div>

@@ -1,0 +1,31 @@
+<section class="panel">
+  <header>
+    <h2>Start a lobby</h2>
+    <p>Friends join from the list of lobbies. Everyone hears and sees the same moment.</p>
+  </header>
+  <form (ngSubmit)="onSubmit()" [formGroup]="sessionForm">
+    @if (error) {
+      <p class="error-text" role="alert">{{ error }}</p>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input formControlName="name" id="name" matInput type="text"/>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Start with</mat-label>
+      <mat-select formControlName="playlist">
+        <mat-option value="">No playlist, an empty lobby</mat-option>
+        @for (playlist of playlists; track playlist.id) {
+          <mat-option [value]="playlist.id">{{ playlist.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button [disabled]="loading" color="primary" id="submit-button" mat-flat-button type="submit">
+      @if (loading) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Create and enter
+      }
+    </button>
+  </form>
+</section>

@@ -1,0 +1,10 @@
+@if (multiMode) {
+  <!-- [(selectedOptions)] has to come before (selectedOptionsChange), otherwise onChange() emits the old selection -->
+  <app-object-multi-select [(selectedOptions)]="selectedOptions" (selectedOptionsChange)="onChange()" appearance="outline"
+  [selectObjectData]="selectObjectData"></app-object-multi-select>
+}
+@if (!multiMode) {
+  <app-object-select [(selectedOptions)]="selectedOptions" (selectedOptionsChange)="onChange()" appearance="outline"
+  [selectObjectData]="selectObjectData"></app-object-select>
+}
+<app-add-object-button (objectAdded)="objectAdded()" [objectInputData]="addObjectInputData"></app-add-object-button>

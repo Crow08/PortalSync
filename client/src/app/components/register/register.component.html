@@ -1,0 +1,42 @@
+<mat-card class="auth">
+  <div class="brand">
+    <img alt="PortalSync" src="assets/logo-scene.svg">
+    <div>
+      <h1>You are invited. Pick a name and a password.</h1>
+      <p>Videos, songs and playlists play in step on every device in the lobby.</p>
+    </div>
+  </div>
+  <form (ngSubmit)="onSubmit()" [formGroup]="registerForm">
+    <h2>Create account</h2>
+    @if (error) {
+      <p class="error-text" role="alert">{{ error }}</p>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>Username</mat-label>
+      <input [errorStateMatcher]="matcher" autocomplete="username" formControlName="username" id="username" matInput
+        type="text"/>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input [errorStateMatcher]="matcher" autocomplete="new-password" formControlName="password" id="password" matInput
+        type="password"/>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Confirm password</mat-label>
+      <input [errorStateMatcher]="matcher" autocomplete="new-password" formControlName="password_confirm"
+        id="password_confirm" matInput type="password"/>
+    </mat-form-field>
+    @if (registrationSuccessful) {
+      <p class="hint" role="status">Account created.</p>
+      <button [routerLink]="'/login'" color="primary" mat-flat-button type="button">Go to sign in</button>
+    } @else {
+      <button [disabled]="loading" color="primary" mat-flat-button type="submit">
+        @if (loading) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Create account
+        }
+      </button>
+    }
+  </form>
+</mat-card>

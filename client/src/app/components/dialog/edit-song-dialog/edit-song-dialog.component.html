@@ -1,0 +1,15 @@
+<h2 class="title" mat-dialog-title>Edit Song</h2>
+<mat-dialog-content>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Song title</mat-label>
+    <input [(ngModel)]="selectedTitle" autocomplete="off" matInput/>
+  </mat-form-field>
+  <app-input-artist [(selectedOptions)]="selectedArtist"></app-input-artist>
+  <app-input-album [(selectedOptions)]="selectedAlbum"></app-input-album>
+  <app-input-genre [(selectedOptions)]="selectedGenres"></app-input-genre>
+  <app-input-tag [(selectedOptions)]="selectedTags"></app-input-tag>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close type="button">Cancel</button>
+  <button (click)="saveSong()" color="primary" mat-flat-button type="button">Save</button>
+</mat-dialog-actions>

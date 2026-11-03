@@ -1,0 +1,98 @@
+<h1 class="page-title">Settings</h1>
+<div class="grid">
+  <section class="panel">
+    <h2>Appearance</h2>
+    <div class="setting">
+      <h3 id="theme-label">Color theme</h3>
+      <mat-button-toggle-group (valueChange)="setTheme($event)" [value]="getTheme()" aria-labelledby="theme-label"
+        hideSingleSelectionIndicator>
+        @for (theme of themes; track theme.value) {
+          <mat-button-toggle [value]="theme.value">
+            <span [style.--swatch-accent]="theme.accent" [style.--swatch-surface]="theme.surface" aria-hidden="true" class="swatch"></span>
+            {{ theme.label }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      <p class="hint">Accent color and surfaces of the whole app. Saved in this browser.</p>
+    </div>
+    @if (backgrounds.length > 1) {
+      <div class="setting">
+        <h3 id="background-label">Background picture</h3>
+        <mat-button-toggle-group (valueChange)="setBackground($event)" [value]="getBackground()" aria-labelledby="background-label"
+          hideSingleSelectionIndicator>
+          @for (background of backgrounds; track background.value) {
+            <mat-button-toggle [value]="background.value">{{ background.label }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        <p class="hint">Shown behind all pages except the player.</p>
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Playback</h2>
+
+    <div class="setting">
+      <h3 id="volume-label">Default player volume</h3>
+      <div class="slider-row">
+        <mat-slider [displayWith]="volumeLabel" [max]="0.5" [min]="0" [step]="0.005" class="ps-slider" id="volume-slider">
+          <input (valueChange)="setVolume($event)" aria-labelledby="volume-label" matSliderThumb #slider
+            value="{{ getDefaultVolume() }}"/>
+        </mat-slider>
+        <span class="value">{{ getVolumePercent(slider.value) }}%</span>
+      </div>
+    </div>
+
+    <div class="setting">
+      <h3 id="skip-label">Time skip length</h3>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input (input)="setCurrentTimeSkipLength($event.target)" aria-labelledby="skip-label" matInput type="number"
+          value="{{ getCurrentTimeSkipLength() }}"/>
+        <span matTextSuffix>s</span>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Spotify</h2>
+    <p class="hint">
+      Spotify songs are played by your own Spotify Premium account in this browser. Without a connected account you can not
+      hear them, the session does not wait for you.
+    </p>
+    <p class="status">
+      Status: <b>{{ spotifyPlayer.connection | async }}</b>
+      @if (spotifyPlayer.error | async; as error) {
+        <span> ({{ error }})</span>
+      }
+    </p>
+    <div class="buttons">
+      @if (!spotifyLoggedIn) {
+        @if (spotifyAuthUrl) {
+          <a [href]="spotifyAuthUrl" color="primary" mat-flat-button>Login with Spotify</a>
+        } @else if (spotifyChecked) {
+          <span class="hint">Spotify is not set up on this server (no Spotify client id).</span>
+        }
+      } @else {
+        <button (click)="connectSpotify()" color="primary" mat-flat-button type="button"
+          [disabled]="(spotifyPlayer.connection | async) === 'connected' || (spotifyPlayer.connection | async) === 'connecting'">
+          Connect player
+        </button>
+        <button (click)="disconnectSpotify()" mat-stroked-button type="button">Disconnect</button>
+      }
+    </div>
+
+    <div class="setting">
+      <h3 id="latency-label">Latency correction</h3>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input (input)="setSpotifyLatencyCorrection($event.target)" aria-labelledby="latency-label" matInput step="10"
+          type="number" value="{{ getSpotifyLatencyCorrection() }}"/>
+        <span matTextSuffix>ms</span>
+      </mat-form-field>
+      <p class="hint">
+        Spotify starts about {{ spotifyDefaultLatency }} ms after it is told to (measured with built-in loudspeakers). Use a
+        positive value if Spotify starts later than the others for you (e.g. Bluetooth loudspeakers), a negative value if it
+        starts earlier. Used in total: {{ getSpotifyLatency() }} ms.
+      </p>
+    </div>
+  </section>
+</div>

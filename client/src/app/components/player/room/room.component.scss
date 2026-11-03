@@ -1,0 +1,602 @@
+// Room: the stage and the transport bar on the left, queue and people on the right. Nothing scrolls except the queue.
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--side-width, 360px);
+  height: 100%;
+  min-height: 0;
+  font-family: var(--ps-font);
+  color: var(--ps-text);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 160px;
+  background: #000;
+  overflow: hidden;
+}
+
+.video-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+
+  &[hidden] {
+    display: none;
+  }
+
+  ::ng-deep video {
+    object-fit: contain;
+  }
+}
+
+.fullscreen-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 20px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.4s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.cover-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 24px 48px;
+  padding: 16px 48px;
+  background: radial-gradient(ellipse at 30% 40%, var(--ps-glow) 0, transparent 60%), var(--ps-bg);
+}
+
+.cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: min(300px, 38vh);
+  aspect-ratio: 1;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+
+  .mat-icon {
+    width: 72px;
+    height: 72px;
+    font-size: 72px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.cover-text {
+  flex: 0 1 420px;
+  min-width: 200px;
+}
+
+.cover-title {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.cover-sub {
+  margin-top: 8px;
+  color: var(--ps-muted);
+  font-size: 18px;
+}
+
+.overlay {
+  position: absolute;
+  top: 14px;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+
+  &.top-center {
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ps-bg) 88%, transparent);
+  color: var(--ps-text);
+  font-size: 12px;
+  font-weight: 500;
+
+  .mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.bar {
+  flex: none;
+  padding: 10px 20px 8px;
+  background: var(--ps-panel);
+  border-top: 1px solid var(--ps-line);
+}
+
+.transport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.now {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.now-cover {
+  flex: none;
+  width: 56px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.now-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+app-rating-star {
+  flex: none;
+  white-space: nowrap;
+}
+
+.now-title,
+.now-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.now-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.now-sub {
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .slot {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.play.mat-mdc-unelevated-button {
+  min-width: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+
+  .mat-icon {
+    margin: 0;
+    width: 26px;
+    height: 26px;
+    font-size: 26px;
+  }
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+
+  .volume-icon {
+    margin-left: 8px;
+    color: var(--ps-muted);
+  }
+
+  .volume-slider {
+    width: 100px;
+  }
+}
+
+.side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ps-panel);
+  border-left: 1px solid var(--ps-line);
+}
+
+.tabs {
+  flex: none;
+  margin: 8px;
+
+  mat-button-toggle {
+    flex: 1;
+  }
+
+  .count {
+    margin-left: 6px;
+    color: var(--ps-muted);
+    font-size: 11px;
+  }
+}
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  padding: 0 8px;
+  overflow-y: auto;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.queue-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.queue-head {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 0 4px 0 10px;
+
+  .label {
+    color: var(--ps-muted);
+    font-size: 12px;
+  }
+
+  .on {
+    color: var(--ps-accent);
+  }
+}
+
+.queue-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+
+  // the rows are as wide as the panel: the wrapper would otherwise grow with the longest title and push the remove
+  // button out of the panel
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+// the virtual scroll viewport needs equal row heights, see playlistRowHeight
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 4px 0 10px;
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--ps-raise);
+  }
+
+  &.history {
+    opacity: 0.55;
+  }
+
+  &.current {
+    background: var(--ps-raise);
+    box-shadow: inset 0 0 0 1px var(--ps-accent);
+  }
+
+  &.placeholder {
+    background: var(--ps-raise);
+    opacity: 0.6;
+  }
+
+  .lead {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--ps-muted);
+  }
+
+  &.current .lead {
+    color: var(--ps-accent);
+  }
+}
+
+.row-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: -2px;
+    border-radius: 10px;
+  }
+}
+
+.row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row .row-remove.mat-mdc-icon-button {
+  // the icon is centered in the button, whose padding is taken away so that it can shrink to nothing
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 0;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  color: var(--ps-muted);
+  // hidden, the title uses the space; the button grows with a short transition for the row under the pointer or with
+  // the keyboard focus
+  opacity: 0;
+  transition: width 0.15s ease, opacity 0.12s ease;
+}
+
+.row:hover .row-remove.mat-mdc-icon-button,
+.row:focus-within .row-remove.mat-mdc-icon-button,
+.row .row-remove.mat-mdc-icon-button:focus-visible {
+  width: 40px;
+  opacity: 1;
+}
+
+// devices without hover always show it
+@media (hover: none) {
+  .row .row-remove.mat-mdc-icon-button {
+    width: 40px;
+    opacity: 1;
+  }
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 58px;
+  padding: 0 10px;
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--ps-raise);
+  }
+}
+
+.person-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.person-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.person-details {
+  display: flex;
+  gap: 8px;
+  color: var(--ps-muted);
+  font-family: var(--ps-mono);
+  font-size: 12px;
+
+  .out-of-sync {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--ps-danger);
+  }
+
+  .out-of-sync-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+.state {
+  color: var(--ps-muted);
+
+  &.ready {
+    color: var(--ps-ok);
+  }
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--ps-bg);
+  font-size: 12px;
+  font-weight: 700;
+
+  &.small {
+    width: 28px;
+    height: 28px;
+    margin-left: -6px;
+    border: 2px solid var(--ps-panel);
+    font-size: 11px;
+  }
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ps-line);
+  font-size: 12px;
+}
+
+.avatars {
+  display: flex;
+  padding-left: 6px;
+}
+
+.summary-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-sub {
+  color: var(--ps-muted);
+  font-family: var(--ps-mono);
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  z-index: 5;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+
+  // the line that shows where the handle is while it is used
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background: var(--ps-accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// while dragging, nothing is selected and the cursor stays the same wherever the pointer is
+:host(.resizing) {
+  cursor: col-resize;
+  user-select: none;
+
+  .resize-handle::after {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .resize-handle {
+    display: none;
+  }
+
+  :host {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(320px, 1fr);
+    height: auto;
+  }
+
+  .stage {
+    aspect-ratio: 16 / 9;
+    flex: none;
+  }
+
+  .transport {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .cover-stage {
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  .cover-title {
+    font-size: 22px;
+  }
+
+  .side {
+    border-left: 0;
+    border-top: 1px solid var(--ps-line);
+  }
+}

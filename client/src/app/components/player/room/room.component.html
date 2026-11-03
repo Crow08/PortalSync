@@ -1,0 +1,227 @@
+<ng-template #controls>
+  <app-player-track (seek)="jumpOffset($event)" [chapters]="chapters" [playerState]="playerState"
+    [thumbnailUrl]="thumbnailUrl"></app-player-track>
+  <div class="transport">
+    <div class="now">
+      <div class="now-cover" [style.background]="coverGradient"></div>
+      <div class="now-text">
+        <div class="now-title">{{ hasMedia ? currentMedia.title : 'Nothing playing' }}</div>
+        <div class="now-sub">{{ getSubTitle() || (hasMedia ? 'Unknown artist' : 'Add something to the queue') }}</div>
+      </div>
+      @if (hasMedia) {
+        <app-rating-star (rating)="onRating($event)" [currentRating]="userSongRating" [songRating]="songRating"></app-rating-star>
+      }
+    </div>
+
+    <div class="buttons">
+      @if (chapters.length > 0) {
+        <button [matMenuTriggerFor]="chapterMenu" aria-label="Chapters" mat-icon-button title="Chapters" type="button">
+          <mat-icon>format_list_bulleted</mat-icon>
+        </button>
+      } @else {
+        <!-- keeps the play button centered between the two outer buttons -->
+        <span aria-hidden="true" class="slot"></span>
+      }
+      <button (click)="publishCommand('previous')" aria-label="Previous" mat-icon-button title="Previous" type="button">
+        <mat-icon>skip_previous</mat-icon>
+      </button>
+      <button (click)="togglePlayback()" [attr.aria-label]="playerState === 'PLAY' ? 'Pause' : 'Play'" class="play" color="primary"
+        mat-flat-button [title]="playerState === 'PLAY' ? 'Pause' : 'Play'" type="button">
+        <mat-icon>{{ playerState === 'PLAY' ? 'pause' : 'play_arrow' }}</mat-icon>
+      </button>
+      <button (click)="publishCommand('skip')" aria-label="Next" mat-icon-button title="Next" type="button">
+        <mat-icon>skip_next</mat-icon>
+      </button>
+      <!-- with chapters, "next chapter" replaces the time skip, which moves into the chapter menu -->
+      @if (chapters.length > 0) {
+        <button (click)="nextChapter()" [disabled]="isLastChapter()" [title]="'Next chapter: ' + (getNextChapter()?.title ?? '')"
+          aria-label="Next chapter" mat-icon-button type="button">
+          <mat-icon>fast_forward</mat-icon>
+        </button>
+      } @else {
+        <button (click)="timeSkip()" [attr.aria-label]="'Skip ' + settingsService.defaultTimeSkipLength + ' s'"
+          [title]="'Skip ' + settingsService.defaultTimeSkipLength + ' s'" mat-icon-button type="button">
+          <mat-icon>update</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="options">
+      <mat-icon class="volume-icon">volume_up</mat-icon>
+      <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" title="Volume">
+        <input (valueChange)="setVolume($event)" matSliderThumb value="{{ getVolume() }}"/>
+      </mat-slider>
+      @if (isFullscreen) {
+        <button (click)="exitFullscreen()" aria-label="Exit fullscreen" mat-icon-button title="Exit fullscreen" type="button">
+          <mat-icon>fullscreen_exit</mat-icon>
+        </button>
+      } @else {
+        <button (click)="fullscreen()" [hidden]="!isVideoMode()" aria-label="Fullscreen" mat-icon-button title="Fullscreen"
+          type="button">
+          <mat-icon>fullscreen</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+  <mat-menu #chapterMenu="matMenu" class="ps-menu chapter-menu">
+    <button (click)="previousChapter()" mat-menu-item type="button">
+      <mat-icon>fast_rewind</mat-icon>
+      <span>Previous chapter</span>
+    </button>
+    <button (click)="nextChapter()" [disabled]="isLastChapter()" mat-menu-item type="button">
+      <mat-icon>fast_forward</mat-icon>
+      <span>Next chapter</span>
+    </button>
+    <button (click)="timeSkip()" mat-menu-item type="button">
+      <mat-icon>update</mat-icon>
+      <span>Skip {{ settingsService.defaultTimeSkipLength }} s</span>
+    </button>
+    <mat-divider></mat-divider>
+    @for (chapter of chapters; track chapter; let i = $index) {
+      <button (click)="jumpToChapter(chapter)" [class.current-chapter]="i === getCurrentChapterIndex()" mat-menu-item type="button">
+        <mat-icon>{{ i === getCurrentChapterIndex() ? 'play_arrow' : '' }}</mat-icon>
+        <span class="chapter-time">{{ formatTime(chapter.start) }}</span>
+        <span class="chapter-title">{{ chapter.title }}</span>
+      </button>
+    }
+  </mat-menu>
+</ng-template>
+
+<section class="main">
+  <div class="stage">
+    <!-- audio: the cover; video: the video element is owned by the MediaService and moved into the wrapper, see ngAfterViewInit -->
+    @if (!showVideo) {
+      <div class="cover-stage">
+        <div class="cover" [style.background]="coverGradient"><mat-icon>music_note</mat-icon></div>
+        <div class="cover-text">
+          <div class="cover-title">{{ hasMedia ? currentMedia.title : 'Nothing playing' }}</div>
+          <div class="cover-sub">{{ getSubTitle() }}</div>
+        </div>
+      </div>
+    }
+    <div #videoWrapper [hidden]="!showVideo" class="video-wrapper">
+      @if (isFullscreen) {
+        <div class="fullscreen-controls">
+          <ng-container [ngTemplateOutlet]="controls"></ng-container>
+        </div>
+      }
+    </div>
+
+    <div class="overlay top-center">
+      @if (playbackHint) {
+        <span class="chip hint" role="status"><mat-icon>block</mat-icon>{{ playbackHint }}</span>
+      }
+      @if (autoplayBlocked) {
+        <span class="chip hint" role="status">
+          <mat-icon>volume_off</mat-icon>Playing muted. Click anywhere to unmute.
+        </span>
+      }
+    </div>
+  </div>
+
+  @if (!isFullscreen) {
+    <div class="bar">
+      <ng-container [ngTemplateOutlet]="controls"></ng-container>
+    </div>
+  }
+</section>
+
+<aside class="side">
+  <!-- the border of the panel: dragging it (or the arrow keys) changes the width, a double click resets it -->
+  <div (dblclick)="resetSideWidth()" (keydown)="onResizeKey($event)" (lostpointercapture)="endResize()" (pointercancel)="endResize()"
+    (pointerdown)="startResize($event)" (pointermove)="resize($event)" (pointerup)="endResize()" [attr.aria-valuemax]="sideWidthMax"
+    [attr.aria-valuemin]="sideWidthMin" [attr.aria-valuenow]="sideWidth" aria-label="Width of the side panel" aria-orientation="vertical"
+    class="resize-handle" role="separator" tabindex="0" title="Drag to resize, double click to reset"></div>
+  <mat-button-toggle-group (valueChange)="tab = $event" [value]="tab" aria-label="Side panel" class="tabs" hideSingleSelectionIndicator>
+    <mat-button-toggle value="queue">Queue <span class="count">{{ queue.length + (hasMedia ? 1 : 0) }}</span></mat-button-toggle>
+    <mat-button-toggle value="people">People <span class="count">{{ sessionUsers.length }}</span></mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <div [hidden]="tab !== 'queue'" class="panel queue-panel">
+    <div class="queue-head">
+      <span class="label" title="Position of the current media / length of the playlist">
+        {{ history.length + (hasMedia ? 1 : 0) }} / {{ playlistRows.length - (hasMedia ? 0 : 1) }}
+      </span>
+      <span class="spacer"></span>
+      <button (click)="publishCommand('shuffle')" aria-label="Shuffle queue" mat-icon-button title="Shuffle queue" type="button">
+        <mat-icon>shuffle</mat-icon>
+      </button>
+      <button (click)="publishCommand('loop/' + !loopMode)" [attr.aria-pressed]="loopMode" [class.on]="loopMode"
+        [title]="loopMode ? 'Loop: on' : 'Loop: off'" aria-label="Loop the queue" mat-icon-button type="button">
+        <mat-icon>{{ loopMode ? 'repeat_on' : 'repeat' }}</mat-icon>
+      </button>
+      <button (click)="scrollToCurrent()" [attr.aria-label]="'Scroll to the current ' + mediaNoun" mat-icon-button
+        [title]="'Scroll to the current ' + mediaNoun" type="button">
+        <mat-icon>my_location</mat-icon>
+      </button>
+      <a aria-label="Add from the library" mat-icon-button routerLink="/library" title="Add from the library">
+        <mat-icon>add</mat-icon>
+      </a>
+    </div>
+    <!-- only the visible rows are rendered, see playlistRows. Without a template cache: cached (detached) rows would
+    stay registered as cdkDrag items and shift the drop indices. -->
+    <cdk-virtual-scroll-viewport #playlistViewport (cdkDropListDropped)="dropPlaylistRow($event)" [itemSize]="playlistRowHeight"
+      cdkDropList class="queue-viewport">
+      <div *cdkVirtualFor="let row of playlistRows; trackBy: trackByIndex; templateCacheSize: 0" [cdkDragData]="row"
+        [cdkDragDisabled]="row.type === 'current'" [class.current]="row.type === 'current'" [class.history]="row.type === 'history'"
+        cdkDrag class="row">
+        <div *cdkDragPlaceholder class="row placeholder">{{ row.media.title }}</div>
+        @if (row.type === 'current') {
+          <mat-icon class="lead">equalizer</mat-icon>
+          <span class="row-title">{{ row.media.title || 'Nothing playing' }}</span>
+        } @else {
+          <button (click)="jumpTo(combinedIndex(row), row.media.id)" class="row-open" type="button"
+            [attr.aria-label]="'Play ' + row.media.title">
+            <mat-icon class="lead">drag_indicator</mat-icon>
+            <span class="row-title">{{ row.media.title }}</span>
+          </button>
+          <button (click)="removeSongFromQueueOrHistory(row.index, row.type, row.media.id)" aria-label="Remove" class="row-remove"
+            mat-icon-button title="Remove" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+    </cdk-virtual-scroll-viewport>
+  </div>
+
+  <div [hidden]="tab !== 'people'" class="panel">
+    @for (user of sessionUsers; track user.id) {
+      @if ({ status: getUserStatus(user.id) }; as listener) {
+        <div class="person">
+          <span [style.background]="avatarColor(user.id)" class="avatar">{{ initials(user.username) }}</span>
+          <div class="person-info">
+            <span class="person-name">{{ user.username }}</span>
+            <span class="person-details">
+              <span title="Latency (round trip to the server)">{{ formatLatency(listener.status) }}</span>
+              @if (hasDrift(listener.status)) {
+                <span [class.out-of-sync]="isOutOfSync(listener.status)" title="Drift from the session position (+: behind, -: ahead)">
+                  @if (isOutOfSync(listener.status)) {
+                    <mat-icon class="out-of-sync-icon">sync_problem</mat-icon>
+                  }
+                  {{ formatDrift(listener.status!.drift!) }}
+                </span>
+              }
+            </span>
+          </div>
+          <mat-icon [title]="getStateText(listener.status)" class="state" [class.ready]="listener.status?.state === 'READY'">
+            {{ getStateIcon(listener.status) }}
+          </mat-icon>
+        </div>
+      }
+    }
+  </div>
+
+  <footer class="summary">
+    <div class="avatars">
+      @for (user of sessionUsers; track user.id) {
+        <span [style.background]="avatarColor(user.id)" [title]="user.username" class="avatar small">{{ initials(user.username) }}</span>
+      }
+    </div>
+    <div class="summary-text">
+      <div>{{ readySummary }}</div>
+      @if (maxDrift !== null) {
+        <div class="summary-sub">max drift {{ maxDrift }} ms</div>
+      }
+    </div>
+  </footer>
+</aside>

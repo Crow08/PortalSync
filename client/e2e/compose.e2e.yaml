@@ -1,0 +1,52 @@
+# Throwaway stack for the Playwright e2e tests (client/e2e). Own project name, own port, database in tmpfs:
+# it never touches the dev database or the real media library. All values are disposable test values.
+#
+#   docker compose -f compose.e2e.yaml up -d --build --wait
+#   docker compose -f compose.e2e.yaml down -v
+#
+# The build context is the repository root (two folders up), like in compose.yaml. MEDIA_DIR must exist (the e2e global setup creates it).
+name: portalsync-e2e
+
+services:
+  db:
+    image: mysql:8.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: portalsync_e2e
+      MYSQL_USER: e2e
+      MYSQL_PASSWORD: e2e-password
+      MYSQL_ROOT_PASSWORD: e2e-root-password
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -pe2e-root-password --silent"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 10s
+
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: portalsync-app-e2e
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: portalsync_e2e
+      MYSQL_USER: e2e
+      MYSQL_PASSWORD: e2e-password
+      CLIENT_ORIGIN: http://127.0.0.1:${E2E_PORT:-18080}
+      URLCRYPTO_SECRET: e2e-only-url-crypto-secret-0123456789
+    volumes:
+      - ${MEDIA_DIR:?set MEDIA_DIR}:/media
+    ports:
+      - "127.0.0.1:${E2E_PORT:-18080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s

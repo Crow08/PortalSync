@@ -1,0 +1,33 @@
+<mat-card class="auth">
+  <div class="brand">
+    <img alt="PortalSync" src="assets/logo-scene.svg">
+    <div>
+      <h1>Watch and listen together, on the same beat.</h1>
+      <p>Videos, songs and playlists play in step on every device in the lobby.</p>
+    </div>
+  </div>
+  <form (ngSubmit)="onSubmit()" [formGroup]="loginForm">
+    <h2>Sign in</h2>
+    @if (error) {
+      <p class="error-text" role="alert">{{ error }}</p>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>Username</mat-label>
+      <input [errorStateMatcher]="matcher" autocomplete="username" formControlName="username" id="username" matInput
+        type="text"/>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input [errorStateMatcher]="matcher" autocomplete="current-password" formControlName="password" id="password"
+        matInput type="password"/>
+    </mat-form-field>
+    <button [disabled]="loading" color="primary" id="submit-button" mat-flat-button type="submit">
+      @if (loading) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Sign in
+      }
+    </button>
+    <p class="hint">No account yet? Ask for an invite link.</p>
+  </form>
+</mat-card>

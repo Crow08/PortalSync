@@ -1,0 +1,10 @@
+<h2 class="title" mat-dialog-title>{{ data.title }}</h2>
+@if (data.message) {
+  <mat-dialog-content>
+    <p class="message">{{ data.message }}</p>
+  </mat-dialog-content>
+}
+<mat-dialog-actions align="end">
+  <button (click)="onDismiss()" mat-button type="button">{{ noButton }}</button>
+  <button (click)="onConfirm()" color="primary" mat-flat-button type="button">{{ yesButton }}</button>
+</mat-dialog-actions>

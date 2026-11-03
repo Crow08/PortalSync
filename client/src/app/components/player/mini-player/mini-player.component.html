@@ -1,0 +1,36 @@
+<div class="mini-player">
+  <div class="media-info" [title]="(currentMedia.title || 'Nothing playing') + ' – ' + (getSubTitle() || '')">
+    <div class="cover"></div>
+    <div class="texts">
+      <div class="song-title">{{ currentMedia.title || 'Nothing playing' }}</div>
+      <div class="sub">{{ getSubTitle() || (currentMedia.title ? 'Unknown artist' : 'Session is empty') }}</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-buttons">
+      <button (click)="publishCommand('previous')" aria-label="Previous" mat-icon-button title="Previous" type="button">
+        <mat-icon>skip_previous</mat-icon>
+      </button>
+      <button (click)="togglePlayback()" [attr.aria-label]="playerState === 'PLAY' ? 'Pause' : 'Play'" class="play" mat-icon-button
+        [title]="playerState === 'PLAY' ? 'Pause' : 'Play'" type="button">
+        <mat-icon>{{ playerState === 'PLAY' ? 'pause' : 'play_arrow' }}</mat-icon>
+      </button>
+      <button (click)="publishCommand('skip')" aria-label="Next" mat-icon-button title="Next" type="button">
+        <mat-icon>skip_next</mat-icon>
+      </button>
+    </div>
+    <app-player-track (seek)="jumpOffset($event)" [chapters]="chapters" [compact]="true" [playerState]="playerState"
+      [thumbnailUrl]="thumbnailUrl"></app-player-track>
+  </div>
+
+  <div class="side">
+    <mat-icon class="volume-icon">volume_up</mat-icon>
+    <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" title="Volume">
+      <input (valueChange)="setVolume($event)" matSliderThumb value="{{ getVolume() }}"/>
+    </mat-slider>
+    <button (click)="backToSession()" aria-label="Back to the player" mat-icon-button title="Back to the player" type="button">
+      <mat-icon>open_in_new</mat-icon>
+    </button>
+  </div>
+</div>

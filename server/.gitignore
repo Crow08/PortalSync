@@ -1,0 +1,44 @@
+target/
+src/main/resources/static/
+!src/main/resources/static/index.html
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### test music ###
+*.falc
+*.m3u
+*.m4a
+*.mp3
+*.ogg
+*.wav
+*.wma
+*.mp4
+*.mkv

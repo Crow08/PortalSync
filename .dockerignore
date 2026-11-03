@@ -1,0 +1,14 @@
+# Allow list: only what the Dockerfile copies is sent to the build.
+*
+!client/package.json
+!client/package-lock.json
+!client/angular.json
+!client/tsconfig.json
+!client/tsconfig.app.json
+!client/src
+!server/pom.xml
+!server/src
+# replaced by the client build
+server/src/main/resources/static
+# local seed with real user names and password hashes: must not end up in the war
+server/src/main/resources/data.sql

@@ -1,0 +1,166 @@
+// Upload: the songs on the left, what they get on the right
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.page-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  align-items: start;
+  max-width: 1100px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--ps-panel);
+  border: 1px solid var(--ps-line);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.hint,
+.empty {
+  margin: 0;
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
+  padding: 16px;
+  border: 2px dashed var(--ps-line);
+  border-radius: 12px;
+  color: var(--ps-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover,
+  &.over,
+  &:focus-within {
+    border-color: var(--ps-accent);
+    background: var(--ps-raise);
+    color: var(--ps-text);
+  }
+
+  .mat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+  }
+
+  .dropzone-title {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--ps-raise);
+  }
+
+  .lead {
+    flex: none;
+    color: var(--ps-muted);
+  }
+
+  .file-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-size {
+    flex: none;
+    color: var(--ps-muted);
+    font-family: var(--ps-mono);
+    font-size: 12px;
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  .label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ps-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+
+  .spacer {
+    flex: 1;
+  }
+
+  .summary {
+    color: var(--ps-muted);
+    font-size: 12px;
+  }
+
+  button[mat-flat-button] {
+    min-width: 120px;
+    height: 42px;
+    font-weight: 600;
+  }
+}

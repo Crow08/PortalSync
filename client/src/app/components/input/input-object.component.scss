@@ -1,0 +1,11 @@
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+app-object-multi-select,
+app-object-select {
+  flex: 1;
+  min-width: 0;
+}

@@ -1,0 +1,300 @@
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild,
+  HostBinding,
+  ChangeDetectionStrategy
+} from '@angular/core';
+import { PlayerState } from '../../../models/playerState';
+import { MediaService } from '../../../services/media.service';
+import { debounce, interval, Subject, Subscription } from 'rxjs';
+import { Chapter } from '../../../models/chapter';
+
+// Layout of the thumbnail sprite, must match tools/convert-video.ps1:
+// tile n shows the time n * THUMBNAIL_INTERVAL, at column n % THUMBNAIL_COLUMNS and row floor(n / THUMBNAIL_COLUMNS).
+const THUMBNAIL_INTERVAL = 2;
+const THUMBNAIL_WIDTH = 160;
+const THUMBNAIL_HEIGHT = 90;
+const THUMBNAIL_COLUMNS = 10;
+/** A requested position counts as reached when the media is this close (seconds). */
+const SEEK_REACHED_TOLERANCE = 2;
+/** A requested position is shown at most this long (ms), in case the jump never takes effect. */
+const SEEK_PENDING_TIMEOUT = 10000;
+
+interface SeekPreview {
+  /** Horizontal center of the preview, relative to the progress wrapper. */
+  left: number;
+  time: string;
+  /** CSS background-position of the tile, null without thumbnails. */
+  tilePosition: string | null;
+  /** Title of the chapter at the hovered position, null without chapters. */
+  chapter: string | null;
+}
+
+@Component({
+    selector: 'app-player-track',
+    templateUrl: './player-track.component.html',
+    styleUrls: ['./player-track.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
+export class PlayerTrackComponent implements OnInit, OnChanges, OnDestroy {
+  progression = 0;
+  rawSeek = new Subject<number>();
+  @Input()
+  playerState!: PlayerState;
+  /** Pre-signed URL of the thumbnail sprite of the current video, null if there is none. */
+  @Input()
+  thumbnailUrl: string | null = null;
+  /** Chapters of the current video, ordered by start time, empty if there are none. */
+  @Input()
+  chapters: Chapter[] = [];
+  /** Shows only the current time, not the length of the media, e.g. in the mini player. */
+  @Input()
+  @HostBinding('class.compact')
+  compact = false;
+  @Output()
+  seek = new EventEmitter<number>();
+  @ViewChild('wrapper', { static: true })
+  wrapper!: ElementRef<HTMLElement>;
+  @ViewChild('slider', { read: ElementRef, static: true })
+  slider!: ElementRef<HTMLElement>;
+
+  preview: SeekPreview | null = null;
+  /**
+   * The position (percent) the user asked for. It is shown until the jump has taken effect: the media keeps playing at the
+   * old position until the session has agreed on the jump, the handle must not go back to it meanwhile.
+   */
+  seekTarget: number | null = null;
+  private seekTimeout: ReturnType<typeof setTimeout> | undefined;
+  readonly thumbnailWidth = THUMBNAIL_WIDTH;
+  readonly thumbnailHeight = THUMBNAIL_HEIGHT;
+  /**
+   * CSS background of the sprite once it is loaded. The preview is only shown with a loaded sprite, so videos without
+   * thumbnails (and songs) show no preview, and a hover never shows a half loaded or broken image.
+   */
+  thumbnailBackground: string | null = null;
+  private requestedThumbnailUrl: string | null = null;
+  /** Number of tiles in the loaded sprite; the last ones may be cut off by rounding of the video duration. */
+  private thumbnailCount = 0;
+
+  private seekSubscription: Subscription | null = null;
+  private hovering = false;
+  /** Whether the user drags the knob: it stays visible even when the pointer leaves the slider. */
+  dragging = false;
+  private readonly progressionListener = (progression: number) => {
+    this.progression = progression;
+    if (this.seekTarget !== null) {
+      const duration = this.mediaService.getDuration();
+      if (isFinite(duration) && (Math.abs(progression - this.seekTarget) / 100) * duration < SEEK_REACHED_TOLERANCE) {
+        this.clearSeekTarget();
+      }
+    }
+  };
+  // while dragging, the pointer may leave the slider: follow it on the document until it is released
+  private readonly dragMoveListener = (event: PointerEvent) => this.updatePreview(event.clientX);
+  private readonly dragEndListener = (event: PointerEvent) => this.endDrag(event);
+
+  constructor(private mediaService: MediaService) {}
+
+  ngOnInit(): void {
+    // the position is only reported while the media plays: take over the current one (e.g. a paused media on a new page)
+    this.progression = this.mediaService.getProgression();
+    this.mediaService.addProgressionListener(this.progressionListener);
+    this.seekSubscription = this.rawSeek.pipe(debounce(() => interval(250))).subscribe({
+      next: (value) => {
+        this.seek.emit(this.getJumpOffset(value));
+      },
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    this.preloadThumbnails();
+    // the session started again after the jump: the position is where the user asked for
+    if (changes['playerState'] && this.playerState === 'PLAY' && changes['playerState'].previousValue === 'WAITING') {
+      this.clearSeekTarget();
+    }
+  }
+
+  /** The value shown by the slider and the progress bar: the requested position until the jump has taken effect. */
+  get displayedProgression(): number {
+    return this.seekTarget ?? this.progression;
+  }
+
+  /** The session is busy with the jump or the start, which the user sees as loading. */
+  get loading(): boolean {
+    return this.playerState === 'WAITING' || this.seekTarget !== null;
+  }
+
+  ngOnDestroy(): void {
+    this.mediaService.removeProgressionListener(this.progressionListener);
+    clearTimeout(this.seekTimeout);
+    this.seekSubscription?.unsubscribe();
+    this.removeDragListeners();
+  }
+
+  onSeek(value: number) {
+    this.seekTarget = value;
+    clearTimeout(this.seekTimeout);
+    this.seekTimeout = setTimeout(() => this.clearSeekTarget(), SEEK_PENDING_TIMEOUT);
+    this.rawSeek.next(value);
+  }
+
+  private clearSeekTarget(): void {
+    this.seekTarget = null;
+    clearTimeout(this.seekTimeout);
+    // the position is only reported while playing: do not fall back to the one from before the jump
+    this.progression = this.mediaService.getProgression();
+  }
+
+  onPointerMove(event: PointerEvent) {
+    this.hovering = true;
+    this.updatePreview(event.clientX);
+  }
+
+  onPointerDown(event: PointerEvent) {
+    this.dragging = true;
+    this.updatePreview(event.clientX);
+    document.addEventListener('pointermove', this.dragMoveListener);
+    document.addEventListener('pointerup', this.dragEndListener);
+    document.addEventListener('pointercancel', this.dragEndListener);
+  }
+
+  onPointerLeave() {
+    this.hovering = false;
+    if (!this.dragging) {
+      this.preview = null;
+    }
+  }
+
+  getTimeDisplay(): string {
+    if (this.compact) {
+      return this.getDurationString(this.mediaService.getCurrentTime());
+    }
+    return `${this.getDurationString(this.mediaService.getCurrentTime())} / ${this.getDurationString(
+      this.mediaService.getDuration()
+    )}`;
+  }
+
+  /**
+   * The segments of the seek bar, one per chapter (a single one without chapters): their length in seconds (the share of
+   * the bar) and how far they are filled by the displayed position, in percent.
+   */
+  get segments(): { length: number; fill: number }[] {
+    const duration = this.mediaService.getDuration();
+    const position = this.displayedProgression / 100;
+    if (!isFinite(duration) || duration <= 0) {
+      return [{ length: 1, fill: this.displayedProgression }];
+    }
+    const starts = [0, ...this.chapters.map((c) => c.start).filter((start) => start > 0 && start < duration), duration];
+    const segments: { length: number; fill: number }[] = [];
+    for (let i = 0; i < starts.length - 1; i++) {
+      const from = starts[i] / duration;
+      const to = starts[i + 1] / duration;
+      segments.push({ length: starts[i + 1] - starts[i], fill: this.clamp((position - from) / (to - from), 0, 1) * 100 });
+    }
+    return segments;
+  }
+
+  getDurationString(seconds: number): string {
+    if (isNaN(seconds)) {
+      return '';
+    }
+    const date = new Date(0);
+    date.setSeconds(seconds); // specify value for SECONDS here
+    return date.toISOString().substring(14, 19);
+  }
+
+  protected getJumpOffset(seekPercent: number): number {
+    return Math.round(this.mediaService.getProgressionOffsetInSeconds(seekPercent) * 1000);
+  }
+
+  private endDrag(event: PointerEvent) {
+    this.dragging = false;
+    this.removeDragListeners();
+    // touch has no hover: hide the preview once the finger is lifted
+    if (!this.hovering || event.pointerType !== 'mouse') {
+      this.preview = null;
+    }
+  }
+
+  private removeDragListeners() {
+    document.removeEventListener('pointermove', this.dragMoveListener);
+    document.removeEventListener('pointerup', this.dragEndListener);
+    document.removeEventListener('pointercancel', this.dragEndListener);
+  }
+
+  private updatePreview(clientX: number) {
+    const duration = this.mediaService.getDuration();
+    // the slider values map to the track, which is inset from the slider element
+    const track = this.slider.nativeElement.querySelector('.mdc-slider__track') ?? this.slider.nativeElement;
+    const trackRect = track.getBoundingClientRect();
+    const hasChapters = this.chapters.length > 0;
+    if ((!this.thumbnailBackground && !hasChapters) || !isFinite(duration) || duration <= 0 || trackRect.width === 0) {
+      this.preview = null;
+      return;
+    }
+    const time = this.clamp((clientX - trackRect.left) / trackRect.width, 0, 1) * duration;
+
+    let tilePosition: string | null = null;
+    if (this.thumbnailBackground) {
+      const tile = Math.min(Math.floor(time / THUMBNAIL_INTERVAL), this.thumbnailCount - 1);
+      const x = (tile % THUMBNAIL_COLUMNS) * THUMBNAIL_WIDTH;
+      const y = Math.floor(tile / THUMBNAIL_COLUMNS) * THUMBNAIL_HEIGHT;
+      tilePosition = `-${x}px -${y}px`;
+    }
+    const chapter = hasChapters ? this.getChapterAt(time)?.title ?? null : null;
+
+    // keep the preview inside the player
+    const wrapperRect = this.wrapper.nativeElement.getBoundingClientRect();
+    const halfWidth = THUMBNAIL_WIDTH / 2;
+    const left = this.clamp(clientX - wrapperRect.left, halfWidth, Math.max(halfWidth, wrapperRect.width - halfWidth));
+
+    this.preview = { left, time: this.getDurationString(time), tilePosition, chapter };
+  }
+
+  private getChapterAt(time: number): Chapter | undefined {
+    let current: Chapter | undefined;
+    for (const chapter of this.chapters) {
+      if (chapter.start > time) {
+        break;
+      }
+      current = chapter;
+    }
+    return current;
+  }
+
+  private preloadThumbnails() {
+    const url = this.thumbnailUrl;
+    if (url === this.requestedThumbnailUrl) {
+      return;
+    }
+    this.requestedThumbnailUrl = url;
+    this.thumbnailBackground = null;
+    this.preview = null;
+    if (!url) {
+      return;
+    }
+    const image = new Image();
+    // a missing sprite (404) never fires load: no preview for this video
+    image.onload = () => {
+      const tiles = Math.floor(image.naturalWidth / THUMBNAIL_WIDTH) * Math.floor(image.naturalHeight / THUMBNAIL_HEIGHT);
+      if (this.requestedThumbnailUrl === url && tiles > 0) {
+        this.thumbnailCount = tiles;
+        this.thumbnailBackground = `url("${url}")`;
+      }
+    };
+    image.src = url;
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+  }
+}

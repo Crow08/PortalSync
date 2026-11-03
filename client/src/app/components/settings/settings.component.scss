@@ -1,0 +1,106 @@
+// the page scrolls inside the content area when the settings are taller than the window
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.page-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(450px, 100%), 1fr));
+  gap: 16px;
+  align-items: start;
+  max-width: 960px;
+}
+
+.panel {
+  padding: 20px;
+  background: var(--ps-panel);
+  border: 1px solid var(--ps-line);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.setting {
+  padding-top: 16px;
+
+  h3 {
+    margin: 0 0 8px;
+    color: var(--ps-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+.hint {
+  margin: 0 0 12px;
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+.status {
+  margin: 0 0 12px;
+}
+
+.slider-row,
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-row {
+  mat-slider {
+    flex: 1;
+  }
+
+  .value {
+    min-width: 3em;
+    text-align: right;
+    font-family: var(--ps-mono);
+    font-size: 12px;
+  }
+}
+
+mat-form-field {
+  width: 160px;
+}
+
+// Preview of a theme in the theme toggle: the surface with the accent as a dot.
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+  vertical-align: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--ps-line);
+  background: radial-gradient(circle, var(--swatch-accent) 0 45%, var(--swatch-surface) 50%);
+}
+
+// All toggle groups look the same: a little less padding and text than the default toggle, so the five theme choices fit one
+// line (see the minimum width of a panel in .grid). In a narrow panel the choices wrap instead of sticking out of it.
+mat-button-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+}
+
+mat-button-toggle-group ::ng-deep .mat-button-toggle-label-content {
+  padding: 0 7px;
+  font-size: 15px;
+}

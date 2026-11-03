@@ -1,0 +1,91 @@
+/* Theme specific styles will take effect across all components but only if style class is set on #app-theme-container. */
+@use '@angular/material' as mat;
+@use 'src/app/themes/themes' as *;
+@use 'sass:map';
+
+//include
+@include mat.elevation-classes();
+@include mat.app-background();
+
+// Theme colors for app elements that are not Material components.
+@mixin app-colors($primary) {
+  .autoplay-hint {
+    background-color: mat.m2-get-color-from-palette($primary);
+    color: mat.m2-get-color-from-palette($primary, default-contrast);
+  }
+
+  .seek-preview-image {
+    border-color: mat.m2-get-color-from-palette($primary);
+  }
+
+  .seek-preview-time {
+    background-color: mat.m2-get-color-from-palette($primary);
+    color: mat.m2-get-color-from-palette($primary, default-contrast);
+  }
+}
+
+// Surfaces of the dark Material theme, taken from the surfaces of a theme.
+@function theme-background($t) {
+  @return (
+    background: map.get($t, bg),
+    card: map.get($t, panel),
+    dialog: map.get($t, panel),
+    app-bar: map.get($t, panel),
+    status-bar: map.get($t, bg),
+    hover: rgba(255, 255, 255, 0.06),
+    focused-button: rgba(255, 255, 255, 0.12),
+    raised-button: map.get($t, raise),
+    disabled-button: rgba(255, 255, 255, 0.12),
+    disabled-button-toggle: map.get($t, raise),
+    selected-button: map.get($t, raise),
+    selected-disabled-button: map.get($t, raise),
+    unselected-chip: map.get($t, raise),
+    disabled-list-option: rgba(255, 255, 255, 0.12),
+    tooltip: map.get($t, tooltip),
+  );
+}
+
+@function material-theme($t, $typography: null) {
+  $primary: mat.m2-define-palette(map.get($t, primary));
+  $base: mat.m2-define-dark-theme((
+    color: (
+      primary: $primary,
+      accent: $primary
+    ),
+    typography: mat.m2-define-typography-config($font-family: 'Inter, Roboto, sans-serif'),
+    density: 0,
+  ));
+  @return map.deep-merge($base, (color: (background: theme-background($t))));
+}
+
+// The first theme is the default (no theme class, e.g. before the app shell is there); it also carries the typography and
+// density. Every theme only adds its colors and CSS variables on top: .graphite-theme.theme-<id>.
+$default-theme: map.get($themes, 'ocean');
+
+.graphite-theme {
+  @include mat.all-component-themes(material-theme($default-theme));
+  @include app-colors(mat.m2-define-palette(map.get($default-theme, primary)));
+}
+
+@each $id, $t in $themes {
+  .graphite-theme.theme-#{$id} {
+    --ps-bg: #{map.get($t, bg)};
+    --ps-panel: #{map.get($t, panel)};
+    --ps-raise: #{map.get($t, raise)};
+    --ps-line: #{map.get($t, line)};
+    --ps-text: #{map.get($t, text)};
+    --ps-muted: #{map.get($t, muted)};
+    --ps-accent: #{map.get($t, accent)};
+    --ps-accent-ink: #{map.get($t, ink)};
+    --ps-glow: #{map.get($t, glow)};
+    --ps-video: #{map.get($t, video)};
+    --ps-song: #{map.get($t, song)};
+
+    @include mat.all-component-colors(material-theme($t));
+    @include app-colors(mat.m2-define-palette(map.get($t, primary)));
+  }
+}
+
+.mat-dense {
+  @include mat.all-component-densities(-5);
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="PortalSync">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="glow-ring" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>
+  </defs>
+  <g stroke="#fff" stroke-opacity=".22" stroke-width="3" stroke-linecap="round">
+    <line x1="205" y1="150" x2="205" y2="270"/>
+    <line x1="258" y1="320" x2="258" y2="410"/>
+    <line x1="352" y1="125" x2="352" y2="185"/>
+    <line x1="418" y1="190" x2="418" y2="260"/>
+    <line x1="462" y1="350" x2="462" y2="450"/>
+    <line x1="300" y1="440" x2="300" y2="500"/>
+  </g>
+  <ellipse cx="320" cy="100" rx="200" ry="30" fill="#2b1204"/>
+  <ellipse cx="320" cy="100" rx="200" ry="30" fill="none" stroke="#ff9a1f" stroke-width="20" filter="url(#glow-ring)"/>
+  <ellipse cx="320" cy="100" rx="200" ry="30" fill="none" stroke="#ff9a1f" stroke-width="12"/>
+  <ellipse cx="320" cy="100" rx="200" ry="30" fill="none" stroke="#ffe2b8" stroke-width="3"/>
+  <g transform="translate(330 320) rotate(-16)">
+    <path d="M-60 -84 L-60 84 L100 0Z" fill="#fff" stroke="#fff" stroke-width="30" stroke-linejoin="round" filter="url(#glow)" opacity=".55"/>
+    <path d="M-60 -84 L-60 84 L100 0Z" fill="#fff" stroke="#fff" stroke-width="22" stroke-linejoin="round"/>
+  </g>
+  <ellipse cx="320" cy="540" rx="200" ry="30" fill="#04202e"/>
+  <ellipse cx="320" cy="540" rx="200" ry="30" fill="none" stroke="#3fb4ff" stroke-width="20" filter="url(#glow-ring)"/>
+  <ellipse cx="320" cy="540" rx="200" ry="30" fill="none" stroke="#3fb4ff" stroke-width="12"/>
+  <ellipse cx="320" cy="540" rx="200" ry="30" fill="none" stroke="#d6f1ff" stroke-width="3"/>
+</svg>

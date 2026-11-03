@@ -1,0 +1,104 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.mini-player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.media-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 1 260px;
+  min-width: 0;
+}
+
+.cover {
+  flex: none;
+  width: 56px;
+  height: 36px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--ps-accent) 30%, var(--ps-bg)), var(--ps-accent));
+}
+
+.texts {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-title,
+.sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sub {
+  color: var(--ps-muted);
+  font-size: 12px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+
+  app-player-track {
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  white-space: nowrap;
+}
+
+// rectangular with rounded corners, like the buttons of the mockup
+.play.mat-mdc-icon-button {
+  border-radius: 10px;
+  background: var(--ps-raise);
+
+  &:hover {
+    background: color-mix(in srgb, var(--ps-text) 10%, var(--ps-raise));
+  }
+}
+
+.side {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: none;
+  white-space: nowrap;
+
+  .volume-icon {
+    flex: none;
+    color: var(--ps-muted);
+  }
+
+  .volume-slider {
+    width: 100px;
+  }
+}
+
+// narrow windows: the volume icon makes room for the seek bar
+@media (max-width: 1100px) {
+  .side .volume-icon {
+    display: none;
+  }
+}

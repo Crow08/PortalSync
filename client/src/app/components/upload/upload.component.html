@@ -1,0 +1,57 @@
+<h1 class="page-title">Upload</h1>
+<div class="layout">
+  <section class="panel files-panel">
+    <h2>Songs</h2>
+    <p class="hint">Songs only. Videos are not uploaded here.</p>
+    <label (dragleave)="dragOver = false" (dragover)="onDragOver($event)" (drop)="onDrop($event)" [class.over]="dragOver"
+      class="dropzone">
+      <mat-icon>upload_file</mat-icon>
+      <span class="dropzone-title">Drop songs here or choose files</span>
+      <input #fileInput (change)="onFilesSelected(fileInput)" accept="audio/*" class="visually-hidden" multiple type="file"/>
+    </label>
+    @if (files.length > 0) {
+      <div class="list" role="list">
+        @for (file of files; track file) {
+          <div class="file" role="listitem">
+            <mat-icon class="lead">music_note</mat-icon>
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size">{{ formatSize(file.size) }}</span>
+            <button (click)="removeFile(file)" [attr.aria-label]="'Remove ' + file.name" mat-icon-button type="button">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="empty">No songs chosen yet.</p>
+    }
+  </section>
+
+  <section class="panel details-panel">
+    <h2>Details</h2>
+    <p class="hint">Everything here is optional and applies to all songs of this upload.</p>
+    <div class="fields">
+      <div class="field"><span class="label">Artist</span><app-input-artist [(selectedOptions)]="selectedArtist"></app-input-artist></div>
+      <div class="field"><span class="label">Album</span><app-input-album [(selectedOptions)]="selectedAlbum"></app-input-album></div>
+      <div class="field"><span class="label">Genres</span><app-input-genre [(selectedOptions)]="selectedGenres"></app-input-genre></div>
+      <div class="field"><span class="label">Tags</span><app-input-tag [(selectedOptions)]="selectedTags"></app-input-tag></div>
+      <div class="field">
+        <span class="label">Playlists</span>
+        <app-input-playlist [(selectedOptions)]="selectedPlaylists"></app-input-playlist>
+      </div>
+    </div>
+    <div class="actions">
+      @if (files.length > 0) {
+        <span class="summary">{{ files.length }} {{ files.length === 1 ? 'song' : 'songs' }}, {{ formatSize(totalSize) }}</span>
+      }
+      <span class="spacer"></span>
+      <button (click)="upload()" [disabled]="loading || files.length === 0" color="primary" mat-flat-button type="button">
+        @if (loading) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Upload
+        }
+      </button>
+    </div>
+  </section>
+</div>

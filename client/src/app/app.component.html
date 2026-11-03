@@ -1,0 +1,66 @@
+<div [class.auth-page]="isAuthPage" [class.plain-background]="backgroundImage === null" [style.--ps-bg-image]="backgroundImage" [class]="themeClass" id="app-theme-container">
+  <!-- Header -->
+  <header id="header">
+    <a aria-label="PortalSync" class="brand" routerLink="/">
+      <img alt="" src="assets/logo.svg">
+    </a>
+    @if (sessionId && sessionInfo) {
+      <a [routerLink]="['/sessions', sessionId, 'lobby']" class="session-link">
+        <span class="session-name">{{ sessionInfo }}</span>
+        <span class="live-chip" role="status"><span [class.pending]="!connectionBadge.live" class="live-dot"></span>{{ connectionBadge.text }}</span>
+      </a>
+    }
+    <div class="spacer"></div>
+    <button [matMenuTriggerFor]="userMenu" [attr.aria-label]="'Account menu of ' + username" class="account" type="button">
+      <span class="user-name">{{ username }}</span>
+      <span aria-hidden="true" class="avatar">{{ initials }}</span>
+      <mat-icon aria-hidden="true" class="chevron">expand_more</mat-icon>
+    </button>
+    <mat-menu #userMenu="matMenu" class="ps-menu" xPosition="before">
+      <a mat-menu-item routerLink="settings">
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
+      </a>
+      <button (click)="logout()" mat-menu-item type="button">
+        <mat-icon>logout</mat-icon>
+        <span>Log out</span>
+      </button>
+    </mat-menu>
+  </header>
+  <!-- Navigation -->
+  <nav aria-label="Main" id="rail">
+    @if (sessionId) {
+      <a [routerLink]="['/sessions', sessionId, 'lobby']" [class.active]="isActive('room')" class="rail-item">
+        <mat-icon>graphic_eq</mat-icon>
+        <span>Player</span>
+      </a>
+    }
+    <a [class.active]="isActive('rooms')" class="rail-item" routerLink="/">
+      <mat-icon>video_library</mat-icon>
+      <span>Lobbies</span>
+    </a>
+    <a [class.active]="isActive('library')" class="rail-item" routerLink="library">
+      <mat-icon>playlist_play</mat-icon>
+      <span>Library</span>
+    </a>
+    <div class="spacer"></div>
+    <a [class.active]="isActive('spotify')" class="rail-item" routerLink="spotify/import">
+      <mat-icon>library_music</mat-icon>
+      <span>Spotify</span>
+    </a>
+    <a [class.active]="isActive('settings')" class="rail-item" routerLink="settings">
+      <mat-icon>tune</mat-icon>
+      <span>Settings</span>
+    </a>
+  </nav>
+  <!-- router - content -->
+  <main id="content">
+    <router-outlet></router-outlet>
+  </main>
+  <!-- Footer -->
+  @if (showMiniPlayer) {
+    <footer id="footer">
+      <app-mini-player></app-mini-player>
+    </footer>
+  }
+</div>

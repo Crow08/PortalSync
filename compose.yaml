@@ -1,0 +1,84 @@
+# PortalSync with Docker: MySQL, the app (server + client in one image) and optionally Caddy as TLS proxy.
+#
+#   cp .env.example .env     # and set the passwords and the key
+#   docker compose up -d --build                    # http://localhost:8080
+#   docker compose --profile tls up -d --build      # additionally https://$PORTALSYNC_DOMAIN (ports 80 and 443)
+#
+# The build context is the repository root (the folder with client/ and server/), where this file lives.
+name: portalsync
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: portalsync
+      MYSQL_USER: portalsync
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portalsync-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: portalsync
+      MYSQL_USER: portalsync
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      # the only origin allowed for CORS and the WebSocket, the address users type in
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8080}
+      URLCRYPTO_SECRET: ${URLCRYPTO_SECRET:?set URLCRYPTO_SECRET in .env}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
+      SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI:-}
+    volumes:
+      # the media library (songs, videos, *.thumbs.jpg); the app runs as uid 10001 and has to be able to write there
+      - ${MEDIA_DIR:-./media}:/media
+    ports:
+      # only on this machine by default; set APP_BIND=0.0.0.0 to reach it from the network
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  caddy:
+    profiles: ["tls"]
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      # "localhost" gets a certificate from Caddy's local CA (browsers do not trust it), set a real host name for the internet
+      PORTALSYNC_DOMAIN: ${PORTALSYNC_DOMAIN:-localhost}
+      # the Caddyfile is shared with the run without Docker, there the default is localhost:8080
+      PORTALSYNC_UPSTREAM: app:8080
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,68 @@
+:host {
+  display: inline-block;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ps-muted);
+  cursor: pointer;
+  overflow: hidden;
+  transition: max-width 0.15s ease, opacity 0.15s ease;
+
+  &.filled {
+    color: var(--ps-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ps-accent);
+  }
+
+  .mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+  }
+
+  // the stars after the first one only show while the rating is hovered or focused
+  &.extra {
+    max-width: 0;
+    opacity: 0;
+  }
+}
+
+.average {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  color: var(--ps-muted);
+  font-size: 12px;
+  transition: max-width 0.15s ease, opacity 0.15s ease;
+}
+
+:host(:hover),
+:host(:focus-within) {
+  .star.extra {
+    max-width: 28px;
+    opacity: 1;
+  }
+
+  .average {
+    max-width: 3em;
+    margin-left: 4px;
+    opacity: 1;
+  }
+}

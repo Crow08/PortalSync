@@ -1,0 +1,130 @@
+<h1 class="page-title">Import from Spotify</h1>
+@if (!loggedIn) {
+  <p class="notice" role="status">
+    You are not logged in to Spotify. <a routerLink="/settings">Log in in the settings</a> first.
+  </p>
+}
+
+<div class="layout">
+  <section class="panel">
+    <h2>Search songs</h2>
+    <form (ngSubmit)="search()" class="row">
+      <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+        <input [(ngModel)]="query" aria-label="Title, artist or album" autocomplete="off" matInput name="query"
+          placeholder="Title, artist or album"/>
+      </mat-form-field>
+      <button [disabled]="!loggedIn || searching || !query.trim()" color="primary" mat-flat-button type="submit">Search</button>
+    </form>
+    @if (searchError) {
+      <p class="error" role="alert">{{ searchError }}</p>
+    }
+
+    <div class="tracks">
+      @for (track of results; track track) {
+        <label class="track" [class.on]="isSelected(track)">
+          <mat-checkbox (change)="toggle(track)" [checked]="isSelected(track)"></mat-checkbox>
+          <span class="grow">
+            <span class="title">{{ track.title }}</span>
+            <span class="sub">{{ track.artist }} · {{ track.album }}</span>
+          </span>
+          <span class="duration">{{ formatDuration(track.durationMs) }}</span>
+        </label>
+      }
+      @if (searching) {
+        <mat-spinner diameter="28"></mat-spinner>
+      }
+    </div>
+    @if (results.length > 0) {
+      <div class="row">
+        <span class="sub grow">{{ results.length }} of {{ total }} results</span>
+        @if (hasMore) {
+          <button (click)="loadMore()" [disabled]="searching" mat-button type="button">Show more</button>
+        }
+      </div>
+    }
+
+    @if (selected.size > 0) {
+      <div class="add">
+        <p>
+          {{ selected.size }} song{{ selected.size === 1 ? '' : 's' }} selected. They are added to the library; choose
+          playlists to add them to as well.
+        </p>
+        <app-input-playlist [(selectedOptions)]="selectedPlaylists"></app-input-playlist>
+        <div class="row">
+          <button (click)="addSelected()" [disabled]="adding" color="primary" mat-flat-button type="button">Add to the library</button>
+          <button (click)="selected.clear()" [disabled]="adding" mat-button type="button">Clear selection</button>
+          @if (adding) {
+            <mat-spinner diameter="28"></mat-spinner>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Import a playlist</h2>
+    <p class="hint">
+      The songs are added to the library and to a new playlist with the name of the Spotify playlist. Spotify only lets this
+      app read the songs of playlists you created or collaborate on.
+    </p>
+    <div class="row">
+      <button (click)="loadPlaylists()" [disabled]="!loggedIn || loadingPlaylists || !!importing" mat-stroked-button type="button">
+        {{ playlistsLoaded ? 'Reload my playlists' : 'Show my playlists' }}
+      </button>
+      @if (loadingPlaylists) {
+        <mat-spinner diameter="28"></mat-spinner>
+      }
+    </div>
+
+    <div class="tracks">
+      @for (playlist of playlists; track playlist) {
+        <div class="track">
+          <span class="grow">
+            <span class="title">{{ playlist.name }}</span>
+            <span class="sub">{{ playlist.owner }}@if (playlist.total >= 0) {
+              <span> · {{ playlist.total }} songs</span>
+            }</span>
+          </span>
+          <button (click)="importPlaylist(playlist)" [disabled]="!playlist.readable || !!importing"
+            [title]="playlist.readable ? 'Import the songs' : 'Spotify does not allow this app to read the songs of this playlist'"
+            mat-stroked-button type="button">
+            Import
+          </button>
+        </div>
+      }
+    </div>
+    @if (playlistsLoaded && playlists.length === 0) {
+      <p class="hint">You have no playlists.</p>
+    }
+
+    <form (ngSubmit)="lookUpPlaylist()" class="row">
+      <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+        <input [(ngModel)]="playlistLink" aria-label="The link of a playlist" autocomplete="off" matInput name="link"
+          placeholder="Or the link of a playlist"/>
+      </mat-form-field>
+      <button [disabled]="!loggedIn || !playlistLink.trim() || !!importing" mat-stroked-button type="submit">Look up</button>
+    </form>
+    @if (linkedPlaylist; as playlist) {
+      <div class="track">
+        <span class="grow">
+          <span class="title">{{ playlist.name }}</span>
+          <span class="sub">{{ playlist.owner }}@if (playlist.total >= 0) {
+            <span> · {{ playlist.total }} songs</span>
+          }@if (!playlist.readable) {
+            <span> · Spotify does not allow this app to read its songs</span>
+          }</span>
+        </span>
+        <button (click)="importPlaylist(playlist)" [disabled]="!playlist.readable || !!importing" mat-stroked-button type="button">
+          Import
+        </button>
+      </div>
+    }
+
+    @if (importing) {
+      <p class="row" role="status"><mat-spinner diameter="28"></mat-spinner> {{ importing }}</p>
+    }
+    @if (playlistError) {
+      <p class="error" role="alert">{{ playlistError }}</p>
+    }
+  </section>
+</div>
