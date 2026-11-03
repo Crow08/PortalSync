@@ -51,6 +51,11 @@
     color: var(--ps-muted);
     font-size: 13px;
     line-height: 1.4;
+
+    a {
+      color: var(--ps-accent);
+      font-weight: 600;
+    }
   }
 }
 
