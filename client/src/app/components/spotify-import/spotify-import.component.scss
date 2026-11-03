@@ -136,3 +136,19 @@ label.track {
     font-size: 13px;
   }
 }
+
+// the panel for artists and albums takes the whole row
+.wide {
+  grid-column: 1 / -1;
+}
+
+.groups {
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}

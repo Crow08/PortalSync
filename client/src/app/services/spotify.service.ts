@@ -8,6 +8,8 @@ const API_URL = 'https://api.spotify.com/v1';
 /** Development Mode apps get at most 10 search results per request. */
 const SEARCH_LIMIT = 10;
 const PAGE_LIMIT = 50;
+/** How often a request is repeated when Spotify answers 429 (too many requests). */
+const MAX_RETRIES = 3;
 
 /** A song of Spotify, as far as the library needs it. */
 export interface SpotifyTrack {
@@ -17,6 +19,26 @@ export interface SpotifyTrack {
   album: string;
   durationMs: number;
 }
+
+export interface SpotifyArtist {
+  id: string;
+  name: string;
+}
+
+export interface SpotifyAlbum {
+  id: string;
+  name: string;
+  artist: string;
+  /** The year of the release, empty when it is not known. */
+  year: string;
+  /** Number of songs, -1 when it is not known. */
+  totalTracks: number;
+  /** Spotify's group of the album for an artist: album, single, compilation or appears_on. */
+  group: string;
+}
+
+/** The groups of the albums of an artist that Spotify can list. */
+export type SpotifyAlbumGroup = 'album' | 'single' | 'compilation' | 'appears_on';
 
 export interface SpotifyPlaylist {
   id: string;
@@ -267,6 +289,77 @@ export class SpotifyService {
     return { tracks: this.toTracks(result.tracks.items), total: result.tracks.total };
   }
 
+  /** Searches artists, ten per request; resolves to the artists and the total number of hits. */
+  async searchArtists(query: string, offset = 0): Promise<{ artists: SpotifyArtist[]; total: number }> {
+    const result = await this.api('/search', { q: query, type: 'artist', limit: SEARCH_LIMIT, offset });
+    return {
+      artists: result.artists.items.filter((item: any) => item).map((item: any) => ({ id: item.id, name: item.name })),
+      total: result.artists.total,
+    };
+  }
+
+  /** Searches albums, ten per request; resolves to the albums and the total number of hits. */
+  async searchAlbums(query: string, offset = 0): Promise<{ albums: SpotifyAlbum[]; total: number }> {
+    const result = await this.api('/search', { q: query, type: 'album', limit: SEARCH_LIMIT, offset });
+    return {
+      albums: result.albums.items.filter((item: any) => item).map((item: any) => this.toAlbum(item)),
+      total: result.albums.total,
+    };
+  }
+
+  /** The albums of an artist in the given groups. */
+  async getArtistAlbums(artistId: string, groups: SpotifyAlbumGroup[]): Promise<SpotifyAlbum[]> {
+    const albums: SpotifyAlbum[] = [];
+    for (let offset = 0; ; offset += PAGE_LIMIT) {
+      const page = await this.api(`/artists/${artistId}/albums`, {
+        include_groups: groups.join(','),
+        limit: PAGE_LIMIT,
+        offset,
+      });
+      page.items.filter((item: any) => item).forEach((item: any) => albums.push(this.toAlbum(item)));
+      if (!page.next) {
+        return albums;
+      }
+    }
+  }
+
+  /** The artist with the id, uri or url. */
+  async getArtist(idOrUrl: string): Promise<SpotifyArtist> {
+    const id = SpotifyService.parseId(idOrUrl, 'artist');
+    if (!id) {
+      throw new SpotifyApiError(400, 'This is no Spotify artist link');
+    }
+    const artist = await this.api(`/artists/${id}`);
+    return { id: artist.id, name: artist.name };
+  }
+
+  /** The album with the id, uri or url. */
+  async getAlbum(idOrUrl: string): Promise<SpotifyAlbum> {
+    const id = SpotifyService.parseId(idOrUrl, 'album');
+    if (!id) {
+      throw new SpotifyApiError(400, 'This is no Spotify album link');
+    }
+    return this.toAlbum(await this.api(`/albums/${id}`));
+  }
+
+  /**
+   * The songs of an album. The songs of an album carry no album of their own, so they get the one of the album. With an
+   * artist id only the songs that artist plays on are returned (compilations hold songs of many artists).
+   */
+  async getAlbumTracks(album: SpotifyAlbum, onlyArtistId?: string): Promise<SpotifyTrack[]> {
+    const tracks: SpotifyTrack[] = [];
+    for (let offset = 0; ; offset += PAGE_LIMIT) {
+      const page = await this.api(`/albums/${album.id}/tracks`, { limit: PAGE_LIMIT, offset });
+      const items = onlyArtistId
+        ? page.items.filter((item: any) => item?.artists?.some((artist: any) => artist.id === onlyArtistId))
+        : page.items;
+      tracks.push(...this.toTracks(items).map((track) => ({ ...track, album: album.name })));
+      if (!page.next) {
+        return tracks;
+      }
+    }
+  }
+
   /** The playlists of the user, with whether their songs can be read. */
   async getMyPlaylists(): Promise<SpotifyPlaylist[]> {
     const me = await this.api('/me');
@@ -309,9 +402,19 @@ export class SpotifyService {
 
   /** The id of a playlist from its url (https://open.spotify.com/playlist/...), uri (spotify:playlist:...) or id. */
   static parsePlaylistId(input: string): string | null {
+    return SpotifyService.parseId(input, 'playlist');
+  }
+
+  /** The id of a playlist, album or artist from its url (https://open.spotify.com/album/...), uri or plain id. */
+  static parseId(input: string, kind: 'playlist' | 'album' | 'artist'): string | null {
     const text = input.trim();
-    const match = text.match(/playlist[/:]([A-Za-z0-9]+)/) ?? text.match(/^([A-Za-z0-9]{22})$/);
+    const match = text.match(new RegExp(`${kind}[/:]([A-Za-z0-9]+)`)) ?? text.match(/^([A-Za-z0-9]{22})$/);
     return match ? match[1] : null;
+  }
+
+  /** The kind of Spotify item a link points to, null for anything else. */
+  static linkKind(input: string): 'playlist' | 'album' | 'artist' | null {
+    return input.match(/(playlist|album|artist)[/:][A-Za-z0-9]+/)?.[1] as 'playlist' | 'album' | 'artist' | null ?? null;
   }
 
   /** Calls the Web API with the login of the user. */
@@ -321,7 +424,13 @@ export class SpotifyService {
     }
     const url = new URL(API_URL + path);
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
-    const response = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.loginToken.token}` } });
+    let response = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.loginToken.token}` } });
+    // too many requests: wait as long as Spotify asks and try again, an import of an artist makes many requests
+    for (let retry = 0; response.status === 429 && retry < MAX_RETRIES; retry++) {
+      const wait = Number(response.headers.get('Retry-After'));
+      await new Promise((resolve) => setTimeout(resolve, (Number.isFinite(wait) && wait > 0 ? Math.min(wait, 30) : 2) * 1000));
+      response = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.loginToken.token}` } });
+    }
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new SpotifyApiError(response.status, body?.error?.message ?? `Spotify answered ${response.status}`);
@@ -339,6 +448,17 @@ export class SpotifyService {
         album: track.album?.name ?? 'Unknown Album',
         durationMs: track.duration_ms ?? 0,
       }));
+  }
+
+  private toAlbum(album: any): SpotifyAlbum {
+    return {
+      id: album.id,
+      name: album.name,
+      artist: album.artists?.[0]?.name ?? 'Unknown Artist',
+      year: typeof album.release_date === 'string' ? album.release_date.substring(0, 4) : '',
+      totalTracks: album.total_tracks ?? -1,
+      group: album.album_group ?? album.album_type ?? '',
+    };
   }
 
   private toPlaylist(playlist: any, myId: string): SpotifyPlaylist {

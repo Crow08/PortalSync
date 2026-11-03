@@ -2,7 +2,15 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SpotifyLoginDialogComponent } from '../dialog/spotify-login-dialog/spotify-login-dialog.component';
-import { SpotifyApiError, SpotifyPlaylist, SpotifyService, SpotifyTrack } from '../../services/spotify.service';
+import {
+  SpotifyAlbum,
+  SpotifyAlbumGroup,
+  SpotifyApiError,
+  SpotifyArtist,
+  SpotifyPlaylist,
+  SpotifyService,
+  SpotifyTrack,
+} from '../../services/spotify.service';
 import { HttpHelperService } from '../../services/http-helper.service';
 import { GenericDataObject } from '../../models/genericDataObject';
 
@@ -36,6 +44,33 @@ export class SpotifyImportComponent {
   playlistError = '';
   /** What the import of a playlist is doing right now, empty when it is idle. */
   importing = '';
+
+  // artists and albums
+  catalogKind: 'artists' | 'albums' = 'artists';
+  catalogQuery = '';
+  artistResults: SpotifyArtist[] = [];
+  albumResults: SpotifyAlbum[] = [];
+  catalogTotal = 0;
+  catalogSearching = false;
+  catalogLink = '';
+  catalogError = '';
+  /** What the import of artists and albums is doing right now, empty when it is idle. */
+  catalogImporting = '';
+  chosenArtist: SpotifyArtist | null = null;
+  artistAlbums: SpotifyAlbum[] = [];
+  loadingAlbums = false;
+  readonly albumGroups: { value: SpotifyAlbumGroup; label: string }[] = [
+    { value: 'album', label: 'Albums' },
+    { value: 'single', label: 'Singles' },
+    { value: 'compilation', label: 'Compilations' },
+    { value: 'appears_on', label: 'Appears on' },
+  ];
+  selectedGroups = new Set<SpotifyAlbumGroup>(['album', 'single']);
+  selectedAlbums = new Set<string>();
+  /** Only the songs of the chosen artist: albums such as compilations hold songs of other artists too. */
+  onlyChosenArtist = true;
+  createCatalogPlaylist = false;
+  catalogPlaylists: GenericDataObject[] = [];
 
   constructor(
     private spotifyService: SpotifyService,
@@ -158,6 +193,185 @@ export class SpotifyImportComponent {
       this.playlistError = this.describe(error);
     } finally {
       this.importing = '';
+    }
+  }
+
+  get catalogHasMore(): boolean {
+    return (this.catalogKind === 'artists' ? this.artistResults.length : this.albumResults.length) < this.catalogTotal;
+  }
+
+  get catalogBusy(): boolean {
+    return !!this.catalogImporting || this.loadingAlbums;
+  }
+
+  get selectedAlbumSongs(): number {
+    return this.artistAlbums
+      .filter((album) => this.selectedAlbums.has(album.id))
+      .reduce((sum, album) => sum + Math.max(album.totalTracks, 0), 0);
+  }
+
+  setCatalogKind(kind: 'artists' | 'albums'): void {
+    this.catalogKind = kind;
+    this.artistResults = [];
+    this.albumResults = [];
+    this.catalogTotal = 0;
+    this.catalogError = '';
+  }
+
+  async searchCatalog(): Promise<void> {
+    if (!this.catalogQuery.trim() || !this.requireLogin()) {
+      return;
+    }
+    this.artistResults = [];
+    this.albumResults = [];
+    this.catalogTotal = 0;
+    await this.loadCatalogResults(0);
+  }
+
+  async loadMoreCatalog(): Promise<void> {
+    await this.loadCatalogResults(this.catalogKind === 'artists' ? this.artistResults.length : this.albumResults.length);
+  }
+
+  /** Looks up a link to an artist or an album and shows it like a search result. */
+  async lookUpCatalogLink(): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
+    this.catalogError = '';
+    try {
+      switch (SpotifyService.linkKind(this.catalogLink)) {
+        case 'artist':
+          this.setCatalogKind('artists');
+          await this.chooseArtist(await this.spotifyService.getArtist(this.catalogLink));
+          break;
+        case 'album':
+          this.setCatalogKind('albums');
+          this.albumResults = [await this.spotifyService.getAlbum(this.catalogLink)];
+          this.catalogTotal = 1;
+          break;
+        case 'playlist':
+          this.catalogError = 'This is a playlist: import it in the panel for playlists.';
+          break;
+        default:
+          this.catalogError = 'This is no link to a Spotify artist or album.';
+      }
+    } catch (error) {
+      this.catalogError = this.describe(error);
+    }
+  }
+
+  async chooseArtist(artist: SpotifyArtist): Promise<void> {
+    this.chosenArtist = artist;
+    await this.loadArtistAlbums();
+  }
+
+  closeArtist(): void {
+    this.chosenArtist = null;
+    this.artistAlbums = [];
+    this.selectedAlbums.clear();
+  }
+
+  async toggleGroup(group: SpotifyAlbumGroup): Promise<void> {
+    this.selectedGroups.has(group) ? this.selectedGroups.delete(group) : this.selectedGroups.add(group);
+    await this.loadArtistAlbums();
+  }
+
+  toggleAlbum(album: SpotifyAlbum): void {
+    this.selectedAlbums.has(album.id) ? this.selectedAlbums.delete(album.id) : this.selectedAlbums.add(album.id);
+  }
+
+  toggleAllAlbums(): void {
+    if (this.selectedAlbums.size === this.artistAlbums.length) {
+      this.selectedAlbums.clear();
+    } else {
+      this.artistAlbums.forEach((album) => this.selectedAlbums.add(album.id));
+    }
+  }
+
+  async importChosenAlbums(): Promise<void> {
+    const artist = this.chosenArtist;
+    if (artist) {
+      const albums = this.artistAlbums.filter((album) => this.selectedAlbums.has(album.id));
+      await this.importAlbums(albums, artist.name, this.onlyChosenArtist ? artist.id : undefined);
+    }
+  }
+
+  async importAlbum(album: SpotifyAlbum): Promise<void> {
+    await this.importAlbums([album], album.name);
+  }
+
+  /** Reads the songs of the albums (every song once) and imports them, into a new playlist if that is chosen. */
+  private async importAlbums(albums: SpotifyAlbum[], name: string, onlyArtistId?: string): Promise<void> {
+    if (albums.length === 0 || !this.requireLogin()) {
+      return;
+    }
+    this.catalogError = '';
+    try {
+      const tracks = new Map<string, SpotifyTrack>();
+      for (const [index, album] of albums.entries()) {
+        this.catalogImporting = `Reading ${album.name} (${index + 1} of ${albums.length})`;
+        (await this.spotifyService.getAlbumTracks(album, onlyArtistId)).forEach(
+          (track) => tracks.has(track.uri) || tracks.set(track.uri, track)
+        );
+      }
+      if (tracks.size === 0) {
+        this.catalogError = `${name} has no songs that can be imported.`;
+        return;
+      }
+      const playlistIds = this.catalogPlaylists.map((playlist) => playlist.id);
+      if (this.createCatalogPlaylist) {
+        this.catalogImporting = `Creating the playlist ${name}`;
+        playlistIds.push(await this.httpHelperService.post<number>('/api/v1/playlists/', name));
+      }
+      const list = [...tracks.values()];
+      await this.importTracks(list, playlistIds, (done) => {
+        this.catalogImporting = `Importing ${name}: ${done} of ${list.length}`;
+      });
+      this.notify(`${name}: ${list.length} songs imported`);
+    } catch (error) {
+      this.catalogError = this.describe(error);
+    } finally {
+      this.catalogImporting = '';
+    }
+  }
+
+  private async loadArtistAlbums(): Promise<void> {
+    const artist = this.chosenArtist;
+    if (!artist) {
+      return;
+    }
+    this.loadingAlbums = true;
+    this.catalogError = '';
+    try {
+      const groups = this.albumGroups.map((group) => group.value).filter((group) => this.selectedGroups.has(group));
+      this.artistAlbums = groups.length > 0 ? await this.spotifyService.getArtistAlbums(artist.id, groups) : [];
+      // all albums are chosen, the user takes out what is not wanted
+      this.selectedAlbums = new Set(this.artistAlbums.map((album) => album.id));
+    } catch (error) {
+      this.catalogError = this.describe(error);
+    } finally {
+      this.loadingAlbums = false;
+    }
+  }
+
+  private async loadCatalogResults(offset: number): Promise<void> {
+    this.catalogSearching = true;
+    this.catalogError = '';
+    try {
+      const query = this.catalogQuery.trim();
+      if (this.catalogKind === 'artists') {
+        const result = await this.spotifyService.searchArtists(query, offset);
+        this.artistResults = [...this.artistResults, ...result.artists];
+        this.catalogTotal = result.total;
+      } else {
+        const result = await this.spotifyService.searchAlbums(query, offset);
+        this.albumResults = [...this.albumResults, ...result.albums];
+        this.catalogTotal = result.total;
+      }
+    } catch (error) {
+      this.catalogError = this.describe(error);
+    } finally {
+      this.catalogSearching = false;
     }
   }
 

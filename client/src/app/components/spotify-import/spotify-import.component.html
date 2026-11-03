@@ -128,4 +128,142 @@
       <p class="error" role="alert">{{ playlistError }}</p>
     }
   </section>
+
+  <section class="panel wide">
+    <h2>Import an artist or an album</h2>
+    <p class="hint">
+      All songs of an album, or of the albums of an artist that you choose, are added to the library. Songs that are
+      already in the library are not added twice.
+    </p>
+    <mat-button-toggle-group (valueChange)="setCatalogKind($event)" [value]="catalogKind" aria-label="What to search"
+      hideSingleSelectionIndicator>
+      <mat-button-toggle value="artists">Artists</mat-button-toggle>
+      <mat-button-toggle value="albums">Albums</mat-button-toggle>
+    </mat-button-toggle-group>
+    <form (ngSubmit)="searchCatalog()" class="row">
+      <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+        <input [(ngModel)]="catalogQuery" [attr.aria-label]="catalogKind === 'artists' ? 'Name of the artist' : 'Name of the album'"
+          [placeholder]="catalogKind === 'artists' ? 'Name of the artist' : 'Name of the album'" autocomplete="off" matInput
+          name="catalogQuery"/>
+      </mat-form-field>
+      <button [disabled]="catalogSearching || !catalogQuery.trim() || catalogBusy" color="primary" mat-flat-button type="submit">
+        Search
+      </button>
+    </form>
+    <form (ngSubmit)="lookUpCatalogLink()" class="row">
+      <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+        <input [(ngModel)]="catalogLink" aria-label="The link of an artist or an album" autocomplete="off" matInput
+          name="catalogLink" placeholder="Or the link of an artist or an album"/>
+      </mat-form-field>
+      <button [disabled]="!catalogLink.trim() || catalogBusy" mat-stroked-button type="submit">Look up</button>
+    </form>
+
+    @if (chosenArtist; as artist) {
+      <div class="add">
+        <div class="row">
+          <h3 class="grow">{{ artist.name }}</h3>
+          <button (click)="closeArtist()" [disabled]="catalogBusy" mat-button type="button">Back to the results</button>
+        </div>
+        <div class="row groups">
+          @for (group of albumGroups; track group.value) {
+            <mat-checkbox (change)="toggleGroup(group.value)" [checked]="selectedGroups.has(group.value)"
+              [disabled]="catalogBusy">
+              {{ group.label }}
+            </mat-checkbox>
+          }
+        </div>
+        @if (loadingAlbums) {
+          <mat-spinner diameter="28"></mat-spinner>
+        }
+        @if (artistAlbums.length > 0) {
+          <div class="row">
+            <button (click)="toggleAllAlbums()" [disabled]="catalogBusy" mat-button type="button">
+              {{ selectedAlbums.size === artistAlbums.length ? 'Select none' : 'Select all' }}
+            </button>
+            <span class="sub grow">{{ selectedAlbums.size }} of {{ artistAlbums.length }} albums</span>
+          </div>
+        }
+        <div class="tracks">
+          @for (album of artistAlbums; track album.id) {
+            <label class="track" [class.on]="selectedAlbums.has(album.id)">
+              <mat-checkbox (change)="toggleAlbum(album)" [checked]="selectedAlbums.has(album.id)"
+                [disabled]="catalogBusy"></mat-checkbox>
+              <span class="grow">
+                <span class="title">{{ album.name }}</span>
+                <span class="sub">{{ album.year }}@if (album.totalTracks >= 0) {
+                  <span> · {{ album.totalTracks }} songs</span>
+                }</span>
+              </span>
+            </label>
+          }
+        </div>
+        @if (!loadingAlbums && artistAlbums.length === 0) {
+          <p class="hint">No albums in the chosen groups.</p>
+        }
+        <mat-checkbox [(ngModel)]="onlyChosenArtist" [disabled]="catalogBusy" name="onlyChosenArtist">
+          Only songs by {{ artist.name }}
+        </mat-checkbox>
+      </div>
+    } @else {
+      <div class="tracks">
+        @for (artist of artistResults; track artist.id) {
+          <div class="track">
+            <span class="grow"><span class="title">{{ artist.name }}</span></span>
+            <button (click)="chooseArtist(artist)" [disabled]="catalogBusy" mat-stroked-button type="button">
+              Choose albums
+            </button>
+          </div>
+        }
+        @for (album of albumResults; track album.id) {
+          <div class="track">
+            <span class="grow">
+              <span class="title">{{ album.name }}</span>
+              <span class="sub">{{ album.artist }}@if (album.year) {
+                <span> · {{ album.year }}</span>
+              }@if (album.totalTracks >= 0) {
+                <span> · {{ album.totalTracks }} songs</span>
+              }</span>
+            </span>
+            <button (click)="importAlbum(album)" [disabled]="catalogBusy" mat-stroked-button type="button">Import</button>
+          </div>
+        }
+        @if (catalogSearching) {
+          <mat-spinner diameter="28"></mat-spinner>
+        }
+      </div>
+      @if (artistResults.length + albumResults.length > 0) {
+        <div class="row">
+          <span class="sub grow">{{ artistResults.length + albumResults.length }} of {{ catalogTotal }} results</span>
+          @if (catalogHasMore) {
+            <button (click)="loadMoreCatalog()" [disabled]="catalogSearching || catalogBusy" mat-button type="button">
+              Show more
+            </button>
+          }
+        </div>
+      }
+    }
+
+    <div class="add">
+      <mat-checkbox [(ngModel)]="createCatalogPlaylist" [disabled]="catalogBusy" name="createCatalogPlaylist">
+        Also create a playlist with the name of the {{ chosenArtist ? 'artist' : 'album' }}
+      </mat-checkbox>
+      <app-input-playlist [(selectedOptions)]="catalogPlaylists"></app-input-playlist>
+      @if (chosenArtist) {
+        <div class="row">
+          <button (click)="importChosenAlbums()" [disabled]="catalogBusy || selectedAlbums.size === 0" color="primary"
+            mat-flat-button type="button">
+            Import {{ selectedAlbums.size }} album{{ selectedAlbums.size === 1 ? '' : 's' }}
+            ({{ selectedAlbumSongs }} songs at most)
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (catalogImporting) {
+      <p class="row" role="status"><mat-spinner diameter="28"></mat-spinner> {{ catalogImporting }}</p>
+    }
+    @if (catalogError) {
+      <p class="error" role="alert">{{ catalogError }}</p>
+    }
+  </section>
 </div>
