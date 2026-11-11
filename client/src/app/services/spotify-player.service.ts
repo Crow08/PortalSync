@@ -43,6 +43,8 @@ export class SpotifyPlayerService {
   private muted = false;
   private stateWaiters: ((state: Spotify.PlaybackState) => boolean)[] = [];
   private pollTimer: ReturnType<typeof setInterval> | undefined;
+  /** The last operation on the player, see enqueue. */
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(private spotifyService: SpotifyService) {}
 
@@ -79,45 +81,72 @@ export class SpotifyPlayerService {
    * Loads the track and leaves it paused at the position, so that resume() starts it right away. The SDK only pauses a
    * track that is really playing, so it is started silently first.
    */
-  async load(uri: string, positionMs: number): Promise<void> {
-    const player = this.requirePlayer();
-    this.lastPlayingPosition = 0;
-    await player.setVolume(0);
-    try {
-      const playing = this.waitForState((state) => !state.paused && state.position >= positionMs + LOADED_AFTER);
-      const response = await this.spotifyService.play(uri, positionMs);
-      if (!response.ok) {
-        throw new Error(`Spotify answered ${response.status}`);
+  load(uri: string, positionMs: number): Promise<void> {
+    return this.enqueue(async () => {
+      const player = this.requirePlayer();
+      this.lastPlayingPosition = 0;
+      await player.setVolume(0);
+      try {
+        // a track that is still playing would be taken for the new one
+        await this.doPause();
+        const playing = this.waitForState((state) => !state.paused && state.position >= positionMs + LOADED_AFTER);
+        const response = await this.spotifyService.play(uri, positionMs);
+        if (!response.ok) {
+          throw new Error(`Spotify answered ${response.status}`);
+        }
+        await playing;
+        await this.doPause();
+        await this.doSeek(positionMs);
+      } finally {
+        await player.setVolume(this.effectiveVolume);
       }
-      await playing;
-      await this.pauseAt(positionMs);
-    } finally {
-      await player.setVolume(this.effectiveVolume);
-    }
+    });
   }
 
-  async resume(): Promise<void> {
-    await this.requirePlayer().resume();
+  resume(): Promise<void> {
+    return this.enqueue(() => this.requirePlayer().resume());
   }
 
-  async pause(): Promise<void> {
-    if (this.player && this.state && !this.state.paused) {
-      await this.player.pause();
-    }
+  pause(): Promise<void> {
+    return this.enqueue(async () => {
+      if (this.player) {
+        await this.doPause();
+      }
+    });
   }
 
   /** Pauses and seeks, resolves once the player shows the position. */
-  async pauseAt(positionMs: number): Promise<void> {
-    const player = this.requirePlayer();
-    if (this.state && !this.state.paused) {
-      const paused = this.waitForState((state) => state.paused);
-      await player.pause();
-      await paused;
-    }
-    await this.seek(positionMs);
+  pauseAt(positionMs: number): Promise<void> {
+    return this.enqueue(async () => {
+      await this.doPause();
+      await this.doSeek(positionMs);
+    });
   }
 
-  async seek(positionMs: number): Promise<void> {
+  seek(positionMs: number): Promise<void> {
+    return this.enqueue(() => this.doSeek(positionMs));
+  }
+
+  /**
+   * Runs the operations on the player one after another. They take several steps and wait for the player in between: a
+   * start that falls into a load that is still running (joining a playing session) would be undone by the pause of the
+   * load, and both would wait for a state the other one prevents.
+   */
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.queue.then(operation);
+    this.queue = result.catch(() => undefined);
+    return result;
+  }
+
+  private async doPause(): Promise<void> {
+    if (this.state && !this.state.paused) {
+      const paused = this.waitForState((state) => state.paused);
+      await this.requirePlayer().pause();
+      await paused;
+    }
+  }
+
+  private async doSeek(positionMs: number): Promise<void> {
     const reached = this.waitForState((state) => Math.abs(state.position - positionMs) < SEEK_TOLERANCE);
     await this.requirePlayer().seek(positionMs);
     await reached;
@@ -171,7 +200,8 @@ export class SpotifyPlayerService {
     }
     const player = new Spotify.Player({
       name: 'PortalSync',
-      getOAuthToken: (callback) => callback(this.spotifyService.loginToken.token),
+      // the SDK asks again when its token expired: never hand it the old one
+      getOAuthToken: (callback) => void this.spotifyService.getAccessToken().then(callback),
       volume: this.effectiveVolume,
     });
     // the audio of the player is only allowed after a gesture: the click that asked for the connection is still valid now
@@ -214,10 +244,19 @@ export class SpotifyPlayerService {
 
   private async poll(): Promise<void> {
     const state = await this.player?.getCurrentState();
-    if (state && !state.paused) {
-      this.receive(state);
+    if (!state) {
+      return;
+    }
+    this.receive(state);
+    if (!state.paused) {
       this.tick.next();
     }
+    // the SDK sends no event while a track just keeps playing: the waiters must not depend on one arriving in time
+    this.notifyWaiters(state);
+  }
+
+  private notifyWaiters(state: Spotify.PlaybackState): void {
+    this.stateWaiters = this.stateWaiters.filter((waiter) => !waiter(state));
   }
 
   private onState(state: Spotify.PlaybackState | null): void {
@@ -236,7 +275,7 @@ export class SpotifyPlayerService {
     if (!state.paused) {
       this.playing.next();
     }
-    this.stateWaiters = this.stateWaiters.filter((waiter) => !waiter(state));
+    this.notifyWaiters(state);
   }
 
   private receive(state: Spotify.PlaybackState): void {

@@ -10,6 +10,10 @@ const SEARCH_LIMIT = 10;
 const PAGE_LIMIT = 50;
 /** How often a request is repeated when Spotify answers 429 (too many requests). */
 const MAX_RETRIES = 3;
+/** The access token is refreshed by a timer this long (s) before it expires. */
+const REFRESH_AHEAD = 300;
+/** A token that expires within this time (s) is not used any more. */
+const EXPIRY_MARGIN = 60;
 
 /** A song of Spotify, as far as the library needs it. */
 export interface SpotifyTrack {
@@ -80,6 +84,9 @@ interface LoginToken {
 })
 export class SpotifyService {
   private static refreshJob: number;
+  /** Date.now() at which the access token expires. */
+  private static expiresAt = 0;
+  private refreshing: Promise<boolean> | undefined;
   redirectPath = '/spotify/redirect';
   spotifyAuthUrl = 'https://accounts.spotify.com/authorize';
   private config: Promise<SpotifyConfig> | null = null;
@@ -116,6 +123,7 @@ export class SpotifyService {
   set loginToken(loginToken: LoginToken) {
     SpotifyService._loginToken.token = loginToken.token;
     SpotifyService._loginToken.expiresIn = loginToken.expiresIn;
+    SpotifyService.expiresAt = Date.now() + loginToken.expiresIn * 1000;
     if (!!loginToken.refreshToken) {
       SpotifyService._loginToken.refreshToken = loginToken.refreshToken;
       // lets the connection survive a reload of the page (the login itself needs a redirect to Spotify)
@@ -124,9 +132,10 @@ export class SpotifyService {
     if (!!SpotifyService.refreshJob) {
       clearTimeout(SpotifyService.refreshJob);
     }
+    // only keeps the token fresh ahead of time: timers are late in background tabs and after standby, see restore()
     SpotifyService.refreshJob = setTimeout(() => {
-      this.refreshToken();
-    }, (loginToken.expiresIn - 60) * 1000);
+      this.refresh();
+    }, (loginToken.expiresIn - REFRESH_AHEAD) * 1000);
   }
 
   private static _deviceId: string;
@@ -160,23 +169,45 @@ export class SpotifyService {
     return !!this.storedRefreshToken;
   }
 
-  /** Gets an access token with the refresh token of an earlier visit. Resolves to whether the client is logged in. */
+  /**
+   * Makes sure there is an access token that is still valid: gets one with the refresh token of this or an earlier visit
+   * when there is none or it expires (Spotify's tokens last an hour). Resolves to whether the client is logged in.
+   */
   restore(): Promise<boolean> {
-    const stored = this.storedRefreshToken;
-    if (this.loggedIn || !stored) {
-      return Promise.resolve(this.loggedIn);
+    if (this.loggedIn && Date.now() < SpotifyService.expiresAt - EXPIRY_MARGIN * 1000) {
+      return Promise.resolve(true);
     }
-    return this.httpHelper
-      .post('/api/v1/spotify/refresh', stored)
-      .then((loginToken) => {
-        this.loginToken = loginToken as LoginToken;
-        return true;
-      })
-      .catch((error) => {
-        console.error('Spotify login could not be restored', error);
-        localStorage.removeItem(this.refreshTokenKey);
-        return false;
-      });
+    return this.refresh();
+  }
+
+  /** A valid access token, empty when the client is not logged in. Never use loginToken.token directly: it may be expired. */
+  async getAccessToken(): Promise<string> {
+    return (await this.restore()) ? this.loginToken.token : '';
+  }
+
+  private refresh(): Promise<boolean> {
+    const refreshToken = this.loginToken.refreshToken || this.storedRefreshToken;
+    if (!refreshToken) {
+      return Promise.resolve(false);
+    }
+    if (!this.refreshing) {
+      const hadSession = this.loggedIn;
+      this.refreshing = this.httpHelper
+        .post('/api/v1/spotify/refresh', refreshToken)
+        .then((loginToken) => {
+          this.loginToken = loginToken as LoginToken;
+          return true;
+        })
+        .catch((error) => {
+          console.error('Spotify login could not be refreshed', error);
+          if (!hadSession) {
+            localStorage.removeItem(this.refreshTokenKey);
+          }
+          return false;
+        })
+        .finally(() => (this.refreshing = undefined));
+    }
+    return this.refreshing;
   }
 
   /** Forgets the login of the current user for good. */
@@ -190,15 +221,6 @@ export class SpotifyService {
     clearTimeout(SpotifyService.refreshJob);
     SpotifyService._loginToken.token = '';
     SpotifyService._loginToken.refreshToken = '';
-  }
-
-  refreshToken() {
-    this.httpHelper
-      .post('/api/v1/spotify/refresh', this.loginToken.refreshToken)
-      .then((loginToken) => {
-        this.loginToken = loginToken as LoginToken;
-      })
-      .catch(console.error);
   }
 
   /** The settings of the Spotify app, read from the server once. */
@@ -242,7 +264,7 @@ export class SpotifyService {
       const player = new Spotify.Player({
         name: 'Spotify delegate Player',
         getOAuthToken: (cb) => {
-          cb(this.loginToken.token);
+          this.getAccessToken().then(cb);
         },
         volume: 0.5,
       });
@@ -267,16 +289,17 @@ export class SpotifyService {
     this.play('spotify:track:0gkVD2tr14wCfJhqhdE94L').catch(console.error);
   }
 
-  play(uri: string, positionMs = 0) {
+  async play(uri: string, positionMs = 0) {
     let body = JSON.stringify({
       uris: [uri],
       position_ms: positionMs,
     });
+    const token = await this.getAccessToken();
 
     return fetch(`https://api.spotify.com/v1/me/player/play?device_id=${this.deviceId}`, {
       body,
       headers: {
-        Authorization: `Bearer ${this.loginToken.token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       method: 'PUT',
@@ -425,6 +448,10 @@ export class SpotifyService {
     const url = new URL(API_URL + path);
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
     let response = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.loginToken.token}` } });
+    // the token expired although it should not have (clock of the computer, standby): get a new one once
+    if (response.status === 401 && (await this.refresh())) {
+      response = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.loginToken.token}` } });
+    }
     // too many requests: wait as long as Spotify asks and try again, an import of an artist makes many requests
     for (let retry = 0; response.status === 429 && retry < MAX_RETRIES; retry++) {
       const wait = Number(response.headers.get('Retry-After'));
