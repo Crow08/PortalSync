@@ -23,7 +23,7 @@ export const NO_BACKGROUND = 'none';
 const BACKGROUND_LIST_URL = 'assets/backgrounds/backgrounds.json';
 
 /** The color theme; ids and colors: src/app/themes/themes.scss (class theme-<id>), the colors here only draw the choice. */
-export type Theme = 'ocean' | 'mint' | 'violet' | 'amber' | 'mono' | 'anime';
+export type Theme = 'ocean' | 'mint' | 'violet' | 'amber' | 'mono' | 'synthwave' | 'anime';
 export const DEFAULT_THEME: Theme = 'ocean';
 export const THEMES: { value: Theme; label: string; accent: string; surface: string }[] = [
   { value: 'ocean', label: 'Ocean', accent: '#3fb4ff', surface: '#101826' },
@@ -31,6 +31,7 @@ export const THEMES: { value: Theme; label: string; accent: string; surface: str
   { value: 'violet', label: 'Violet', accent: '#b794ff', surface: '#19171e' },
   { value: 'amber', label: 'Amber', accent: '#ffbe5c', surface: '#1c1711' },
   { value: 'mono', label: 'Mono', accent: '#cfcfcf', surface: '#181818' },
+  { value: 'synthwave', label: 'Synthwave', accent: '#f92aad', surface: '#241b2f' },
   { value: 'anime', label: "Hawky's Theme", accent: '#ff6a13', surface: '#13152e' },
 ];
 

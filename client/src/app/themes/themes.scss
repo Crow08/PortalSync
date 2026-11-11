@@ -162,6 +162,41 @@ $themes: (
       contrast: (50: #161616, 100: #161616, 200: #161616, 300: #161616, 400: #161616, 500: #161616, 600: #161616, 700: #ffffff, 800: #ffffff, 900: #ffffff, A100: #161616, A200: #161616, A400: #161616, A700: #161616)
     )
   ),
+  // Synthwave: the colors of the VS Code theme SynthWave '84 (editor #262335, sidebar #241b2f, the hot pink of its neon mode
+  // as accent, cyan functions as video, yellow keywords as song). The glow and the other neon colors (cyan, yellow, red,
+  // coral) are in src/app/themes/synthwave/synthwave.scss.
+  'synthwave': (
+    label: 'Synthwave',
+    accent: #f92aad,
+    ink: #1f0014,
+    bg: #262335,
+    panel: #241b2f,
+    raise: #2f2647,
+    line: #3d3160,
+    text: #f4eef8,
+    muted: #848bbd,
+    tooltip: #3d3157,
+    glow: #4d1a5c,
+    video: #36f9f6,
+    song: #fede5d,
+    primary: (
+      50: #ffe6f5,
+      100: #ffc2e6,
+      200: #ff99d5,
+      300: #ff6fc4,
+      400: #fc4ab8,
+      500: #f92aad,
+      600: #e01d9b,
+      700: #bc1483,
+      800: #940d68,
+      900: #6b074b,
+      A100: #ffb3df,
+      A200: #ff7ccb,
+      A400: #ff45b6,
+      A700: #f5009f,
+      contrast: (50: #1f0014, 100: #1f0014, 200: #1f0014, 300: #1f0014, 400: #1f0014, 500: #1f0014, 600: #1f0014, 700: #ffffff, 800: #ffffff, 900: #ffffff, A100: #1f0014, A200: #1f0014, A400: #1f0014, A700: #1f0014)
+    )
+  ),
   // Anime: shonen opening meets mecha cockpit. Only the colors live here; shapes, fonts, the Kamehameha seek bar and the
   // easter eggs are in src/app/themes/anime/ (styles) and anime-theme.service.ts (the few things CSS can not do).
   'anime': (

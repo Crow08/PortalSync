@@ -1,5 +1,7 @@
 // The anime theme brings its own styles (only active with the class theme-anime), see src/app/themes/anime/anime.scss.
 @use 'src/app/themes/anime/anime';
+// The neon glow of the synthwave theme, see src/app/themes/synthwave/synthwave.scss.
+@use 'src/app/themes/synthwave/synthwave';
 
 /* Design tokens of the redesign (graphite ground, one accent). These are the values of the default theme; every theme overrides them with the class theme-<id> (src/app/themes/themes.scss). New components use these instead of the Material themes. */
 :root {

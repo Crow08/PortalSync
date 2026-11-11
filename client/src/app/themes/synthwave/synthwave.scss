@@ -1,0 +1,306 @@
+// SYNTHWAVE THEME · NEON
+// The colors of the theme are the 'synthwave' entry in src/app/themes/themes.scss; this file adds the neon of the VS Code
+// theme SynthWave '84 (https://github.com/robb0wen/synthwave-vscode, its glow mode synthwave84.css). Like there, every neon
+// color has a role:
+//   pink    the accent (buttons, sliders, filled stars, toggled icons), glowing hot pink
+//   yellow  keywords there, titles here: warm white text with an orange glow
+//   cyan    functions there, "where you are" here: active navigation, selected tabs, the current title, links
+//   red     classes there, errors here
+//   coral   numbers there and here: times, counts, latency
+// plus the pink to cyan gradient of its active tab underline. Everything is scoped to the theme class, the components know
+// nothing about it (like the anime theme).
+
+// The class is repeated on purpose: the component styles (view encapsulation adds an attribute selector to them) are loaded
+// after the global styles and would win every tie.
+$s: ".graphite-theme.theme-synthwave.theme-synthwave.theme-synthwave";
+
+#{$s} {
+  // the neon colors and glows of SynthWave '84 (values from its theme and glow CSS)
+  --sw-pink: #f92aad;
+  --sw-cyan: #36f9f6;
+  --sw-yellow: #fede5d;
+  --sw-red: #fe4450;
+  --sw-coral: #f97e72;
+  --sw-gradient: linear-gradient(90deg, var(--sw-pink), var(--sw-cyan));
+  --sw-glow-pink: 0 0 2px #100c0f, 0 0 5px rgb(220 7 142 / 0.6), 0 0 10px rgb(255 255 255 / 0.2);
+  --sw-glow-yellow: 0 0 2px #393a33, 0 0 8px rgb(243 159 5 / 0.46), 0 0 2px rgb(243 159 5 / 0.46);
+  --sw-glow-cyan: 0 0 2px #001716, 0 0 3px rgb(3 237 249 / 0.46), 0 0 5px rgb(3 237 249 / 0.46), 0 0 8px rgb(3 237 249 / 0.46);
+  --sw-glow-red: 0 0 2px #000, 0 0 10px rgb(252 31 44 / 0.46), 0 0 5px rgb(252 31 44 / 0.46), 0 0 25px rgb(252 31 44 / 0.46);
+  --sw-halo: 0 0 6px color-mix(in srgb, var(--sw-pink) 70%, transparent),
+    0 0 18px color-mix(in srgb, var(--sw-pink) 40%, transparent);
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // pink: accent-colored text glows hot pink, accent surfaces get a halo
+  // ---------------------------------------------------------------------------------------------------------------------------
+  :is(app-login, app-register) .brand p a,
+  app-database-browser .collection.on .mat-icon,
+  app-add-to-playlist-dialog .item .check,
+  app-room .queue-head .on,
+  app-rating-star .star.filled {
+    text-shadow: var(--sw-glow-pink);
+  }
+
+  .account .avatar,
+  app-database-browser .owners .avatar,
+  app-room .resize-handle::after {
+    box-shadow: var(--sw-halo);
+  }
+
+  // filled primary buttons are neon tubes: no fill, a pink line that glows inside and out, a pink wash on hover. The line is
+  // an inset shadow, so the button keeps its size.
+  .mat-mdc-unelevated-button.mat-primary:not(:disabled) {
+    --mat-button-filled-container-color: transparent;
+    --mat-button-filled-label-text-color: #ffd6f0;
+    --mat-button-filled-state-layer-color: var(--sw-pink);
+    background: transparent;
+    color: #ffd6f0;
+    box-shadow: inset 0 0 0 1px var(--sw-pink), inset 0 0 8px rgb(249 42 173 / 0.35), 0 0 6px rgb(249 42 173 / 0.6),
+      0 0 16px rgb(249 42 173 / 0.3);
+    transition: background-color 0.15s;
+
+    &:hover {
+      background: rgb(249 42 173 / 0.1);
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // yellow: titles are keywords, warm white with an orange glow
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .page-title,
+  .session-name,
+  :is(app-login, app-register) .brand h1,
+  app-browser .name,
+  app-room .cover-title,
+  app-room .now-title,
+  app-mini-player .song-title,
+  .mat-mdc-dialog-title {
+    color: #f4eee4;
+    text-shadow: var(--sw-glow-yellow);
+  }
+
+  // songs are yellow (--ps-song); their labels glow like the titles
+  app-database-browser .kind,
+  app-database-browser .chip.song,
+  app-browser .chip.kind-music {
+    text-shadow: var(--sw-glow-yellow);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // cyan: where you are (active navigation, selected tabs, the current title, links), near-white with a cyan glow
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .rail-item.active,
+  .rail-item.active .mat-icon,
+  .chapter-menu .current-chapter,
+  .chapter-menu .current-chapter .mat-icon,
+  app-room .row.current .lead,
+  app-room .row.current .row-title,
+  app-database-browser .hint a,
+  app-spotify-import .notice a {
+    color: #fdfdfd;
+    text-shadow: var(--sw-glow-cyan);
+  }
+
+  // videos are cyan (--ps-video) and glow like it
+  app-database-browser .kind.video,
+  app-database-browser .chip.video,
+  app-browser .chip.kind-video {
+    text-shadow: var(--sw-glow-cyan);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // red: errors
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .error-text,
+  app-room .out-of-sync,
+  app-browser .delete:hover,
+  app-room .row .row-remove.mat-mdc-icon-button:hover {
+    color: var(--sw-red);
+    text-shadow: var(--sw-glow-red);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // coral: numbers (times, counts, latency, ratings)
+  // ---------------------------------------------------------------------------------------------------------------------------
+  app-player-track .time-display,
+  app-room .tabs .count,
+  app-room .queue-head .label,
+  app-room .person-details,
+  app-room .summary-sub,
+  app-rating-star .average,
+  app-browser .count {
+    color: var(--sw-coral);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // the pink to cyan gradient of the active tab: under the header, beside the active rail item, under the selected tab, in
+  // the seek bar
+  // ---------------------------------------------------------------------------------------------------------------------------
+  #header {
+    border-bottom: 0;
+    background: var(--sw-gradient) bottom / 100% 2px no-repeat, var(--ps-panel);
+  }
+
+  // the rail is the activity bar of the editor: full-width items without gaps or rounded corners, the marker as high as the
+  // item
+  #rail {
+    gap: 0;
+    padding: 0;
+    background: #171520;
+  }
+
+  .rail-item {
+    position: relative;
+    width: 100%;
+    border-radius: 0;
+  }
+
+  .rail-item.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--sw-pink), var(--sw-cyan));
+    box-shadow: 0 0 8px rgb(3 237 249 / 0.5);
+  }
+
+  // flush layout like the editor: the library and the queue and people panels have no padding of their own
+  app-database-browser,
+  app-room .panel {
+    padding: 0;
+  }
+
+  // the collections of the library and its toolbar (filter, sort, search, upload) keep some room at the top
+  app-database-browser .collections,
+  app-database-browser .library > .toolbar {
+    padding-top: 12px;
+  }
+
+  // without the padding the divider between the stage and the side panel is thicker: a 2 px border, and the resize line that
+  // shows on hover is 4 px, centered on it
+  app-room .side {
+    border-left-width: 2px;
+  }
+
+  app-room .resize-handle::after {
+    left: 4px;
+    width: 4px;
+  }
+
+  // the Queue and People tabs span the whole side panel: no margin, no frame at the sides and on top
+  app-room .tabs {
+    margin: 0;
+    border-top: 0;
+    border-inline: 0;
+  }
+
+  app-player-track .segments .fill {
+    background: var(--sw-gradient);
+    box-shadow: 0 0 6px rgb(249 42 173 / 0.6), 0 0 12px rgb(3 237 249 / 0.3);
+  }
+}
+
+// selected toggles (cyan, gradient underline): styles.scss styles them under the id #app-theme-container, so this rule
+// needs the id too
+#{$s}#app-theme-container .mat-button-toggle-checked {
+  background: var(--sw-gradient) bottom / 100% 2px no-repeat, var(--ps-raise);
+  color: #fdfdfd;
+
+  // on the inner button: browsers reset text-shadow on buttons, so it would not be inherited
+  .mat-button-toggle-button {
+    text-shadow: var(--sw-glow-cyan);
+  }
+}
+
+// phone: the rail is the bottom bar, the marker of the active item lies on its top edge
+@media (max-width: 720px) {
+  #{$s} .rail-item {
+    width: auto;
+  }
+
+  #{$s} .rail-item.active::after {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: auto;
+    width: auto;
+    height: 3px;
+    background: var(--sw-gradient);
+  }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// player buttons are hexagons. A clip-path would also cut off the glow, so the play button is drawn by two clipped layers
+// behind its icon (the pink one shows as the line, the dark one inside it) and glows by a drop-shadow on the unclipped
+// button, which follows the hexagon. The other player buttons only get a hexagonal hover shape.
+// -----------------------------------------------------------------------------------------------------------------------------
+$hexagon: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+
+#{$s} {
+  app-room .play.mat-mdc-unelevated-button:not(:disabled),
+  app-mini-player .play.mat-mdc-icon-button:not(:disabled) {
+    isolation: isolate;
+    border-radius: 0;
+    background: transparent;
+    color: #ffd6f0;
+    box-shadow: none;
+    filter: drop-shadow(0 0 4px rgb(249 42 173 / 0.7)) drop-shadow(0 0 10px rgb(249 42 173 / 0.35));
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      clip-path: $hexagon;
+      pointer-events: none;
+    }
+
+    &::before {
+      inset: 0;
+      background: var(--sw-pink);
+    }
+
+    &::after {
+      inset: 1.5px;
+      background: radial-gradient(circle, rgb(249 42 173 / 0.22), var(--ps-panel) 70%);
+      transition: background-color 0.15s;
+    }
+
+    &:hover {
+      background: transparent;
+
+      &::after {
+        background: radial-gradient(circle, rgb(249 42 173 / 0.38), var(--ps-panel) 75%);
+      }
+    }
+  }
+
+  :is(app-room .buttons, app-room .options, app-mini-player .control-buttons, app-mini-player .side) .mat-mdc-icon-button {
+    // (the focus ring stays round: clipped, it would lose its diagonal edges)
+    .mat-mdc-button-persistent-ripple,
+    .mat-mdc-button-ripple {
+      border-radius: 0;
+      clip-path: $hexagon;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// sharp corners everywhere, like the editor: buttons, icon buttons, cards, fields, toggles, menus, dialogs, toasts, focus
+// rings. Covers, avatars, chips (with their status dots) and slider knobs keep the radius of their components. The id of the app
+// container (or the overlay container, which carries the theme class too) outranks every class-only component rule, however
+// deeply nested. Shapes made by clip-path, like the hexagonal play buttons, stay.
+// -----------------------------------------------------------------------------------------------------------------------------
+$rounded: ".cover, .now-cover, .preview, .avatar, .chip, .access-chip, .live-chip, .dot, .live-dot, .mdc-slider__thumb-knob";
+
+#{$s}:is(#app-theme-container, .cdk-overlay-container) {
+  --mat-focus-indicator-border-radius: 0;
+
+  &,
+  *:not(#{$rounded}),
+  *::before,
+  *::after {
+    border-radius: 0;
+  }
+}
