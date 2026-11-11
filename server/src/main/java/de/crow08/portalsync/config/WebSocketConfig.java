@@ -62,6 +62,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
   @Override
   public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+    // a message over the limit closes the connection (default 64 KB): lists of media ids can be long
+    registration.setMessageSizeLimit(1024 * 1024);
+    // the queue of a session is sent as a whole and can be several hundred KB (default 512 KB)
+    registration.setSendBufferSizeLimit(4 * 1024 * 1024);
     registration.addDecoratorFactory(new WebSocketHandlerDecoratorFactory() {
       @Override
       public WebSocketHandler decorate(WebSocketHandler handler) {

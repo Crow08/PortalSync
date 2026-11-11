@@ -423,7 +423,10 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   }
 
   addMediaListToQueue(mediaList: Media[]): void {
-    this.publishWithFeedback(`addMediaListToQueue`, JSON.stringify(mediaList), 'Added to the queue');
+    // only the ids: the server reads nothing else, and a long list of whole media exceeds its message size limit,
+    // which closes the connection
+    const ids = mediaList.map((media) => ({ id: media.id }));
+    this.publishWithFeedback(`addMediaListToQueue`, JSON.stringify(ids), 'Added to the queue');
   }
 
   playMediaNext(media: Media): void {
