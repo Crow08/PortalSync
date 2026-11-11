@@ -55,6 +55,10 @@ export abstract class PlayerComponent {
     return this.engine.loopMode;
   }
 
+  get fairQueue() {
+    return this.engine.fairQueue;
+  }
+
   get history() {
     return this.engine.history;
   }

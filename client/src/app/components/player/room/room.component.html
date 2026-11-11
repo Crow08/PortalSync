@@ -150,6 +150,11 @@
         [title]="loopMode ? 'Loop: on' : 'Loop: off'" aria-label="Loop the queue" mat-icon-button type="button">
         <mat-icon>{{ loopMode ? 'repeat_on' : 'repeat' }}</mat-icon>
       </button>
+      <button (click)="publishCommand('fairQueue/' + !fairQueue)" [attr.aria-pressed]="fairQueue" [class.on]="fairQueue"
+        [title]="fairQueue ? 'Fair queue: on (added titles take turns between the users)' : 'Fair queue: off (added titles go to the end)'"
+        aria-label="Fair queue" mat-icon-button type="button">
+        <mat-icon>balance</mat-icon>
+      </button>
       <button (click)="scrollToCurrent()" [attr.aria-label]="'Scroll to the current ' + mediaNoun" mat-icon-button
         [title]="'Scroll to the current ' + mediaNoun" type="button">
         <mat-icon>my_location</mat-icon>

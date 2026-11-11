@@ -48,6 +48,8 @@ const NO_MEDIA = () => new Media(-1, 'SONG', '', '', []);
 export class PlayerEngineService {
   playerState: PlayerState = PlayerState.STOP;
   loopMode = false;
+  /** Media are added to the queue in fair order (the users take turns) instead of at the end. */
+  fairQueue = false;
   queue: { id: number; title: string }[] = [];
   history: { id: number; title: string }[] = [];
   sessionUsers: User[] = [];
@@ -143,6 +145,7 @@ export class PlayerEngineService {
     this.mediaService.stop();
     this.playerState = PlayerState.STOP;
     this.loopMode = false;
+    this.fairQueue = false;
     this.queue = [];
     this.history = [];
     this.sessionUsers = [];
@@ -425,6 +428,7 @@ export class PlayerEngineService {
           this.queue = commandObject.queue;
           this.history = commandObject.history;
           this.loopMode = commandObject.loopMode;
+          this.fairQueue = commandObject.fairQueue;
           switch (commandObject.sessionState) {
             case 'PLAY':
               this.lastReadyEvent = {
@@ -479,6 +483,9 @@ export class PlayerEngineService {
         switch (commandObject.updateType) {
           case 'LoopMode':
             this.loopMode = commandObject.loopMode;
+            break;
+          case 'FairQueue':
+            this.fairQueue = commandObject.fairQueue;
             break;
           case 'Queue':
             this.queue = commandObject.queue;

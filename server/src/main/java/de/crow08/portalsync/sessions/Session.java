@@ -33,6 +33,8 @@ public class Session {
   private Duration savedProgression = Duration.ZERO;
   private Queue queue = new Queue();
   private boolean loopMode;
+  /** Media are added to the queue in fair order (the users take turns) instead of at the end. */
+  private boolean fairQueue;
 
   @Deprecated
   public Session() {
@@ -141,6 +143,14 @@ public class Session {
 
   public void setLoopMode(boolean loopMode) {
     this.loopMode = loopMode;
+  }
+
+  public boolean isFairQueue() {
+    return fairQueue;
+  }
+
+  public void setFairQueue(boolean fairQueue) {
+    this.fairQueue = fairQueue;
   }
 
   public enum SessionState {

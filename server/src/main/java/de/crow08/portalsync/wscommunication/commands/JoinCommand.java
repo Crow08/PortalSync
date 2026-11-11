@@ -17,6 +17,7 @@ public class JoinCommand extends Command {
   List<UserStatus> userStatuses;
   Session.SessionState sessionState;
   boolean loopMode;
+  boolean fairQueue;
   long startServerTime;
   long startMediaTime;
 
@@ -27,8 +28,8 @@ public class JoinCommand extends Command {
   }
 
   public JoinCommand(long userId, MinimalMedia currentMedia, List<MinimalMedia> queue, List<MinimalMedia> history,
-                     Session.SessionState sessionState, boolean loopMode, long startServerTime, long startMediaTime, List<User> sessionUsers,
-                     List<UserStatus> userStatuses) {
+                     Session.SessionState sessionState, boolean loopMode, boolean fairQueue, long startServerTime,
+                     long startMediaTime, List<User> sessionUsers, List<UserStatus> userStatuses) {
     super("Join");
     this.userId = userId;
     this.currentMedia = currentMedia;
@@ -36,6 +37,7 @@ public class JoinCommand extends Command {
     this.history = history;
     this.sessionState = sessionState;
     this.loopMode = loopMode;
+    this.fairQueue = fairQueue;
     this.startServerTime = startServerTime;
     this.startMediaTime = startMediaTime;
     this.sessionUsers = sessionUsers;
@@ -88,6 +90,14 @@ public class JoinCommand extends Command {
 
   public void setLoopMode(boolean loopMode) {
     this.loopMode = loopMode;
+  }
+
+  public boolean isFairQueue() {
+    return fairQueue;
+  }
+
+  public void setFairQueue(boolean fairQueue) {
+    this.fairQueue = fairQueue;
   }
 
   public long getStartServerTime() {

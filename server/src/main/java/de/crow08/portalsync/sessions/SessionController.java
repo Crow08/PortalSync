@@ -2,6 +2,7 @@ package de.crow08.portalsync.sessions;
 
 import de.crow08.portalsync.model.media.Media;
 import de.crow08.portalsync.model.queue.Queue;
+import de.crow08.portalsync.model.queue.QueueEntry;
 import de.crow08.portalsync.model.users.User;
 import de.crow08.portalsync.model.users.UserRepository;
 import de.crow08.portalsync.wscommunication.WebSocketSessionController;
@@ -184,10 +185,10 @@ public class SessionController {
       Queue queue = session.getQueue();
       session.setMediaStarted(null);
       session.setSavedProgression(Duration.ZERO);
-      Media currentMedia = queue.getCurrentMedia();
+      QueueEntry current = queue.getCurrent();
       // Add current media to history
-      if (currentMedia != null) {
-        queue.getHistoryMedia().add(currentMedia);
+      if (current != null) {
+        queue.getHistoryMedia().add(current);
       }
       // If queue is empty and loopMode is active, dump history into queue.
       if (queue.getQueuedMedia().size() == 0 && session.isLoopMode() && !queue.getHistoryMedia().isEmpty()) {
@@ -196,10 +197,9 @@ public class SessionController {
       }
       // Get current media from queue.
       if (queue.getQueuedMedia().size() > 0) {
-        queue.setCurrentMedia(queue.getQueuedMedia().get(0));
-        queue.getQueuedMedia().remove(0);
+        queue.setCurrent(queue.getQueuedMedia().remove(0));
       } else {
-        queue.setCurrentMedia(null);
+        queue.setCurrent(null);
       }
     }
   }
@@ -216,15 +216,15 @@ public class SessionController {
       Queue queue = session.getQueue();
       session.setMediaStarted(null);
       session.setSavedProgression(Duration.ZERO);
-      List<Media> all = new ArrayList<>(queue.getHistoryMedia());
+      List<QueueEntry> all = new ArrayList<>(queue.getHistoryMedia());
       // the slot of the current media exists in the index even without a current media
-      all.add(queue.getCurrentMedia());
+      all.add(queue.getCurrent());
       all.addAll(queue.getQueuedMedia());
       queue.getHistoryMedia().clear();
       queue.getQueuedMedia().clear();
       all.subList(0, index).stream().filter(Objects::nonNull).forEach(queue.getHistoryMedia()::add);
       all.subList(index + 1, all.size()).stream().filter(Objects::nonNull).forEach(queue.getQueuedMedia()::add);
-      queue.setCurrentMedia(all.get(index));
+      queue.setCurrent(all.get(index));
     }
   }
 
@@ -239,34 +239,41 @@ public class SessionController {
       Queue queue = session.getQueue();
       session.setMediaStarted(null);
       session.setSavedProgression(Duration.ZERO);
-      Media currentMedia = queue.getCurrentMedia();
-      if (currentMedia != null) {
-        queue.getQueuedMedia().add(0, currentMedia);
+      QueueEntry current = queue.getCurrent();
+      if (current != null) {
+        queue.getQueuedMedia().add(0, current);
       }
       // if history is empty and loop mode is active use the last media int the queue instead.
       if (queue.getHistoryMedia().size() == 0 && session.isLoopMode() && !queue.getQueuedMedia().isEmpty()) {
-        queue.setCurrentMedia(queue.getQueuedMedia().get(queue.getQueuedMedia().size() - 1));
-        queue.getQueuedMedia().remove(queue.getQueuedMedia().size() - 1);
+        queue.setCurrent(queue.getQueuedMedia().remove(queue.getQueuedMedia().size() - 1));
         // if the history is not empty use the latest long.
       } else if (queue.getHistoryMedia().size() > 0) {
-        queue.setCurrentMedia(queue.getHistoryMedia().get(queue.getHistoryMedia().size() - 1));
-        queue.getHistoryMedia().remove(queue.getHistoryMedia().size() - 1);
+        queue.setCurrent(queue.getHistoryMedia().remove(queue.getHistoryMedia().size() - 1));
       } else {
-        queue.setCurrentMedia(null);
+        queue.setCurrent(null);
       }
     }
   }
 
   /**
-   * Adds a list of media to the end of the queue of the session
+   * Adds a list of media to the queue of the session: at the end, or with the fair queue mode of the session each
+   * media in fair order (see {@link Queue#addFair}).
    *
    * @param session for the media to be added to
    * @param media   list of new media
+   * @param addedBy id of the user who adds the media, null if unknown
    */
-
-  public void addMedia(Session session, List<Media> media) {
+  public void addMedia(Session session, List<Media> media, Long addedBy) {
     synchronized (session.getLock()) {
-      session.getQueue().getQueuedMedia().addAll(media);
+      Queue queue = session.getQueue();
+      for (Media added : media) {
+        QueueEntry entry = new QueueEntry(added, addedBy);
+        if (session.isFairQueue()) {
+          queue.addFair(entry);
+        } else {
+          queue.getQueuedMedia().add(entry);
+        }
+      }
     }
   }
 
@@ -341,13 +348,20 @@ public class SessionController {
   }
 
   /**
-   * Shuffles the current Queue.
+   * Shuffles the current Queue. With the fair queue mode of the session the result is in fair order: the media of
+   * each user are shuffled, but the users still take turns (see {@link Queue#addFair}).
    *
    * @param session for which the queue is shuffled for.
    */
   public void shuffleQueue(Session session) {
     synchronized (session.getLock()) {
-      Collections.shuffle(session.getQueue().getQueuedMedia());
+      Queue queue = session.getQueue();
+      Collections.shuffle(queue.getQueuedMedia());
+      if (session.isFairQueue()) {
+        List<QueueEntry> shuffled = new ArrayList<>(queue.getQueuedMedia());
+        queue.getQueuedMedia().clear();
+        shuffled.forEach(queue::addFair);
+      }
     }
   }
 
