@@ -73,7 +73,7 @@ public class SessionResource {
     Optional<Session> session = sessionRepository.findById(Long.parseLong(sessionId));
     Optional<Playlist> playlist = playlistRepository.findById(Long.parseLong(playlistId));
     if (session.isPresent() && playlist.isPresent()) {
-      sessionController.addMedia(session.get(), playlist.get().getSongs(), getCurrentUser().getId());
+      sessionController.addPlaylist(session.get(), playlist.get().getSongs(), getCurrentUser().getId());
     }
   }
 }

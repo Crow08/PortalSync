@@ -1,6 +1,7 @@
 package de.crow08.portalsync.sessions;
 
 import de.crow08.portalsync.model.media.Media;
+import de.crow08.portalsync.model.media.MediaType;
 import de.crow08.portalsync.model.queue.Queue;
 import de.crow08.portalsync.model.queue.QueueEntry;
 import de.crow08.portalsync.model.users.User;
@@ -10,6 +11,7 @@ import de.crow08.portalsync.wscommunication.commands.Command;
 import de.crow08.portalsync.wscommunication.commands.LeaveCommand;
 import de.crow08.portalsync.wscommunication.commands.SessionDeletedCommand;
 import de.crow08.portalsync.wscommunication.commands.StartCommand;
+import de.crow08.portalsync.wscommunication.commands.UpdateFairQueueCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -252,6 +254,28 @@ public class SessionController {
       } else {
         queue.setCurrent(null);
       }
+    }
+  }
+
+  /**
+   * Adds the media of a playlist like {@link #addMedia}. If it is the first content of the lobby (nothing queued,
+   * playing or played yet) and the playlist begins with a song, the fair queue mode is switched on.
+   *
+   * @param session for the media to be added to
+   * @param media   media of the playlist
+   * @param addedBy id of the user who adds the media, null if unknown
+   */
+  public void addPlaylist(Session session, List<Media> media, Long addedBy) {
+    synchronized (session.getLock()) {
+      Queue queue = session.getQueue();
+      boolean initialPlaylist = queue.getCurrent() == null && queue.getQueuedMedia().isEmpty()
+          && queue.getHistoryMedia().isEmpty();
+      // a lobby that starts with music is a party: everybody's songs take turns. Video lobbies keep the plain order
+      if (initialPlaylist && !media.isEmpty() && media.getFirst().getType() == MediaType.SONG && !session.isFairQueue()) {
+        session.setFairQueue(true);
+        sendToSession(session, new UpdateFairQueueCommand(true));
+      }
+      addMedia(session, media, addedBy);
     }
   }
 
