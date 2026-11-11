@@ -34,7 +34,7 @@ public class RatingResource {
     Media media = mediaRepository.findById(songId).orElseThrow(() -> new Exception("Unable to apply rating: Song with Id " + songId + " not found"));
     if (userRating <= 0) {
       // a rating of 0 takes the rating back: it must not count towards the average of the media
-      RatingId ratingId = new RatingId(user, media);
+      RatingId ratingId = new RatingId(user.getId(), media.getId());
       if (ratingRepository.existsById(ratingId)) {
         ratingRepository.deleteById(ratingId);
       }
@@ -47,7 +47,7 @@ public class RatingResource {
   public short getUserRating(@PathVariable Long songId) throws Exception {
     User user = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     Media media = mediaRepository.findById(songId).orElseThrow(() -> new Exception("Unable to get rating of Song with Id " + songId));
-    Optional<Rating> rating = ratingRepository.findById(new RatingId(user, media));
+    Optional<Rating> rating = ratingRepository.findById(new RatingId(user.getId(), media.getId()));
     return rating.map(Rating::getRatingValue).orElse((short) 0);
   }
 

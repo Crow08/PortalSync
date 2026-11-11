@@ -135,7 +135,10 @@ test.describe('player (single user)', () => {
     await startRoom(userPage, unique('rate'), [A]);
     const rating = userPage.getByRole('group', { name: 'Rating' });
     await rating.hover(); // stars 2 to 5 show on hover
+    // the stars fill on hover as well, so only the response shows that the rating was saved
+    const saved = userPage.waitForResponse((r) => r.request().method() === 'PUT' && /\/ratings\/\d+\/addUserRating\/4$/.test(r.url()));
     await rating.getByRole('button', { name: '4 stars' }).click();
+    expect((await saved).ok()).toBe(true);
     await expect(rating.locator('button.star.filled')).toHaveCount(4);
   });
 
