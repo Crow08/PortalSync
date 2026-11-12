@@ -1,0 +1,76 @@
+/*
+ * ANIME THEME — "a shonen opening and a mecha cockpit HUD had a baby"
+ * ====================================================================
+ * Chosen in the settings (Color theme: Anime). Everything is scoped to .graphite-theme.theme-anime, the other themes do not
+ * see any of it. The palette is in _tokens.scss (CSS custom properties --ani-*), the pictures are inline SVG in _art.scss,
+ * the few things CSS can not do (Konami code, click counters, secret words, rewritten texts, fonts) are in
+ * anime-theme.service.ts. Everything respects prefers-reduced-motion.
+ *
+ *   _tokens.scss      palette, fonts, shape mixins
+ *   _art.scss         SVG artwork (fighter, Jolly Roger, magic and transmutation circles, sakura, hexagons, clouds, kunai, ...)
+ *   _shell.scss       background scene, header, navigation rail, footer
+ *   _controls.scss    Material components: buttons, tabs, fields, sliders, menus, dialogs, toasts, spinners
+ *   _player.scss      the room: stage, transport bar, queue, crew
+ *   _kamehameha.scss  the seek bar
+ *   _pages.scss       lobbies, library, settings, upload, Spotify import, login
+ *   _eggs.scss        effect layer, Super Saiyan mode, CSS only eggs, reduced motion
+ *
+ * EASTER EGG INDEX
+ * ----------------
+ * Interactive (anime-theme.service.ts):
+ *   Dragon Ball      Konami code (↑ ↑ ↓ ↓ ← → ← → B A) anywhere: Super Saiyan mode (gold UI, aura, blond fighter,
+ *                    overloading scouter, "SSJ" tag on the logo). The code again powers down.
+ *   Dragon Ball      Click the logo (Jolly Roger) seven times: the eternal dragon flies by and grants a wish (sakura storm).
+ *   Fullmetal Alch.  Click the Settings icon three times quickly: transmutation, "等価交換".
+ *   Secret words     Type them anywhere outside a text field:
+ *                      kamehameha (Dragon Ball), bankai (Bleach), domain (Jujutsu Kaisen), elpsykongroo (Steins;Gate),
+ *                      tuturu (Steins;Gate), dattebayo (Naruto), plusultra (My Hero Academia), nani (Fist of the North Star),
+ *                      oraora / mudamuda (JoJo), zura (Gintama), geass (Code Geass), flcl (FLCL), kaneda (Akira),
+ *                      shinzou (Attack on Titan), pochita (Chainsaw Man), peanuts (Spy x Family), yareyare (JoJo),
+ *                      traceon (Fate), onepunch (One Punch Man), gomugomu (One Piece)
+ *   Dev tools        Open the console.
+ *   Texts            Tooltips, empty states, toasts and status texts speak anime (visible texts only; aria labels stay
+ *                    plain for screen readers).
+ *
+ * Hover and look closely (CSS only):
+ *   Dragon Ball      The seek bar is a Kamehameha: fighter, beam, energy ball; "KA… ME…" at 25 %, "KA-ME-HA-ME-HA!!" at
+ *                    50 %, "IT'S OVER 9000!!" at 90 % (bigger beam). The time readout is a scouter. Ratings are Dragon Balls
+ *                    (unrated ones are stone, like after a wish). Volume at maximum: "IT'S OVER 9000!!".
+ *   JoJo             ゴゴゴゴ on the stage while playing and on the current queue entry. Paused = ZA WARUDO (the beam
+ *                    freezes). Next: "TO BE CONTINUED ⟹". Time skip: "KING CRIMSON!".
+ *   Naruto           Kunai pointer. Akatsuki clouds in the menus. The ball of the beam is a Sharingan while loading.
+ *                    Shuffle spins like a Rasengan. "BELIEVE IT!" on Join.
+ *   One Piece        Jolly Roger logo (straw hat, headphones). The album art is a wanted poster (฿ 3,000,000,000, Wano).
+ *                    "Scroll to current" is a Log Pose. The People tab is 仲間 (nakama). Fullscreen: "GEAR 5!".
+ *   Evangelion       Hazard stripes, NERV warning panels (警告), the side panel is an AT Field, errors are PATTERN BLUE,
+ *                    the listener summary is the MAGI, "max drift" is the sync ratio (400 % at zero drift, like Shinji).
+ *   Pokémon          The play button is a Poké Ball and wobbles like a catch; spinners are Poké Balls.
+ *   Cowboy Bebop     "See you, Space Cowboy…" when nothing plays.
+ *   Steins;Gate      Hover a listener: "♪ Tuturu~". Log out: "El Psy Kongroo".
+ *   Death Note       Confirm dialogs are the notebook, Ryuk watches the confirm button. Remove from queue = write the name.
+ *   My Hero Academia "PLUS ULTRA!" on filled buttons.
+ *   Re:Zero          Previous: "死に戻り (Return by Death)".
+ *   Konosuba         Delete lobby: "EXPLOSION!".
+ *   Gurren Lagann    The add button drills.
+ *   Demon Slayer     A dragged queue entry wears Tanjiro's checkered haori.
+ *   Studio Ghibli    A soot sprite hides under the listener summary (hover it).
+ *   A Certain Magical Index   Rest the pointer on Library for two seconds: 禁書目録, 103,000 grimoires.
+ *   Fullmetal Alchemist       Hover Settings: a transmutation circle. Fair queue = equivalent exchange.
+ *   Hunter x Hunter  Settings are Nen configuration.
+ *   Attack on Titan  Creating a lobby: "SHINZOU WO SASAGEYO!".
+ *   Sword Art Online / Sailor Moon   Login: "LINK START!". Register: "MOON PRISM POWER, MAKE UP!".
+ *   Haruhi           Loop on: the Endless Eight.
+ *   Yu-Gi-Oh!        Fair queue: everyone gets a turn to duel.
+ *   Mob Psycho 100   The sync ratio reads ???% when the drift is huge.
+ *   Lyrical Nanoha   The tab title: 全力全開 (full power).
+ *   Serial Experiments Lain  The console says hello. Present day, present time.
+ */
+
+@use "shell";
+@use "controls";
+@use "player";
+@use "kamehameha";
+@use "pages";
+@use "eggs";
+
+/* You read the whole index. Your power level is higher than 9000. Go touch grass (sakura counts). */

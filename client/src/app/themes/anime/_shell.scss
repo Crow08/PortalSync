@@ -1,0 +1,445 @@
+// ANIME THEME · SHELL
+// The background scene, the header (cockpit top bar), the navigation rail (with katakana) and the footer (mini player).
+@use "tokens" as *;
+@use "art" as *;
+
+/* Previously on PortalSync: everything was a rounded rectangle. Not anymore. */
+
+#{$a} {
+  // the classes are also on the overlay container (menus, dialogs): only tokens and the pointer here, no background
+  @include palette;
+  // Naruto: the pointer is a kunai (the text pointer in fields stays)
+  cursor: $kunai 2 2, auto;
+
+  a,
+  button,
+  [role="button"],
+  .mat-mdc-button-base,
+  .mat-mdc-slider,
+  mat-button-toggle {
+    cursor: $kunai 2 2, pointer;
+  }
+
+  ::selection {
+    background: var(--ani-orange);
+    color: var(--ani-ink);
+  }
+
+  // HUD scrollbars
+  scrollbar-color: var(--ani-orange) transparent;
+  scrollbar-width: thin;
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Ambient scene. Layer 1 (::before): the chosen background picture under a dark ink layer, a starfield and screentone.
+  // Layer 2 (::after): drifting sakura petals. Both are fixed, only transform and opacity are animated.
+  // ---------------------------------------------------------------------------------------------------------------------------
+  &#app-theme-container {
+    background: var(--ani-ink);
+    // moving decoration (the turning cover of the mini player, sparks, shakes) must never make the page itself scroll:
+    // a scrollbar that comes and goes would shift the whole layout
+    overflow: clip;
+  }
+
+  &#app-theme-container::before,
+  &#app-theme-container::after {
+    content: "";
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &#app-theme-container::before {
+    inset: 0;
+    background: radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 33% 72%, #fff 50%, transparent 51%),
+      radial-gradient(1.4px 1.4px at 57% 26%, #cfe9ff 50%, transparent 51%),
+      radial-gradient(1px 1px at 78% 61%, #fff 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 89% 12%, #ffe6f2 50%, transparent 51%),
+      radial-gradient(1px 1px at 22% 88%, #fff 50%, transparent 51%),
+      radial-gradient(1.3px 1.3px at 67% 92%, #cfe9ff 50%, transparent 51%),
+      radial-gradient(1px 1px at 45% 48%, #fff 50%, transparent 51%),
+      radial-gradient(ellipse 70% 60% at 85% 110%, rgb(122 60 255 / 0.35), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 0% 0%, rgb(255 106 19 / 0.18), transparent 70%),
+      linear-gradient(color-mix(in srgb, var(--ani-ink) 82%, transparent), color-mix(in srgb, var(--ani-ink) 90%, transparent)),
+      var(--ps-bg-image, none) center / cover no-repeat, var(--ani-ink);
+    animation: ani-twinkle 6s ease-in-out infinite alternate;
+  }
+
+  &#app-theme-container::after {
+    top: -320px;
+    left: -320px;
+    width: calc(100vw + 640px);
+    height: calc(100vh + 640px);
+    background: $sakura-tile 0 0 / 320px 320px repeat;
+    opacity: 0.35;
+    animation: ani-sakura 26s linear infinite;
+    will-change: transform;
+  }
+
+  // the content area shows the scene: no own background (the picture is in the scene)
+  &#app-theme-container #content {
+    background: transparent;
+  }
+
+  #header,
+  #rail,
+  #content,
+  #footer {
+    position: relative;
+    z-index: 1;
+  }
+
+  // above the rail and the content: its hazard stripe hangs below it
+  #header {
+    z-index: 2;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Header: the top bar of the cockpit, a hazard stripe as lower edge
+  // ---------------------------------------------------------------------------------------------------------------------------
+  #header {
+    background: var(--ani-scanlines),
+      linear-gradient(
+        100deg,
+        color-mix(in srgb, var(--ani-ink-2) 94%, transparent) 0 60%,
+        color-mix(in srgb, var(--ani-purple) 22%, var(--ani-ink-2))
+      );
+    border-bottom: 0;
+    box-shadow: 0 3px 0 -1px #111, 0 4px 0 0 var(--ani-gold);
+
+    &::after {
+      // hazard stripe, NERV approved
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -5px;
+      height: 5px;
+      background: var(--ani-hazard);
+      opacity: 0.85;
+      pointer-events: none;
+    }
+  }
+
+  // One Piece: the logo becomes the Jolly Roger of the PortalSync pirates
+  .brand {
+    position: relative;
+    width: 58px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      opacity: 0;
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 2px 8px;
+      background: $jolly-roger center / contain no-repeat;
+      filter: drop-shadow(0 0 6px rgb(255 106 19 / 0.5));
+      transition: transform 0.25s cubic-bezier(0.3, 1.8, 0.5, 1);
+    }
+
+    &:hover::before {
+      transform: rotate(-12deg) scale(1.15);
+    }
+
+    &:active::before {
+      transform: scale(0.85);
+    }
+  }
+
+  // the session name in a slanted title card, like an episode title
+  .session-link {
+    gap: 12px;
+  }
+
+  .session-name {
+    padding: 2px 18px 2px 12px;
+    background: linear-gradient(90deg, var(--ani-orange), color-mix(in srgb, var(--ani-orange) 60%, var(--ani-red)));
+    color: #fff;
+    font-family: var(--ani-font-display);
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-shadow: 2px 2px 0 #111;
+    transform: skewX(-12deg);
+    @include slant(8px);
+  }
+
+  // "Live" becomes an ON AIR tag
+  .live-chip {
+    height: 22px;
+    padding: 0 12px 0 10px;
+    border-radius: 0;
+    background: var(--ani-red);
+    color: #fff;
+    font-family: var(--ani-font-hud);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex: none;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
+
+    .live-dot {
+      background: #fff;
+      box-shadow: 0 0 6px #fff;
+      animation: ani-blink 1s steps(2, jump-none) infinite;
+
+      &.pending {
+        background: #111;
+        box-shadow: none;
+      }
+    }
+
+    // not live: a hazard tag
+    &:has(.pending) {
+      background: var(--ani-hazard);
+      color: #111;
+      text-shadow: 0 0 2px var(--ani-gold), 0 0 4px var(--ani-gold);
+    }
+  }
+
+  .user-name {
+    color: var(--ani-text);
+    font-family: var(--ani-font-heavy);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+
+  // the account button: an AT Field hexagon avatar
+  .account {
+    border-radius: 0;
+    @include chamfer(8px);
+
+    &:hover,
+    &[aria-expanded="true"] {
+      background: color-mix(in srgb, var(--ani-orange) 18%, var(--ani-ink-3));
+    }
+  }
+
+  .account .avatar {
+    width: 32px;
+    height: 34px;
+    border-radius: 0;
+    background: radial-gradient(circle at 50% 35%, #fff3 0, transparent 60%), var(--ani-orange);
+    color: #111;
+    font-family: var(--ani-font-heavy);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    box-shadow: none;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Navigation rail: the side console of the cockpit, with HUD ticks and katakana under the labels
+  // ---------------------------------------------------------------------------------------------------------------------------
+  #rail {
+    gap: 6px;
+    background: repeating-linear-gradient(to bottom, var(--ani-ki) 0 1px, transparent 1px 12px) right 2px top 0 / 6px 100%
+        no-repeat,
+      var(--ani-scanlines), color-mix(in srgb, var(--ani-ink-2) 92%, transparent);
+    border-right: 2px solid color-mix(in srgb, var(--ani-ki) 40%, transparent);
+  }
+
+  .rail-item {
+    position: relative;
+    height: 62px;
+    gap: 1px;
+    border-radius: 0;
+    color: var(--ani-muted);
+    font-family: var(--ani-font-heavy);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    @include chamfer(9px);
+
+    &::after {
+      // the katakana / kanji label
+      content: var(--kana, "");
+      font-family: var(--ani-font-jp);
+      font-size: var(--kana-size, 8.5px);
+      white-space: nowrap;
+      letter-spacing: 0;
+      text-transform: none;
+      color: color-mix(in srgb, var(--ani-ki) 75%, transparent);
+    }
+
+    &:hover {
+      background: var(--ani-ink-3);
+      color: var(--ani-text);
+      animation: ani-shake 0.32s linear;
+    }
+
+    &.active {
+      background: var(--ani-speedlines),
+        linear-gradient(135deg, var(--ani-orange), color-mix(in srgb, var(--ani-orange) 55%, var(--ani-red)));
+      color: #111;
+      box-shadow: inset 4px 0 0 var(--ani-gold);
+
+      .mat-icon {
+        color: #111;
+        text-shadow: none;
+      }
+
+      &::after {
+        color: #111;
+      }
+    }
+  }
+
+  .rail-player {
+    --kana: "プレイヤー";
+  }
+  .rail-lobbies {
+    --kana: "ロビー";
+  }
+  .rail-library {
+    --kana: "ライブラリ";
+  }
+  .rail-spotify {
+    --kana: "スポティファイ";
+    --kana-size: 7px;
+  }
+  .rail-settings {
+    --kana: "設定";
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Footer and mini player: the lower console, hazard stripe on top
+  // ---------------------------------------------------------------------------------------------------------------------------
+  #footer {
+    background: var(--ani-scanlines), color-mix(in srgb, var(--ani-ink-2) 94%, transparent);
+    border-top: 0;
+    box-shadow: 0 -2px 0 0 #111, 0 -5px 0 0 var(--ani-ki);
+  }
+
+  .mini-player {
+    .cover {
+      border-radius: 0;
+      clip-path: starburst(14, 40%, 50%);
+      animation: ani-spin 18s linear infinite;
+    }
+
+    .song-title {
+      font-family: var(--ani-font-display);
+      font-size: 17px;
+      letter-spacing: 0.04em;
+      font-style: italic;
+    }
+
+    .sub {
+      font-family: var(--ani-font-ui);
+      font-weight: 600;
+    }
+
+    // Pokémon: the play button is a Poké Ball here too
+    .control-buttons .play.mat-mdc-icon-button,
+    .control-buttons .play.mat-mdc-icon-button:hover:not(:disabled) {
+      clip-path: none;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff 0 9px, #111 9.5px 12px, transparent 12.5px),
+        linear-gradient(to bottom, #ee1515 0 45%, #111 45% 55%, #f4f4f4 55%);
+      color: #111;
+      box-shadow: inset 0 0 0 2px #111;
+
+      .mat-icon {
+        position: relative;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover:not(:disabled) {
+        animation: ani-catch 1.1s ease-in-out;
+      }
+    }
+
+    .side::before {
+      content: "PL";
+      color: var(--ani-ki);
+      font-family: var(--ani-font-hud);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .volume-icon {
+      display: none;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// phone: the rail is the bottom bar, no room for the katakana
+// ---------------------------------------------------------------------------------------------------------------------------
+@media (max-width: 720px) {
+  #{$a} {
+    .rail-item {
+      height: 48px;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    #rail {
+      border-right: 0;
+      border-top: 2px solid color-mix(in srgb, var(--ani-ki) 40%, transparent);
+    }
+
+    .session-name {
+      font-size: 16px;
+    }
+  }
+}
+
+@keyframes ani-sakura {
+  to {
+    transform: translate3d(320px, 320px, 0);
+  }
+}
+
+@keyframes ani-twinkle {
+  from {
+    opacity: 0.92;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ani-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes ani-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// a hit: the element shakes for a moment
+@keyframes ani-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-2px, 1px);
+  }
+  40% {
+    transform: translate(2px, -1px);
+  }
+  60% {
+    transform: translate(-1px, -1px);
+  }
+  80% {
+    transform: translate(1px, 1px);
+  }
+}

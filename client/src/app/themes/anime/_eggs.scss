@@ -1,0 +1,436 @@
+// ANIME THEME · EASTER EGGS
+// The effect layer used by AnimeThemeService (Konami code, logo clicks, secret words, the settings icon), the Super Saiyan
+// and wish modes, and the eggs that need no script at all (the library and settings icons).
+@use "tokens" as *;
+@use "art" as *;
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// The effect layer: <div class="anime-fx-root"> in <body>, one .anime-fx per effect, removed by the service
+// -----------------------------------------------------------------------------------------------------------------------------
+.anime-fx-root {
+  @include palette;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.anime-fx {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: var(--ani-speedlines), radial-gradient(circle, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 60%);
+  animation: fx-life var(--fx-ms, 2600ms) ease-out both;
+}
+
+.anime-fx-text {
+  color: #fff;
+  font-family: var(--ani-font-display);
+  font-size: clamp(42px, 9vw, 136px);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  -webkit-text-stroke: 3px #111;
+  paint-order: stroke fill;
+  text-shadow: 7px 7px 0 #111, 0 0 40px var(--fx-glow, var(--ani-orange));
+  rotate: -5deg;
+  animation: fx-slam 0.45s cubic-bezier(0.2, 1.7, 0.4, 1) both;
+}
+
+.anime-fx-sub {
+  padding: 4px 18px;
+  background: #111;
+  color: var(--fx-sub, var(--ani-gold));
+  font-family: var(--ani-font-hud);
+  font-size: clamp(12px, 1.6vw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  animation: fx-slam 0.45s 0.15s cubic-bezier(0.2, 1.7, 0.4, 1) both;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Dragon Ball: the beam crosses the screen
+.anime-fx--beam {
+  --fx-glow: var(--ani-ki);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 90px;
+    translate: 0 -50%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--ani-ki) 20%,
+      #e9fdff 42%,
+      #fff 50%,
+      #e9fdff 58%,
+      var(--ani-ki) 80%,
+      transparent
+    );
+    box-shadow: 0 0 60px 20px rgb(54 214 255 / 0.6);
+    transform-origin: left center;
+    animation: fx-beam 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+}
+
+// Jujutsu Kaisen: Domain Expansion, Infinite Void
+.anime-fx--void {
+  --fx-glow: #b28bff;
+  --fx-sub: #e2d6ff;
+  background: radial-gradient(circle, transparent 0 18%, rgb(178 139 255 / 0.55) 19% 20%, transparent 21%),
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 70% 20%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 80%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 85% 65%, #fff 50%, transparent 51%), radial-gradient(circle, #1a0b3a, #000 70%);
+}
+
+// Bleach: Bankai
+.anime-fx--bankai {
+  --fx-glow: #ff1a1a;
+  --fx-sub: #ff5a5a;
+  background: linear-gradient(160deg, transparent 47%, #ff1a1a 48% 50%, transparent 51%), #000;
+
+  .anime-fx-text {
+    font-family: var(--ani-font-jp);
+    font-style: normal;
+    color: #111;
+    -webkit-text-stroke: 2px #ff2a2a;
+  }
+}
+
+// Steins;Gate: the divergence meter in Nixie tubes
+.anime-fx--divergence {
+  --fx-glow: #ff8a1e;
+  background: radial-gradient(circle, rgb(40 15 0 / 0.85), rgb(0 0 0 / 0.92) 70%);
+
+  .anime-fx-text {
+    color: #ffb44a;
+    font-family: var(--ani-font-hud);
+    font-style: normal;
+    letter-spacing: 0.18em;
+    -webkit-text-stroke: 0;
+    text-shadow: 0 0 10px #ff8a1e, 0 0 30px #ff5a00, 0 0 60px #ff5a00;
+    rotate: 0deg;
+  }
+}
+
+// Code Geass: the sigil
+.anime-fx--geass {
+  --fx-glow: #ff1f3d;
+  --fx-sub: #ff6b80;
+  background: radial-gradient(
+      circle,
+      transparent 0 9%,
+      #ff1f3d 9.5% 10.5%,
+      transparent 11% 14%,
+      rgb(255 31 61 / 0.6) 14.5% 15%,
+      transparent 15.5%
+    ),
+    radial-gradient(circle, rgb(80 0 10 / 0.75), rgb(0 0 0 / 0.85) 70%);
+}
+
+// Dragon Ball: the eternal dragon
+.anime-fx--shenron {
+  --fx-glow: #3fd16a;
+  background: radial-gradient(ellipse at 50% 120%, rgb(30 120 50 / 0.5), transparent 60%), rgb(2 10 6 / 0.88);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12%;
+    width: 900px;
+    height: 225px;
+    background: $shenron center / contain no-repeat;
+    filter: drop-shadow(0 0 18px rgb(63 209 106 / 0.7));
+    animation: fx-dragon 4.6s ease-in-out both;
+  }
+}
+
+// Fullmetal Alchemist: transmutation
+.anime-fx--transmute {
+  --fx-glow: #5ad1ff;
+  background: radial-gradient(circle, rgb(90 209 255 / 0.25), rgb(0 0 0 / 0.75) 70%);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(80vmin, 640px);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: $transmutation-circle center / contain no-repeat;
+    filter: drop-shadow(0 0 8px #5ad1ff) drop-shadow(0 0 22px #5ad1ff);
+    animation: ani-spin 6s linear infinite;
+  }
+
+  .anime-fx-text {
+    font-family: var(--ani-font-jp);
+    font-style: normal;
+  }
+}
+
+// Super Saiyan: the golden flash
+.anime-fx--ssj {
+  --fx-glow: var(--ani-gold);
+  background: var(--ani-speedlines), radial-gradient(circle, rgb(255 230 80 / 0.85), rgb(255 160 0 / 0.2) 60%, transparent);
+
+  .anime-fx-text {
+    color: var(--ani-gold);
+  }
+}
+
+// JoJo: the rush (the service scatters the words)
+.anime-fx--ora {
+  --fx-glow: var(--ani-purple);
+  background: radial-gradient(circle, rgb(122 60 255 / 0.4), rgb(0 0 0 / 0.5) 70%);
+}
+
+.anime-fx-ora {
+  position: absolute;
+  color: #fff;
+  font-family: var(--ani-font-display);
+  font-size: clamp(28px, 5vw, 72px);
+  -webkit-text-stroke: 2px #2a0a4a;
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #111;
+  animation: fx-slam 0.3s var(--delay, 0s) cubic-bezier(0.2, 1.7, 0.4, 1) both;
+}
+
+// a screen shake (One Punch Man, Chainsaw Man)
+.anime-shake#app-theme-container {
+  animation: ani-shake 0.12s linear 4;
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// Super Saiyan mode (Konami code): gold everywhere, a flickering aura, the fighter turns blond
+// -----------------------------------------------------------------------------------------------------------------------------
+html.anime-ssj {
+  #{$a} {
+    --ani-orange: var(--ani-gold);
+    --ps-accent: var(--ani-gold);
+    --ani-purple: #ffb000;
+    --ani-scouter: #ff3b30; // the scouter overloads
+  }
+
+  #{$a}#app-theme-container::before {
+    filter: sepia(0.45) saturate(1.8) hue-rotate(-12deg) brightness(1.1);
+  }
+
+  #{$a} .ki-fighter {
+    background-image: $fighter-ssj;
+    filter: drop-shadow(0 0 6px var(--ani-gold)) drop-shadow(0 0 12px rgb(255 210 31 / 0.6));
+  }
+
+  #{$a} .time-display {
+    animation: ani-shake 0.2s linear infinite;
+  }
+
+  #{$a} .brand::after {
+    content: "SSJ";
+    position: absolute;
+    right: -6px;
+    bottom: 0;
+    padding: 0 4px;
+    background: var(--ani-gold);
+    color: #111;
+    font-family: var(--ani-font-hud);
+    font-size: 8px;
+    font-weight: 900;
+  }
+
+  // the aura: a golden glow at the edges and flames along the bottom
+  .anime-fx-root::before,
+  .anime-fx-root::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .anime-fx-root::before {
+    inset: 0;
+    box-shadow: inset 0 0 60px 12px rgb(255 210 31 / 0.55), inset 0 0 180px 40px rgb(255 160 0 / 0.22);
+    animation: ssj-aura 0.18s ease-in-out infinite alternate;
+  }
+
+  .anime-fx-root::after {
+    left: -60px;
+    right: -60px;
+    bottom: 0;
+    height: 130px;
+    background: conic-gradient(from 165deg at 50% 100%, transparent 0deg, rgb(255 225 80 / 0.55) 15deg, transparent 30deg) 0
+        100% / 46px 130px repeat-x,
+      conic-gradient(from 170deg at 50% 100%, transparent 0deg, rgb(255 180 0 / 0.4) 10deg, transparent 20deg) 23px 100% / 62px
+        100px repeat-x;
+    transform-origin: bottom;
+    animation: ssj-flames 0.22s ease-in-out infinite alternate;
+  }
+}
+
+// the wish of the dragon: a sakura storm
+html.anime-wish #{$a}#app-theme-container::after {
+  opacity: 0.85;
+  animation-duration: 8s;
+}
+
+#{$a} {
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // CSS only eggs on the navigation
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // A Certain Magical Index: rest on the library for a while and it remembers 103,000 grimoires
+  .rail-library::before {
+    content: "禁書目録\A 103,000";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-content: center;
+    background: #111;
+    color: var(--ani-gold);
+    font-family: var(--ani-font-jp);
+    font-size: 9px;
+    line-height: 1.5;
+    text-align: center;
+    white-space: pre;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .rail-library:hover::before {
+    opacity: 1;
+    transition-delay: 1.6s;
+  }
+
+  // Fullmetal Alchemist: a transmutation circle glows behind the settings icon (three quick clicks transmute)
+  .rail-settings::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 22px;
+    width: 46px;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: $transmutation-circle center / contain no-repeat;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .rail-settings:hover::before {
+    opacity: 0.6;
+    animation: ani-spin 3s linear infinite;
+  }
+
+  .rail-settings .mat-icon {
+    position: relative;
+    transition: rotate 0.5s;
+  }
+
+  .rail-settings:hover .mat-icon {
+    rotate: 180deg;
+  }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// Reduced motion: everything stands still. The effects still show (statically) until the service removes them.
+// -----------------------------------------------------------------------------------------------------------------------------
+@media (prefers-reduced-motion: reduce) {
+  #{$a},
+  #{$a} *,
+  #{$a}::before,
+  #{$a}::after,
+  #{$a} *::before,
+  #{$a} *::after,
+  .anime-fx-root,
+  .anime-fx-root *,
+  .anime-fx-root::before,
+  .anime-fx-root::after,
+  .anime-fx-root *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes fx-life {
+  0% {
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fx-slam {
+  0% {
+    opacity: 0;
+    scale: 2.6;
+  }
+  60% {
+    opacity: 1;
+    scale: 0.92;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes fx-beam {
+  from {
+    scale: 0 0.3;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes fx-dragon {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 120vw -40px;
+  }
+}
+
+@keyframes ssj-aura {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ssj-flames {
+  from {
+    scale: 1 0.85;
+    opacity: 0.8;
+  }
+  to {
+    scale: 1 1.08;
+    opacity: 1;
+  }
+}

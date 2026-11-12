@@ -1,10 +1,11 @@
-import { NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { AuthGuard } from './auth.guard';
 import { AppComponent } from './app.component';
+import { AnimeThemeService } from './themes/anime/anime-theme.service';
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { SessionBrowserComponent } from './components/sessions/browser/session-browser.component';
@@ -123,5 +124,9 @@ import { InviteComponent } from './components/invite/invite.component';
             useClass: ThemeAwareOverlayContainer,
         },
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
+        // the anime theme needs a little script (easter eggs, texts); it watches the chosen theme from the start
+        provideAppInitializer(() => {
+            inject(AnimeThemeService);
+        }),
     ] })
 export class AppModule {}

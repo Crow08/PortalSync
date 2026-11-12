@@ -30,25 +30,25 @@
   <!-- Navigation -->
   <nav aria-label="Main" id="rail">
     @if (sessionId) {
-      <a [routerLink]="['/sessions', sessionId, 'lobby']" [class.active]="isActive('room')" class="rail-item">
+      <a [routerLink]="['/sessions', sessionId, 'lobby']" [class.active]="isActive('room')" class="rail-item rail-player">
         <mat-icon>graphic_eq</mat-icon>
         <span>Player</span>
       </a>
     }
-    <a [class.active]="isActive('rooms')" class="rail-item" routerLink="/">
+    <a [class.active]="isActive('rooms')" class="rail-item rail-lobbies" routerLink="/">
       <mat-icon>video_library</mat-icon>
       <span>Lobbies</span>
     </a>
-    <a [class.active]="isActive('library')" class="rail-item" routerLink="library">
+    <a [class.active]="isActive('library')" class="rail-item rail-library" routerLink="library">
       <mat-icon>playlist_play</mat-icon>
       <span>Library</span>
     </a>
     <div class="spacer"></div>
-    <a [class.active]="isActive('spotify')" class="rail-item" routerLink="spotify/import">
+    <a [class.active]="isActive('spotify')" class="rail-item rail-spotify" routerLink="spotify/import">
       <mat-icon>library_music</mat-icon>
       <span>Spotify</span>
     </a>
-    <a [class.active]="isActive('settings')" class="rail-item" routerLink="settings">
+    <a [class.active]="isActive('settings')" class="rail-item rail-settings" routerLink="settings">
       <mat-icon>tune</mat-icon>
       <span>Settings</span>
     </a>

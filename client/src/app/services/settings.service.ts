@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 /**
  * Delay (ms) between the resume() call of the Spotify player and the audible start. Measured on one device with a
@@ -22,7 +23,7 @@ export const NO_BACKGROUND = 'none';
 const BACKGROUND_LIST_URL = 'assets/backgrounds/backgrounds.json';
 
 /** The color theme; ids and colors: src/app/themes/themes.scss (class theme-<id>), the colors here only draw the choice. */
-export type Theme = 'ocean' | 'mint' | 'violet' | 'amber' | 'mono';
+export type Theme = 'ocean' | 'mint' | 'violet' | 'amber' | 'mono' | 'anime';
 export const DEFAULT_THEME: Theme = 'ocean';
 export const THEMES: { value: Theme; label: string; accent: string; surface: string }[] = [
   { value: 'ocean', label: 'Ocean', accent: '#3fb4ff', surface: '#101826' },
@@ -30,6 +31,7 @@ export const THEMES: { value: Theme; label: string; accent: string; surface: str
   { value: 'violet', label: 'Violet', accent: '#b794ff', surface: '#19171e' },
   { value: 'amber', label: 'Amber', accent: '#ffbe5c', surface: '#1c1711' },
   { value: 'mono', label: 'Mono', accent: '#cfcfcf', surface: '#181818' },
+  { value: 'anime', label: "Hawky's Theme", accent: '#ff6a13', surface: '#13152e' },
 ];
 
 @Injectable({
@@ -77,6 +79,9 @@ export class SettingsService {
   /** Read by the app shell on every change detection, like the background. */
   private currentTheme: Theme = SettingsService.readTheme();
 
+  /** The chosen theme and its changes, for code that has to react (the anime theme: AnimeThemeService). */
+  readonly themeChanges = new BehaviorSubject<Theme>(this.currentTheme);
+
   private static readTheme(): Theme {
     try {
       const value = localStorage.getItem('msc_theme');
@@ -92,6 +97,7 @@ export class SettingsService {
 
   set theme(value: Theme) {
     this.currentTheme = value;
+    this.themeChanges.next(value);
     try {
       localStorage.setItem('msc_theme', value);
     } catch {

@@ -1,0 +1,802 @@
+// ANIME THEME · PLAYER (the room)
+// Stage = an anime opening (speed lines, menacing ゴゴゴ, a wanted poster as album art in front of a turning magic circle),
+// transport bar = the cockpit console (NOW FIGHTING banner, Dragon Ball rating, Poké Ball play button, power level volume),
+// side panel = AT Field with the queue (the current title is the boss) and the crew (wanted posters, MAGI status).
+@use "tokens" as *;
+@use "art" as *;
+
+// the room while the session plays (the play button then offers "Pause")
+$playing: ":has(.play[aria-label='Pause'])";
+
+#{$a} app-room {
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Stage
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .stage {
+    background: var(--ani-ink);
+  }
+
+  .cover-stage {
+    isolation: isolate;
+    container-type: size;
+    background: radial-gradient(ellipse at 30% 45%, color-mix(in srgb, var(--ani-purple) 50%, transparent), transparent 62%),
+      radial-gradient(ellipse at 85% 90%, color-mix(in srgb, var(--ani-orange) 25%, transparent), transparent 55%),
+      var(--ani-halftone), var(--ani-ink);
+
+    // speed lines, turning very slowly around the center
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      z-index: -2;
+      background: var(--ani-speedlines);
+      mask-image: radial-gradient(circle, transparent 10%, #000 40%);
+      opacity: 0.9;
+      animation: ani-spin 160s linear infinite;
+      will-change: transform;
+    }
+
+    // JoJo: menacing, only while the session plays
+    &::after {
+      content: "ゴ ゴ ゴ ゴ";
+      position: absolute;
+      top: 6%;
+      right: 3%;
+      z-index: 1;
+      color: color-mix(in srgb, var(--ani-purple) 70%, #fff);
+      font-family: var(--ani-font-jp);
+      font-size: clamp(22px, 9cqh, 64px);
+      writing-mode: vertical-rl;
+      text-shadow: 3px 3px 0 #111;
+      opacity: 0;
+      transition: opacity 0.6s;
+      pointer-events: none;
+    }
+  }
+
+  // a narrow stage puts the title under the poster: both have to share the height
+  @container (max-width: 760px) {
+    .cover {
+      --poster: min(200px, 30cqh);
+    }
+
+    .cover-title {
+      font-size: clamp(22px, 8cqh, 60px);
+    }
+  }
+
+  // a short stage (phones, small windows): a smaller poster, no title card label
+  @container (max-height: 360px) {
+    .cover {
+      --poster: min(240px, 40cqh);
+    }
+
+    .cover-text::before {
+      display: none;
+    }
+  }
+
+  &#{$playing} .cover-stage::after {
+    opacity: 0.85;
+    animation: ani-menace 0.6s steps(2, jump-none) infinite;
+  }
+
+  // One Piece: the album art is a wanted poster in front of a turning magic circle
+  .cover {
+    position: relative;
+    box-sizing: border-box;
+    // the width of the poster; borders and texts scale with it, so they always fit on the paper
+    --poster: min(240px, 56cqh);
+    width: var(--poster);
+    aspect-ratio: 3 / 4;
+    border: solid var(--ani-paper);
+    border-width: calc(var(--poster) * 0.23) calc(var(--poster) * 0.07) calc(var(--poster) * 0.34);
+    border-radius: 0;
+    box-shadow: 0 0 0 2px #6b4a2a, 14px 14px 0 rgb(0 0 0 / 0.5), 0 0 70px rgb(255 106 19 / 0.25);
+    transition: box-shadow 0.3s;
+
+    // (no transform here: it would make the poster a stacking context and put the magic circle in front of it)
+    &:hover {
+      box-shadow: 0 0 0 2px #6b4a2a, 14px 14px 0 rgb(0 0 0 / 0.5), 0 0 90px rgb(54 214 255 / 0.55);
+    }
+
+    // the magic circle behind the poster
+    &::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: -1;
+      width: 175%;
+      aspect-ratio: 1;
+      translate: -50% -50%;
+      background: magic-circle("#36d6ff") center / contain no-repeat;
+      opacity: 0.55;
+      filter: drop-shadow(0 0 6px rgb(54 214 255 / 0.8));
+      animation: ani-spin 40s linear infinite;
+      pointer-events: none;
+    }
+
+    &::after {
+      content: "WANTED";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      color: var(--ani-paper-ink);
+      font-family: var(--ani-font-display);
+      font-size: calc(var(--poster) * 0.14);
+      letter-spacing: 0.08em;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    // the icon is the photo: a silhouette; its pseudo elements write the bottom of the poster
+    .mat-icon {
+      position: static;
+      color: rgb(0 0 0 / 0.35);
+      font-size: calc(var(--poster) * 0.39);
+      width: calc(var(--poster) * 0.39);
+      height: calc(var(--poster) * 0.39);
+
+      &::before,
+      &::after {
+        position: absolute;
+        left: 0;
+        right: 0;
+        color: var(--ani-paper-ink);
+        line-height: 1.1;
+        text-align: center;
+        font-feature-settings: normal;
+      }
+
+      &::before {
+        content: "DEAD OR ALIVE";
+        top: calc(100% + var(--poster) * 0.03);
+        font-family: var(--ani-font-heavy);
+        font-size: calc(var(--poster) * 0.058);
+        letter-spacing: 0.12em;
+      }
+
+      // Luffy's bounty after Wano, written with the Berry sign
+      &::after {
+        content: "฿ 3,000,000,000-";
+        top: calc(100% + var(--poster) * 0.12);
+        font-family: "Times New Roman", serif;
+        font-size: calc(var(--poster) * 0.075);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  // the title card of an episode
+  .cover-text::before {
+    content: "NOW FIGHTING ▸ 第壱話";
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 14px 3px 10px;
+    background: var(--ani-red);
+    color: #fff;
+    font-family: var(--ani-font-hud);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    @include slant(7px);
+  }
+
+  .cover-title {
+    color: var(--ani-gold);
+    font-family: var(--ani-font-display);
+    font-size: clamp(30px, 11cqh, 60px);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    -webkit-text-stroke: 1.5px #111;
+    paint-order: stroke fill;
+    text-shadow: 4px 4px 0 #111, 0 0 26px rgb(255 106 19 / 0.55);
+  }
+
+  .cover-sub {
+    margin-top: 10px;
+    color: var(--ani-text);
+    font-family: var(--ani-font-ui);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  // Evangelion: hints are NERV warning panels
+  .chip.hint {
+    height: auto;
+    padding: 6px 14px;
+    border: 3px solid transparent;
+    border-radius: 0;
+    background: linear-gradient(var(--ani-ink), var(--ani-ink)) padding-box, var(--ani-hazard) border-box;
+    color: var(--ani-gold);
+    font-family: var(--ani-font-hud);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    &::before {
+      content: "警告";
+      margin-right: 4px;
+      padding: 1px 6px;
+      background: var(--ani-red);
+      color: #fff;
+      font-family: var(--ani-font-jp);
+      animation: ani-blink 0.9s steps(2, jump-none) infinite;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Transport bar: the cockpit console
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .bar {
+    position: relative;
+    // narrow consoles drop decoration first (see the container query below)
+    container-type: inline-size;
+    padding-top: 24px;
+    border-top: 0;
+    background: var(--ani-scanlines),
+      linear-gradient(180deg, color-mix(in srgb, var(--ani-ki) 10%, var(--ani-ink-2)), var(--ani-ink-2) 40%);
+    box-shadow: inset 0 2px 0 var(--ani-ki), inset 0 4px 0 #111;
+
+    // a tab on the upper edge
+    &::before {
+      content: "SYNC LINK ▸ 同調";
+      position: absolute;
+      top: -15px;
+      left: 20px;
+      z-index: 2;
+      padding: 1px 20px 0 12px;
+      background: var(--ani-ki);
+      color: #06121a;
+      font-family: var(--ani-font-hud);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      line-height: 14px;
+      clip-path: polygon(0 100%, 8px 0, calc(100% - 8px) 0, 100% 100%);
+    }
+  }
+
+  .transport {
+    margin-top: 10px;
+  }
+
+  // NOW FIGHTING banner and a boss health bar under the title
+  .now-text::before {
+    content: "NOW FIGHTING";
+    display: block;
+    white-space: nowrap;
+    color: var(--ani-red);
+    font-family: var(--ani-font-hud);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+  }
+
+  .now-text::after {
+    content: "";
+    display: block;
+    height: 5px;
+    margin-top: 3px;
+    background: linear-gradient(90deg, var(--ani-red), var(--ani-orange) 70%, var(--ani-gold));
+    box-shadow: 0 0 0 1px #111, 0 0 8px rgb(255 45 85 / 0.5);
+    mask-image: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 12px);
+    animation: ani-boss 2.4s ease-in-out infinite;
+  }
+
+  .now-cover {
+    border-radius: 0;
+    clip-path: polygon(0 0, 100% 10%, 92% 100%, 6% 90%);
+  }
+
+  .now-title {
+    font-family: var(--ani-font-display);
+    font-size: 19px;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  .now-sub {
+    font-family: var(--ani-font-ui);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  // the transport keys: chamfered by background layers (no clip-path, so the shouts can leave the button)
+  .buttons {
+    gap: 8px;
+  }
+
+  .buttons .mat-mdc-icon-button,
+  .options .mat-mdc-icon-button {
+    position: relative;
+    overflow: visible;
+    clip-path: none;
+    @include chamfer-bg(color-mix(in srgb, var(--ani-ki) 12%, var(--ani-ink-3)));
+    box-shadow: inset 0 -2px 0 var(--ani-ki);
+
+    &:hover:not(:disabled) {
+      @include chamfer-bg(color-mix(in srgb, var(--ani-ki) 30%, var(--ani-ink-3)));
+    }
+  }
+
+  // JoJo: the next title is "to be continued", the time skip is King Crimson; Re:Zero: previous is Return by Death
+  .buttons [aria-label="Next"]:hover::after {
+    @include shout-bubble("TO BE CONTINUED ⟹");
+    border-radius: 0;
+    background: #c9a227;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+    padding-right: 18px;
+  }
+
+  .buttons [aria-label="Previous"]:hover::after {
+    @include shout-bubble("死に戻り!( Return by Death)");
+  }
+
+  .buttons [aria-label^="Skip "]:hover::after {
+    @include shout-bubble("KING CRIMSON!");
+    background: var(--ani-red);
+    color: #fff;
+  }
+
+  .options [aria-label="Fullscreen"]:hover::after {
+    @include shout-bubble("GEAR 5!");
+  }
+
+  // Pokémon: the play button is a Poké Ball; hover wobbles like a catch
+  .play.mat-mdc-unelevated-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 11px, #111 11.5px 15px, transparent 15.5px),
+      linear-gradient(to bottom, #ee1515 0 45%, #111 45% 55%, #f4f4f4 55%);
+    color: #111;
+    box-shadow: inset 0 0 0 3px #111, inset -6px -8px 0 rgb(0 0 0 / 0.15), 0 0 16px rgb(238 21 21 / 0.45);
+
+    .mat-icon {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+    }
+
+    &:hover {
+      animation: ani-catch 1.1s ease-in-out;
+    }
+  }
+
+  &#{$playing} .play.mat-mdc-unelevated-button {
+    animation: ani-ball-glow 1.2s ease-in-out infinite alternate;
+
+    &:hover {
+      animation: ani-catch 1.1s ease-in-out, ani-ball-glow 1.2s ease-in-out infinite alternate;
+    }
+  }
+
+  // the volume is the power level
+  .options {
+    gap: 4px;
+
+    &::before {
+      content: "POWER LV";
+      color: var(--ani-ki);
+      font-family: var(--ani-font-hud);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+
+    .volume-icon {
+      display: none;
+    }
+  }
+
+  @container (max-width: 760px) {
+    .now-cover,
+    .options::before {
+      display: none;
+    }
+
+    .buttons {
+      gap: 4px;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Side panel: AT Field, queue and crew
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .side {
+    border-left: 2px solid color-mix(in srgb, var(--ani-ki) 45%, transparent);
+    background: hex-tile("#36d6ff", 0.13) 0 0 / 27.7px 48px, var(--ani-scanlines),
+      color-mix(in srgb, var(--ani-ink-2) 94%, transparent);
+  }
+
+  .tabs {
+    margin: 12px 4px 10px;
+
+    .mat-button-toggle-label-content::after {
+      margin-left: 6px;
+      font-family: var(--ani-font-jp);
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    [value="queue"] .mat-button-toggle-label-content::after {
+      content: "キュー";
+    }
+
+    // One Piece: the people are the nakama
+    [value="people"] .mat-button-toggle-label-content::after {
+      content: "仲間";
+    }
+  }
+
+  .queue-head .label {
+    color: var(--ani-ki);
+    font-family: var(--ani-font-hud);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  // Naruto: shuffle spins like a Rasengan
+  .queue-head [aria-label="Shuffle queue"]:hover .mat-icon {
+    color: var(--ani-ki);
+    text-shadow: 0 0 8px var(--ani-ki), 0 0 16px var(--ani-ki);
+    animation: ani-spin 0.35s linear infinite;
+  }
+
+  // Gurren Lagann: the add button is a drill that pierces the heavens
+  .queue-head [aria-label="Add from the library"]:hover .mat-icon {
+    color: var(--ani-orange);
+    animation: ani-spin 0.25s linear infinite;
+  }
+
+  // One Piece: "scroll to the current media" is a Log Pose
+  .queue-head [aria-label^="Scroll to the current"] .mat-icon {
+    color: transparent;
+    background: $log-pose center / 20px no-repeat;
+  }
+
+  .queue-head [aria-label^="Scroll to the current"]:hover .mat-icon {
+    animation: ani-needle 0.8s ease-in-out infinite;
+  }
+
+  .queue-head .on {
+    color: var(--ani-gold);
+  }
+
+  .row {
+    overflow: hidden;
+    border-radius: 0;
+    font-family: var(--ani-font-ui);
+    font-size: 15px;
+    font-weight: 600;
+
+    // a sweep of light under the pointer
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, transparent 30%, rgb(54 214 255 / 0.22) 45%, transparent 60%);
+      translate: -100% 0;
+      pointer-events: none;
+    }
+
+    &:hover {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-ki) 18%, transparent), transparent 80%);
+      box-shadow: inset 3px 0 0 var(--ani-ki);
+
+      &::after {
+        animation: ani-sweep 0.45s ease-out;
+      }
+    }
+
+    &.history .row-title {
+      text-decoration: line-through color-mix(in srgb, var(--ani-red) 60%, transparent);
+    }
+
+    // the current title is the boss of this episode; JoJo menaces it
+    &.current {
+      background: linear-gradient(
+        100deg,
+        color-mix(in srgb, var(--ani-red) 45%, transparent),
+        color-mix(in srgb, var(--ani-orange) 20%, transparent) 70%,
+        transparent
+      );
+      box-shadow: inset 4px 0 0 var(--ani-gold), inset 0 0 0 1px color-mix(in srgb, var(--ani-gold) 50%, transparent);
+      padding-right: 54px;
+
+      .lead {
+        color: var(--ani-gold);
+      }
+
+      .row-title {
+        font-family: var(--ani-font-display);
+        font-size: 17px;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+      }
+
+      &::before {
+        content: "ゴゴゴ";
+        position: absolute;
+        right: 8px;
+        top: calc(50% - 0.65em);
+        color: color-mix(in srgb, var(--ani-purple) 60%, #fff);
+        font-family: var(--ani-font-jp);
+        font-size: 13px;
+        text-shadow: 2px 2px 0 #111;
+        animation: ani-menace 0.5s steps(2, jump-none) infinite;
+      }
+    }
+
+    // Demon Slayer: the dragged placeholder wears Tanjiro's haori
+    &.placeholder {
+      background: repeating-conic-gradient(#1f6b45 0 25%, #111 0 50%) 0 0 / 16px 16px;
+      opacity: 0.75;
+    }
+  }
+
+  .row .row-remove.mat-mdc-icon-button:hover {
+    color: var(--ani-red);
+  }
+
+  // the crew: wanted posters
+  .person {
+    border-radius: 0;
+    font-family: var(--ani-font-ui);
+
+    &:hover {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-orange) 18%, transparent), transparent);
+      box-shadow: inset 3px 0 0 var(--ani-orange);
+    }
+
+    // Steins;Gate: Mayuri says hello
+    &:hover .person-name::after {
+      content: " ♪ Tuturu~";
+      color: var(--ani-sakura);
+      font-family: var(--ani-font-display);
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  .person-name {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .person .avatar {
+    width: 30px;
+    height: 38px;
+    border: solid var(--ani-paper);
+    border-width: 8px 3px 5px;
+    border-radius: 0;
+    color: #111;
+    font-family: var(--ani-font-heavy);
+    box-shadow: 0 0 0 1px #6b4a2a, 3px 3px 0 rgb(0 0 0 / 0.5);
+    rotate: -3deg;
+  }
+
+  .state.ready {
+    color: var(--ani-eva);
+    text-shadow: 0 0 8px var(--ani-eva);
+  }
+
+  .out-of-sync {
+    animation: ani-blink 0.7s steps(2, jump-none) infinite;
+  }
+
+  // Evangelion: the summary is the MAGI; Ghibli: a soot sprite lives under it
+  .summary {
+    position: relative;
+    flex-wrap: wrap;
+    overflow: hidden;
+    border-top: 2px solid color-mix(in srgb, var(--ani-ki) 45%, transparent);
+    background: var(--ani-scanlines), color-mix(in srgb, var(--ani-ink) 70%, transparent);
+    font-family: var(--ani-font-hud);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+
+    &::before {
+      content: "MAGI ▸ MELCHIOR-1 ▣ BALTHASAR-2 ▣ CASPER-3 ▣";
+      flex-basis: 100%;
+      color: var(--ani-eva);
+      font-size: 8.5px;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-shadow: 0 0 6px var(--ani-eva);
+      animation: ani-blink 2.4s steps(2, jump-none) infinite;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      right: 14px;
+      bottom: -26px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 45%, #fff 0 2.2px, #000 2.6px 3.6px, transparent 4px),
+        radial-gradient(circle at 64% 45%, #fff 0 2.2px, #000 2.6px 3.6px, transparent 4px),
+        radial-gradient(circle, #111 0 54%, transparent 56%), repeating-conic-gradient(#111 0 7deg, transparent 7deg 14deg);
+      transition: bottom 0.3s cubic-bezier(0.3, 1.8, 0.5, 1);
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      bottom: 4px;
+    }
+  }
+
+  .summary-sub {
+    color: var(--ani-ki);
+  }
+
+  .avatar.small {
+    border-radius: 0;
+    border-color: var(--ani-paper);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+
+  .resize-handle::after {
+    background: var(--ani-orange);
+    box-shadow: 0 0 10px var(--ani-orange);
+  }
+}
+
+// Dragon Ball: the rating stars are Dragon Balls with one to five stars; unrated balls are stone (like after a wish)
+#{$a} app-rating-star {
+  .star {
+    position: relative;
+    border-radius: 50%;
+
+    .mat-icon {
+      opacity: 0;
+    }
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    &::before {
+      background: radial-gradient(circle at 34% 30%, rgb(255 255 255 / 0.45) 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 55%, #8d93ad, #4b5068 72%, #2c3046);
+      box-shadow: inset -2px -3px 0 rgb(0 0 0 / 0.25);
+    }
+
+    &::after {
+      content: "★";
+      display: grid;
+      place-content: center;
+      color: #6b7090;
+      font-size: 7px;
+      line-height: 0.85;
+      letter-spacing: -0.5px;
+      text-align: center;
+      white-space: pre;
+    }
+
+    &:nth-child(2)::after {
+      content: "★★";
+    }
+
+    &:nth-child(3)::after {
+      content: "★\A★★";
+    }
+
+    &:nth-child(4)::after {
+      content: "★★\A★★";
+    }
+
+    &:nth-child(5)::after {
+      content: "★★\A★\A★★";
+    }
+
+    &.filled::before {
+      background: radial-gradient(circle at 34% 30%, #fff 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 55%, #ffc24a, #ff8a00 62%, #c55a00);
+      box-shadow: inset -2px -3px 0 rgb(0 0 0 / 0.2), 0 0 10px rgb(255 140 0 / 0.7);
+    }
+
+    &.filled::after {
+      color: #d1001f;
+    }
+  }
+
+  .average {
+    font-family: var(--ani-font-hud);
+    font-size: 10px;
+  }
+}
+
+@keyframes ani-menace {
+  0% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 2px -1px;
+  }
+}
+
+@keyframes ani-boss {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes ani-catch {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  10% {
+    rotate: -20deg;
+  }
+  20% {
+    rotate: 16deg;
+  }
+  30% {
+    rotate: 0deg;
+  }
+  45% {
+    rotate: -14deg;
+  }
+  55% {
+    rotate: 10deg;
+  }
+  65% {
+    rotate: 0deg;
+  }
+  78% {
+    rotate: -8deg;
+  }
+  88% {
+    rotate: 5deg;
+  }
+}
+
+@keyframes ani-ball-glow {
+  from {
+    box-shadow: inset 0 0 0 3px #111, inset -6px -8px 0 rgb(0 0 0 / 0.15), 0 0 10px rgb(238 21 21 / 0.35);
+  }
+  to {
+    box-shadow: inset 0 0 0 3px #111, inset -6px -8px 0 rgb(0 0 0 / 0.15), 0 0 26px rgb(238 21 21 / 0.8);
+  }
+}
+
+@keyframes ani-needle {
+  0%,
+  100% {
+    rotate: -20deg;
+  }
+  50% {
+    rotate: 25deg;
+  }
+}
+
+@keyframes ani-sweep {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 100% 0;
+  }
+}

@@ -1,0 +1,249 @@
+// ANIME THEME · PAGES
+// Lobbies as manga panels, the library as a mission log, settings with Nen, the upload as a summoning circle, login as
+// "Link Start!". The shouts of the filled buttons (--shout) are set per page here.
+@use "tokens" as *;
+@use "art" as *;
+
+#{$a} {
+  // page titles everywhere: an episode title with a kanji subtitle
+  .page-title {
+    color: var(--ani-gold);
+    font-family: var(--ani-font-display);
+    font-size: 34px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.05em;
+    -webkit-text-stroke: 1px #111;
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 #111;
+
+    &::after {
+      content: var(--title-kana, "");
+      margin-left: 12px;
+      color: var(--ani-ki);
+      font-family: var(--ani-font-jp);
+      font-size: 14px;
+      font-style: normal;
+      letter-spacing: 0.1em;
+      -webkit-text-stroke: 0;
+      text-shadow: none;
+    }
+  }
+
+  #content h2,
+  #content h3 {
+    font-family: var(--ani-font-heavy);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // panels on the pages: manga frames
+  app-settings .panel,
+  app-upload .panel,
+  app-spotify-import .panel,
+  app-home .side > *,
+  app-session-creator .panel,
+  app-invite .panel {
+    border: 2px solid #111;
+    border-radius: 0;
+    background: var(--ani-halftone), color-mix(in srgb, var(--ani-ink-2) 94%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ani-ki) 30%, transparent), 7px 7px 0 rgb(0 0 0 / 0.5);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Lobbies: every lobby is a manga panel; "Join" believes it
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .room-card {
+    border: 2px solid #111;
+    border-radius: 0;
+    background: var(--ani-ink-2);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ani-ki) 30%, transparent), 8px 8px 0 rgb(0 0 0 / 0.55);
+    transition: translate 0.15s, box-shadow 0.15s;
+
+    &:hover {
+      translate: -2px -2px;
+      box-shadow: 0 0 0 2px var(--ani-orange), 10px 10px 0 rgb(0 0 0 / 0.6);
+    }
+
+    .cover {
+      position: relative;
+      border-radius: 0;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--ani-speedlines), radial-gradient(circle, rgb(0 0 0 / 0.35) 1px, transparent 1.6px) 0 0 / 6px 6px;
+        mix-blend-mode: overlay;
+        pointer-events: none;
+      }
+    }
+
+    .chips,
+    .delete {
+      position: relative;
+      z-index: 1;
+    }
+
+    .chip {
+      border-radius: 0;
+      font-family: var(--ani-font-hud);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      @include slant(5px);
+    }
+
+    // Konosuba: deleting a lobby is an EXPLOSION
+    .delete:hover::after {
+      @include shout-bubble("EXPLOSION!");
+      background: var(--ani-red);
+      color: #fff;
+    }
+
+    .name {
+      font-family: var(--ani-font-display);
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+
+    .now,
+    .count {
+      font-family: var(--ani-font-ui);
+      font-weight: 600;
+    }
+
+    .avatar {
+      border-radius: 0;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    }
+
+    // Naruto: believe it!
+    .mat-mdc-unelevated-button.mat-primary {
+      --shout: "BELIEVE IT! (dattebayo)";
+    }
+  }
+
+  app-session-browser .empty,
+  .library .empty,
+  .library .hint {
+    font-family: var(--ani-font-display);
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    color: var(--ani-muted);
+  }
+
+  // Attack on Titan: creating a lobby dedicates hearts
+  app-session-creator #submit-button {
+    --shout: "SHINZOU WO SASAGEYO!";
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Library: the mission log
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .collection {
+    border-radius: 0;
+    font-family: var(--ani-font-heavy);
+    letter-spacing: 0.04em;
+    @include chamfer(8px);
+
+    &.on {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-orange) 40%, transparent), transparent);
+      box-shadow: inset 3px 0 0 var(--ani-orange);
+    }
+  }
+
+  .library .row {
+    border-radius: 0;
+    font-family: var(--ani-font-ui);
+    font-weight: 600;
+
+    &:hover {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-ki) 16%, transparent), transparent 85%);
+      box-shadow: inset 3px 0 0 var(--ani-ki);
+    }
+
+    &.on {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-orange) 26%, transparent), transparent 85%);
+      box-shadow: inset 4px 0 0 var(--ani-orange);
+    }
+
+    .title {
+      font-size: 15px;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Settings, upload, Spotify import
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Hunter x Hunter: settings are Nen training
+  app-settings {
+    --title-kana: "設定 · 念 (Nen) configuration";
+  }
+
+  app-upload {
+    --title-kana: "召喚 · summoning";
+  }
+
+  app-spotify-import {
+    --title-kana: "輸入 · import jutsu";
+  }
+
+  // the theme swatch of this theme burns
+  app-settings .swatch {
+    border-radius: 0;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+
+  // the upload drop zone is a summoning circle
+  .dropzone {
+    border-radius: 0;
+    background: magic-circle("#ff6a13") center / auto 140% no-repeat, color-mix(in srgb, var(--ani-ink-2) 90%, transparent);
+    background-blend-mode: normal;
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--ani-orange) 12%, var(--ani-ink-2));
+    }
+  }
+
+  .dropzone-title {
+    font-family: var(--ani-font-display);
+    font-size: 22px;
+    letter-spacing: 0.05em;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Login and register: Sword Art Online and Sailor Moon
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .auth .brand {
+    background: var(--ani-speedlines), radial-gradient(ellipse at 20% 100%, var(--ani-purple) 0, transparent 70%),
+      var(--ani-ink-2);
+
+    // the image keeps its size; its own picture is moved out of the box and the Jolly Roger is drawn as its background
+    img {
+      object-position: -9999px 0;
+      background: $jolly-roger center / contain no-repeat;
+    }
+
+    h1 {
+      color: var(--ani-gold);
+      font-family: var(--ani-font-display);
+      font-size: 34px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      -webkit-text-stroke: 1px #111;
+      paint-order: stroke fill;
+      text-shadow: 3px 3px 0 #111;
+    }
+  }
+
+  app-login #submit-button {
+    --shout: "LINK START!";
+  }
+
+  app-register button[type="submit"] {
+    --shout: "MOON PRISM POWER, MAKE UP!";
+  }
+}

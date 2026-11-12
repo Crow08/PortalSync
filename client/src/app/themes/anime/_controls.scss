@@ -1,0 +1,451 @@
+// ANIME THEME · CONTROLS
+// Material components everywhere: buttons as slanted attack cards, toggle groups as skewed tabs, manga panel dialogs,
+// speech bubble toasts, NERV error panels, Poké Ball spinners, power level sliders.
+@use "tokens" as *;
+@use "art" as *;
+
+#{$a} {
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Filled buttons: skewed cards with a comic drop shadow. Hover is an attack: shake, flash and a shout bubble.
+  // The shout is --shout (PLUS ULTRA! by default, other pages set their own, see _pages.scss).
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .mat-mdc-unelevated-button.mat-primary:not(.play) {
+    --shout: "PLUS ULTRA!";
+    // the hit animation keeps the skew (see ani-hit)
+    --ani-base-transform: skewX(-14deg);
+    overflow: visible;
+    border-radius: 0;
+    background: linear-gradient(
+        100deg,
+        transparent 0 62%,
+        rgb(255 255 255 / 0.28) 62% 66%,
+        transparent 66% 70%,
+        rgb(255 255 255 / 0.18) 70% 72%,
+        transparent 72%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ani-orange) 80%, #fff),
+        var(--ani-orange) 55%,
+        color-mix(in srgb, var(--ani-orange) 75%, var(--ani-red))
+      );
+    color: #111;
+    font-family: var(--ani-font-heavy);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transform: skewX(-14deg);
+    box-shadow: 4px 4px 0 #111, var(--ps-neon-box);
+
+    .mdc-button__label,
+    > .mat-icon,
+    .mat-mdc-progress-spinner {
+      display: inline-block;
+      transform: skewX(14deg);
+    }
+
+    &:hover:not(:disabled) {
+      animation: ani-hit 0.34s linear;
+
+      &::after {
+        content: var(--shout);
+        position: absolute;
+        right: -14px;
+        bottom: calc(100% + 6px);
+        z-index: 5;
+        padding: 3px 10px;
+        border: 2px solid #111;
+        border-radius: 50%;
+        background: var(--ani-paper);
+        color: #111;
+        font-family: var(--ani-font-display);
+        font-size: 15px;
+        letter-spacing: 0.04em;
+        line-height: 1.2;
+        white-space: nowrap;
+        transform: skewX(14deg) rotate(4deg);
+        pointer-events: none;
+        animation: ani-pop 0.28s cubic-bezier(0.3, 1.8, 0.5, 1) both;
+      }
+    }
+
+    &:disabled {
+      background: repeating-linear-gradient(-45deg, var(--ani-ink-3) 0 6px, var(--ani-ink-2) 6px 12px);
+      color: var(--ani-muted);
+      box-shadow: none;
+    }
+  }
+
+  // text buttons ("Keep", "Cancel"): HUD labels with a slash underline
+  .mat-mdc-button:not(.mat-mdc-unelevated-button) {
+    border-radius: 0;
+    font-family: var(--ani-font-heavy);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+
+    &:hover {
+      box-shadow: inset 0 -3px 0 var(--ani-ki);
+    }
+  }
+
+  // icon buttons: chamfered cockpit keys; hover hits
+  .mat-mdc-icon-button {
+    border-radius: 0;
+    @include chamfer(7px);
+
+    .mat-mdc-button-persistent-ripple,
+    .mat-mdc-button-ripple,
+    .mat-ripple-element {
+      border-radius: 0;
+    }
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--ani-ki) 14%, transparent);
+      color: var(--ani-ki);
+      animation: ani-hit 0.3s linear;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Toggle groups: skewed tabs, the chosen one burns orange with speed lines
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // (styles.scss styles toggles and cards under the id #app-theme-container: these rules need the id as well)
+  &#app-theme-container .mat-button-toggle-group {
+    gap: 5px;
+    padding: 0 8px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  &#app-theme-container .mat-button-toggle-group .mat-button-toggle {
+    border: 0;
+    border-radius: 0;
+    background: color-mix(in srgb, var(--ani-ink-3) 92%, transparent);
+    color: var(--ani-muted);
+    font-family: var(--ani-font-heavy);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transform: skewX(-14deg);
+    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ani-ki) 45%, transparent);
+
+    .mat-button-toggle-label-content {
+      display: inline-block;
+      transform: skewX(14deg);
+    }
+
+    &:hover {
+      color: var(--ani-text);
+    }
+  }
+
+  &#app-theme-container .mat-button-toggle-group .mat-button-toggle-checked {
+    background: var(--ani-speedlines),
+      linear-gradient(135deg, var(--ani-orange), color-mix(in srgb, var(--ani-orange) 60%, var(--ani-red)));
+    color: #111;
+    text-shadow: none;
+    box-shadow: 3px 3px 0 #111;
+
+    .count {
+      color: #111;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Fields: outlined, square, HUD brackets in the corners
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .mat-mdc-form-field {
+    --mat-form-field-outlined-container-shape: 0;
+    --mat-form-field-outlined-focus-outline-color: var(--ani-ki);
+    font-family: var(--ani-font-ui);
+    font-weight: 600;
+  }
+
+  .mat-form-field-appearance-outline .mat-mdc-text-field-wrapper {
+    @include brackets(var(--ani-ki), 9px, 2px);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Sliders. The volume is a power level gauge (green, yellow, red); IT'S OVER 9000 at the top.
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .mat-mdc-slider .mdc-slider__thumb-knob {
+    width: 12px;
+    height: 20px;
+    border: 2px solid #111;
+    border-radius: 0;
+    background: var(--ani-gold);
+    clip-path: polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%);
+  }
+
+  .volume-slider {
+    --ps-track: 5px;
+    --ps-track-hover: 8px;
+    --mat-slider-active-track-shape: 0;
+    --mat-slider-inactive-track-shape: 0;
+    position: relative;
+
+    .mdc-slider__track--inactive {
+      border-radius: 0;
+      background: linear-gradient(90deg, var(--ani-eva), var(--ani-gold) 60%, var(--ani-red));
+      opacity: 0.22;
+    }
+
+    .mdc-slider__track--active_fill {
+      border-image: linear-gradient(90deg, var(--ani-eva), var(--ani-gold) 60%, var(--ani-red)) 1;
+    }
+
+    .mdc-slider__track--active {
+      border-radius: 0;
+    }
+
+    // the maximum of the volume (0.4)
+    &:has(input[aria-valuetext="0.4"])::after {
+      content: "IT'S OVER 9000!!";
+      position: absolute;
+      left: 50%;
+      bottom: 80%;
+      color: var(--ani-gold);
+      font-family: var(--ani-font-display);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      text-shadow: 2px 2px 0 #111, 0 0 8px var(--ani-red);
+      translate: -50% 0;
+      rotate: -4deg;
+      pointer-events: none;
+      animation: ani-pop 0.3s cubic-bezier(0.3, 1.8, 0.5, 1) both, ani-shake 0.4s 0.3s linear 3;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Cards: manga panels
+  // ---------------------------------------------------------------------------------------------------------------------------
+  &#app-theme-container mat-card {
+    border: 2px solid #111;
+    border-radius: 0;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ani-ki) 30%, transparent), 6px 6px 0 rgb(0 0 0 / 0.55);
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------------
+  // Spinners: a Poké Ball that wobbles (one... two... three... gotcha!)
+  // ---------------------------------------------------------------------------------------------------------------------------
+  .mat-mdc-progress-spinner {
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 14%, #111 15% 24%, transparent 25%),
+      linear-gradient(to bottom, #ee1515 0 44%, #111 44% 56%, #f4f4f4 56%);
+    box-shadow: inset 0 0 0 2px #111;
+    animation: ani-wobble 1.1s ease-in-out infinite;
+
+    > * {
+      visibility: hidden;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------
+// Overlays (the overlay container carries the theme classes too)
+// -----------------------------------------------------------------------------------------------------------------------------
+#{$a} {
+  // menus and drop downs: chamfered cockpit panels with faint red clouds (an organisation we do not talk about)
+  .ps-menu.mat-mdc-menu-panel,
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel {
+    border: 0;
+    border-radius: 0;
+    background: $cloud-tile 0 0 / 140px 90px, var(--ani-scanlines), var(--ani-ink-2);
+    box-shadow: inset 0 3px 0 var(--ani-orange), inset 0 0 0 1px color-mix(in srgb, var(--ani-ki) 40%, transparent),
+      0 14px 30px rgb(0 0 0 / 0.6);
+    @include chamfer(12px);
+  }
+
+  .ps-menu .mat-mdc-menu-item {
+    font-family: var(--ani-font-heavy);
+    letter-spacing: 0.04em;
+
+    &:hover:not([disabled]),
+    &:focus-visible {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ani-orange) 35%, transparent), transparent);
+      box-shadow: inset 3px 0 0 var(--ani-orange);
+    }
+  }
+
+  // dialogs: manga panels with a double frame (paper, then ink) and screentone in the corner
+  .mat-mdc-dialog-surface {
+    border-radius: 0;
+    background: radial-gradient(circle at 100% 0, transparent 0, var(--ani-ink-2) 70%) no-repeat, var(--ani-halftone),
+      var(--ani-ink-2);
+    box-shadow: 0 0 0 3px var(--ani-paper), 0 0 0 7px #111, 14px 14px 0 7px rgb(0 0 0 / 0.55);
+  }
+
+  .mat-mdc-dialog-title {
+    font-family: var(--ani-font-display);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--ani-gold);
+    text-shadow: 3px 3px 0 #111;
+  }
+
+  // the confirmation dialog (delete ...) is a certain black notebook
+  .mat-mdc-dialog-surface:has(app-yes-no-dialog) {
+    background: repeating-linear-gradient(to bottom, transparent 0 27px, rgb(255 255 255 / 0.07) 27px 28px),
+      linear-gradient(
+        90deg,
+        rgb(255 255 255 / 0.05) 0 2px,
+        transparent 2px 22px,
+        rgb(200 30 30 / 0.35) 22px 23px,
+        transparent 23px
+      ),
+      #0c0c0e;
+    box-shadow: 0 0 0 2px #2a2a2e, 0 0 0 6px #050505, 14px 14px 0 6px rgb(0 0 0 / 0.6);
+
+    app-yes-no-dialog {
+      display: block;
+
+      &::before {
+        content: "DEATH NOTE";
+        display: block;
+        padding: 18px 24px 0;
+        color: #e9e9e9;
+        font-family: "Old English Text MT", "UnifrakturCook", "Times New Roman", serif;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        opacity: 0.8;
+      }
+
+      &::after {
+        content: "Rule I: the item whose name is written in this note shall be deleted.";
+        display: block;
+        padding: 0 24px 14px;
+        color: #8d8d95;
+        font-family: "Times New Roman", serif;
+        font-size: 11px;
+        font-style: italic;
+      }
+    }
+
+    .mat-mdc-dialog-title {
+      color: #f2f2f2;
+      font-family: "Old English Text MT", "Times New Roman", serif;
+      font-size: 24px;
+      letter-spacing: 0.02em;
+      text-shadow: none;
+    }
+
+    .mat-mdc-unelevated-button.mat-primary {
+      --shout: "🍎 Ryuk is watching";
+      background: #e9e9e9;
+      box-shadow: 4px 4px 0 #000;
+    }
+  }
+
+  // toasts: speech bubbles with a stamp
+  .mat-mdc-snack-bar-container {
+    --mat-snack-bar-supporting-text-color: var(--ani-paper-ink);
+    --mat-snack-bar-supporting-text-font: var(--ani-font-heavy);
+    --mat-snack-bar-button-color: var(--ani-orange);
+    position: relative;
+
+    .mdc-snackbar__surface {
+      border: 3px solid #111;
+      border-radius: 26px;
+      background: var(--ani-paper);
+      color: var(--ani-paper-ink);
+      box-shadow: 6px 6px 0 rgb(0 0 0 / 0.5);
+    }
+
+    &::before {
+      content: "ドン!";
+      position: absolute;
+      top: -14px;
+      left: -8px;
+      z-index: 2;
+      padding: 10px 12px;
+      background: var(--ani-red);
+      color: #fff;
+      font-family: var(--ani-font-jp);
+      font-size: 13px;
+      transform: rotate(-10deg);
+      clip-path: starburst(12, 40%, 50%);
+      pointer-events: none;
+    }
+
+    // Evangelion: an error is an Angel
+    &.http-error-notification {
+      --mat-snack-bar-supporting-text-color: #ffd0c0;
+
+      .mdc-snackbar__surface {
+        border-radius: 0;
+        background: linear-gradient(var(--ani-ink), var(--ani-ink)) padding-box, var(--ani-hazard) border-box;
+        border: 5px solid transparent;
+        color: #ffb199;
+      }
+
+      &::before {
+        content: "PATTERN BLUE · 使徒";
+        top: -12px;
+        left: 12px;
+        padding: 2px 8px;
+        clip-path: none;
+        background: var(--ani-red);
+        font-family: var(--ani-font-hud);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        transform: none;
+        animation: ani-blink 0.8s steps(2, jump-none) infinite;
+      }
+    }
+  }
+}
+
+@keyframes ani-hit {
+  0% {
+    transform: var(--ani-base-transform, translate(0)) translate(0, 0);
+    filter: brightness(2.2) contrast(1.3);
+  }
+  20% {
+    transform: var(--ani-base-transform, translate(0)) translate(-3px, 1px);
+  }
+  40% {
+    transform: var(--ani-base-transform, translate(0)) translate(3px, -1px);
+    filter: brightness(1.2);
+  }
+  60% {
+    transform: var(--ani-base-transform, translate(0)) translate(-2px, 0);
+  }
+  80% {
+    transform: var(--ani-base-transform, translate(0)) translate(1px, 1px);
+  }
+  100% {
+    transform: var(--ani-base-transform, translate(0)) translate(0, 0);
+    filter: none;
+  }
+}
+
+@keyframes ani-pop {
+  from {
+    opacity: 0;
+    scale: 0.3;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes ani-wobble {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0);
+  }
+  15% {
+    transform: rotate(-22deg);
+  }
+  30% {
+    transform: rotate(18deg);
+  }
+  45% {
+    transform: rotate(-10deg);
+  }
+}

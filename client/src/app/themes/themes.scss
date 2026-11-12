@@ -162,4 +162,38 @@ $themes: (
       contrast: (50: #161616, 100: #161616, 200: #161616, 300: #161616, 400: #161616, 500: #161616, 600: #161616, 700: #ffffff, 800: #ffffff, 900: #ffffff, A100: #161616, A200: #161616, A400: #161616, A700: #161616)
     )
   ),
+  // Anime: shonen opening meets mecha cockpit. Only the colors live here; shapes, fonts, the Kamehameha seek bar and the
+  // easter eggs are in src/app/themes/anime/ (styles) and anime-theme.service.ts (the few things CSS can not do).
+  'anime': (
+    label: 'Anime',
+    accent: #ff6a13,
+    ink: #1a0800,
+    bg: #0b0c1a,
+    panel: #13152e,
+    raise: #1c1f42,
+    line: #2c3168,
+    text: #f6f3ff,
+    muted: #a9afdc,
+    tooltip: #2a2e5e,
+    glow: #3a1d6e,
+    video: #36d6ff,
+    song: #ffd21f,
+    primary: (
+      50: #fff1e6,
+      100: #ffdcc2,
+      200: #ffc299,
+      300: #ffa266,
+      400: #ff8640,
+      500: #ff6a13,
+      600: #f05a00,
+      700: #cc4a00,
+      800: #a33b00,
+      900: #7a2c00,
+      A100: #ffc8a3,
+      A200: #ff9a5c,
+      A400: #ff7a2e,
+      A700: #ff5e00,
+      contrast: (50: #1a0800, 100: #1a0800, 200: #1a0800, 300: #1a0800, 400: #1a0800, 500: #1a0800, 600: #1a0800, 700: #ffffff, 800: #ffffff, 900: #ffffff, A100: #1a0800, A200: #1a0800, A400: #1a0800, A700: #1a0800)
+    )
+  ),
 );

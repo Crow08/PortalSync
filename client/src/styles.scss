@@ -1,3 +1,6 @@
+// The anime theme brings its own styles (only active with the class theme-anime), see src/app/themes/anime/anime.scss.
+@use 'src/app/themes/anime/anime';
+
 /* Design tokens of the redesign (graphite ground, one accent). These are the values of the default theme; every theme overrides them with the class theme-<id> (src/app/themes/themes.scss). New components use these instead of the Material themes. */
 :root {
   --ps-bg: #080f1c;

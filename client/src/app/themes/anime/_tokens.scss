@@ -1,0 +1,105 @@
+// ANIME THEME · TOKENS
+// The palette and the fonts as CSS custom properties: change them here (or override them in the dev tools) to tune the theme.
+// The --ps-* base colors come from the 'anime' entry in src/app/themes/themes.scss.
+
+// Every rule of the theme starts with this selector. The class is repeated on purpose: the component styles (view
+// encapsulation adds an attribute selector to them) are loaded after the global styles and would win every tie.
+$a: ".graphite-theme.theme-anime.theme-anime.theme-anime";
+
+@mixin palette {
+  // ink and paper
+  --ani-ink: #0b0c1a;
+  --ani-ink-2: #13152e;
+  --ani-ink-3: #1c1f42;
+  --ani-paper: #fff6e0; // manga paper, wanted posters
+  --ani-paper-ink: #2a1a0a;
+  --ani-text: #f6f3ff;
+  --ani-muted: #a9afdc;
+  // shonen opening
+  --ani-orange: #ff6a13; // the gi
+  --ani-ki: #36d6ff; // ki blast blue
+  --ani-ki-core: #f2feff;
+  --ani-gold: #ffd21f; // Super Saiyan, hazard stripes
+  --ani-sakura: #ffb7d5;
+  // mecha cockpit
+  --ani-red: #ff2d55; // NERV alert
+  --ani-eva: #8bff3a; // Unit-01 green
+  --ani-purple: #7a3cff; // Unit-01 purple
+  --ani-scouter: #7dff6a; // green scouter lens
+  // fonts (loaded by AnimeThemeService only while the theme is active)
+  --ani-font-display: "Bangers", "Dela Gothic One", Impact, sans-serif;
+  --ani-font-hud: "Orbitron", "Rajdhani", "Consolas", monospace;
+  --ani-font-ui: "Rajdhani", "Inter", system-ui, sans-serif;
+  --ani-font-heavy: "Russo One", "Rajdhani", sans-serif;
+  --ani-font-jp: "Dela Gothic One", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  // textures
+  --ani-halftone: radial-gradient(circle, rgb(255 255 255 / 0.11) 1.1px, transparent 1.7px) 0 0 / 7px 7px;
+  --ani-scanlines: repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 3px);
+  --ani-hazard: repeating-linear-gradient(-45deg, var(--ani-gold) 0 9px, #111 9px 18px);
+  --ani-speedlines: repeating-conic-gradient(from 3deg at 50% 50%, rgb(255 255 255 / 0.1) 0 0.6deg, transparent 0.6deg 5.2deg),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 255 255 / 0.06) 0 0.35deg, transparent 0.35deg 7.3deg);
+  --ani-chamfer: 10px;
+
+  // glow, the same tokens the neon themes use (text in its own color, light titles and surfaces in the accent)
+  --ps-neon-text: 0 0 2px color-mix(in srgb, currentColor 80%, transparent),
+    0 0 8px color-mix(in srgb, currentColor 55%, transparent), 0 0 16px color-mix(in srgb, currentColor 30%, transparent);
+  --ps-neon-title: 0 0 2px rgb(255 255 255 / 0.4), 0 0 10px color-mix(in srgb, var(--ani-orange) 80%, transparent),
+    0 0 22px color-mix(in srgb, var(--ani-orange) 50%, transparent);
+  --ps-neon-box: 0 0 6px color-mix(in srgb, var(--ani-orange) 70%, transparent),
+    0 0 18px color-mix(in srgb, var(--ani-orange) 40%, transparent);
+
+  // the app font becomes the condensed HUD font
+  --ps-font: var(--ani-font-ui);
+  --ps-mono: var(--ani-font-hud);
+  --ps-danger: var(--ani-red);
+  --ps-ok: var(--ani-eva);
+}
+
+// chamfered corners (top left and bottom right), the basic silhouette of the cockpit
+@mixin chamfer($c: var(--ani-chamfer)) {
+  clip-path: polygon(#{$c} 0, 100% 0, 100% calc(100% - #{$c}), calc(100% - #{$c}) 100%, 0 100%, 0 #{$c});
+}
+
+// a slanted parallelogram
+@mixin slant($s: 10px) {
+  clip-path: polygon(#{$s} 0, 100% 0, calc(100% - #{$s}) 100%, 0 100%);
+}
+
+// HUD corner brackets drawn as background layers (no pseudo element needed)
+@mixin brackets($c: var(--ani-ki), $len: 12px, $w: 2px) {
+  background-image: linear-gradient($c, $c), linear-gradient($c, $c), linear-gradient($c, $c), linear-gradient($c, $c),
+    linear-gradient($c, $c), linear-gradient($c, $c), linear-gradient($c, $c), linear-gradient($c, $c);
+  background-size: $len $w, $w $len, $len $w, $w $len, $len $w, $w $len, $len $w, $w $len;
+  background-position: left top, left top, right top, right top, left bottom, left bottom, right bottom, right bottom;
+  background-repeat: no-repeat;
+}
+
+// chamfered corners drawn with two background layers: unlike clip-path, it does not cut pseudo elements (shout bubbles)
+@mixin chamfer-bg($c, $s: 8px) {
+  background: linear-gradient(135deg, transparent $s, $c $s) top left / 100% 51% no-repeat,
+    linear-gradient(-45deg, transparent $s, $c $s) bottom right / 100% 51% no-repeat;
+}
+
+// a shout bubble over an element (hover), text in --shout or the argument
+@mixin shout-bubble($text: var(--shout)) {
+  content: $text;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  padding: 3px 10px;
+  border: 2px solid #111;
+  border-radius: 50%;
+  background: var(--ani-paper);
+  color: #111;
+  font-family: var(--ani-font-display);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  white-space: nowrap;
+  translate: -50% 0;
+  rotate: -3deg;
+  pointer-events: none;
+  animation: ani-pop 0.26s cubic-bezier(0.3, 1.8, 0.5, 1) both;
+}
