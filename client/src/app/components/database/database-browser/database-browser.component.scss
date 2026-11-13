@@ -122,12 +122,31 @@
   border: 1px solid var(--ps-line);
   border-radius: 12px;
   font-size: 13px;
+  // the buttons of an owned playlist (add owner, options) are as high as the owner chips (28 px), so the bar is as slim as
+  // the read-only one
+
+  // the density styles of the theme set the button size on the button itself, so it is set there too
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    --mat-icon-button-state-layer-size: 28px;
+    --mat-icon-button-icon-size: 18px;
+    width: 28px;
+    height: 28px;
+    padding: 5px;
+
+    .mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+  }
 
   .owners {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
+    // as high as an owner chip even without owners ("nobody"), so the bar keeps its height
+    min-height: 28px;
   }
 
   .label {
@@ -331,6 +350,8 @@
 }
 
 .empty {
+  // takes the place of the list: it fills the column, so the footer (select all, count) stays at the bottom
+  flex: 1;
   margin: 0;
   color: var(--ps-muted);
 }

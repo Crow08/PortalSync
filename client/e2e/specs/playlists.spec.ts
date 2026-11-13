@@ -49,7 +49,7 @@ test.describe('playlist ownership', () => {
     await collection(page, name).click();
     await expect(page.locator('.access-chip')).toHaveText('Read only');
     await expect(page.getByRole('button', { name: 'Add an owner' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Delete this playlist' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Playlist options' })).toHaveCount(0);
     await openMedia(page, song.title);
     await expect(page.getByRole('button', { name: 'Remove from this playlist' })).toHaveCount(0);
 
@@ -68,7 +68,8 @@ test.describe('playlist ownership', () => {
 
     await userPage.goto('/library');
     await collection(userPage, name).click();
-    await userPage.getByRole('radiogroup', { name: 'Who can change this playlist' }).getByRole('radio', { name: 'Public' }).click();
+    await userPage.getByRole('button', { name: 'Playlist options' }).click();
+    await userPage.getByRole('menuitemradio', { name: 'Everyone' }).click();
     await expect.poll(async () => (await api(user, `/playlists/${id}`)).json().then((p) => p.publicOwnership)).toBe(true);
 
     const ctx = await loginContext(browser, other);
@@ -92,11 +93,13 @@ test.describe('playlist ownership', () => {
     await userPage.goto('/library');
     await collection(userPage, name).click();
 
-    await userPage.getByRole('button', { name: 'Delete this playlist' }).click();
+    await userPage.getByRole('button', { name: 'Playlist options' }).click();
+    await userPage.getByRole('menuitem', { name: 'Delete this playlist' }).click();
     await userPage.getByRole('button', { name: 'Keep', exact: true }).click();
     await expect(collection(userPage, name)).toBeVisible();
 
-    await userPage.getByRole('button', { name: 'Delete this playlist' }).click();
+    await userPage.getByRole('button', { name: 'Playlist options' }).click();
+    await userPage.getByRole('menuitem', { name: 'Delete this playlist' }).click();
     await userPage.getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(collection(userPage, name)).toHaveCount(0);
     const all: { title: string }[] = (await (await api(user, '/media/all')).json()).content;
@@ -111,7 +114,8 @@ test.describe('playlist ownership', () => {
     await page.goto('/library');
     await collection(page, name).click();
     await expect(page.getByRole('button', { name: 'Add an owner' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Delete this playlist' })).toBeVisible();
+    await page.getByRole('button', { name: 'Playlist options' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Delete this playlist' })).toBeVisible();
     await ctx.close();
   });
 });

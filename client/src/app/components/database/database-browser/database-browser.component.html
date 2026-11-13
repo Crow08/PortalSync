@@ -80,20 +80,32 @@
         }
       </div>
       <div class="access">
-        @if (canDeletePlaylist) {
-          <button (click)="deletePlaylist()" aria-label="Delete this playlist" mat-icon-button title="Delete this playlist"
-            type="button">
-            <mat-icon>delete</mat-icon>
-          </button>
-        }
         @if (canManagePlaylist) {
-          <!-- (change) only fires on user input; (valueChange) also fires when the value is set while rendering -->
-          <mat-button-toggle-group (change)="setPublicOwnership($event.value === 'public')"
-            aria-label="Who can change this playlist" hideSingleSelectionIndicator
-            [value]="playlist.publicOwnership ? 'public' : 'private'">
-            <mat-button-toggle title="Only the owners can change this playlist" value="private">Private</mat-button-toggle>
-            <mat-button-toggle title="Everyone can add and remove songs" value="public">Public</mat-button-toggle>
-          </mat-button-toggle-group>
+          <!-- who can change the playlist and deleting it: behind one button, the bar stays quiet -->
+          <button [matMenuTriggerFor]="playlistMenu" aria-label="Playlist options" mat-icon-button title="Playlist options"
+            type="button">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #playlistMenu="matMenu" class="ps-menu" xPosition="before">
+            <span class="menu-hint">Who can change this playlist</span>
+            <button (click)="setPublicOwnership(false)" [attr.aria-checked]="!playlist.publicOwnership" mat-menu-item
+              role="menuitemradio" title="Only the owners can change this playlist" type="button">
+              <mat-icon>{{ playlist.publicOwnership ? '' : 'check' }}</mat-icon>
+              <span>Only the owners</span>
+            </button>
+            <button (click)="setPublicOwnership(true)" [attr.aria-checked]="playlist.publicOwnership" mat-menu-item
+              role="menuitemradio" title="Everyone can add and remove songs" type="button">
+              <mat-icon>{{ playlist.publicOwnership ? 'check' : '' }}</mat-icon>
+              <span>Everyone</span>
+            </button>
+            @if (canDeletePlaylist) {
+              <mat-divider></mat-divider>
+              <button (click)="deletePlaylist()" mat-menu-item type="button">
+                <mat-icon>delete</mat-icon>
+                <span>Delete this playlist</span>
+              </button>
+            }
+          </mat-menu>
         } @else {
           <span class="access-chip">{{ playlist.publicOwnership ? 'Public: everyone can change it' : 'Read only' }}</span>
         }

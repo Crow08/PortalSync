@@ -297,6 +297,10 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   }
 
   setPublicOwnership(isPublic: boolean): void {
+    // choosing the current setting in the menu changes nothing
+    if (this.activePlaylist?.publicOwnership === isPublic) {
+      return;
+    }
     this.changeOwnership(
       (id) => this.httpHelperService.put(`/api/v1/playlists/${id}/public/${isPublic}`, null),
       isPublic ? 'Everyone can change this playlist now' : 'Only the owners can change this playlist now'
