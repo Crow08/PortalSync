@@ -13,7 +13,7 @@
     <div class="spacer"></div>
     <button [matMenuTriggerFor]="userMenu" [attr.aria-label]="'Account menu of ' + username" class="account" type="button">
       <span class="user-name">{{ username }}</span>
-      <span aria-hidden="true" class="avatar">{{ initials }}</span>
+      <span [style.background]="avatarColor" aria-hidden="true" class="avatar">{{ initials }}</span>
       <mat-icon aria-hidden="true" class="chevron">expand_more</mat-icon>
     </button>
     <mat-menu #userMenu="matMenu" class="ps-menu" xPosition="before">

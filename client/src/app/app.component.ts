@@ -14,6 +14,7 @@ import { Session } from './models/session';
 import { RxStompService } from './services/rx-stomp.service';
 import { RxStompState } from '@stomp/rx-stomp';
 import { SettingsService } from './services/settings.service';
+import { avatarColor } from './utils/avatar-color';
 
 @Component({
     selector: 'app-root',
@@ -126,6 +127,11 @@ export class AppComponent implements OnInit {
 
   get username(): string {
     return this.authenticationService.currentUserValue?.username ?? '';
+  }
+
+  /** The color of the own avatar, the same as in the lobbies. */
+  get avatarColor(): string {
+    return avatarColor(this.authenticationService.currentUserValue?.id ?? 0);
   }
 
   /** Two letters for the avatar in the header. */

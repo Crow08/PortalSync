@@ -115,8 +115,9 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
+  // the background is the user's avatar color (utils/avatar-color.ts), like in the lobbies
   background: var(--ps-accent);
-  color: var(--ps-accent-ink);
+  color: var(--ps-bg);
   font: 700 12px var(--ps-font);
 }
 

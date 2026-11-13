@@ -7,11 +7,11 @@ import { HttpHelperService } from '../../../services/http-helper.service';
 import { AuthenticationService } from '../../../services/authentication.service';
 import { WsService } from '../../../services/ws.service';
 import { YesNoDialogComponent } from '../../dialog/yes-no-dialog/yes-no-dialog.component';
+import { avatarColor } from '../../../utils/avatar-color';
 
 export type RoomFilter = 'all' | 'mine' | 'video' | 'song';
 
 /** Pastel colors of the user avatars and the gradients of the room cards, picked by id. */
-const AVATAR_COLORS = ['#86dbc2', '#ffbe5c', '#8fa8ff', '#f59bb0', '#c7e39b', '#e39a6b'];
 const CARD_GRADIENTS = [
   'linear-gradient(160deg, #1b2447, #4b3a7a 55%, #f2a078)',
   'linear-gradient(150deg, #7a3a5e, #ffbe5c)',
@@ -176,7 +176,7 @@ export class SessionBrowserComponent implements OnInit, OnDestroy {
   listeners(session: Session): { initials: string; color: string }[] {
     return (session.users ?? []).slice(0, MAX_AVATARS).map((user) => ({
       initials: user.username.slice(0, 2).toUpperCase(),
-      color: AVATAR_COLORS[user.id % AVATAR_COLORS.length],
+      color: avatarColor(user.id),
     }));
   }
 }

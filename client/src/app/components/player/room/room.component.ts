@@ -17,6 +17,7 @@ import { SessionService } from '../../../services/session.service';
 import { SettingsService } from '../../../services/settings.service';
 import { AutoplayService } from '../../../services/autoplay.service';
 import { PlayerEngineService } from '../../../services/player-engine.service';
+import { avatarColor } from '../../../utils/avatar-color';
 
 /** Height (px) of a playlist row, all rows must have this height (virtual scrolling). */
 const PLAYLIST_ROW_HEIGHT = 48;
@@ -41,7 +42,6 @@ const COVER_GRADIENTS = [
   'linear-gradient(150deg, #5e3a7a, #f59bb0)',
   'linear-gradient(150deg, #2a5e7a, #9fd6d0)',
 ];
-const AVATAR_COLORS = ['#86dbc2', '#ffbe5c', '#8fa8ff', '#f59bb0', '#c7e39b', '#e39a6b'];
 
 /** A row of the playlist: history, current media and queue in one list. */
 interface PlaylistRow {
@@ -173,7 +173,7 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
   }
 
   avatarColor(userId: number): string {
-    return AVATAR_COLORS[userId % AVATAR_COLORS.length];
+    return avatarColor(userId);
   }
 
   initials(username: string): string {
