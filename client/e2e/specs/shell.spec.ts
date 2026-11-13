@@ -6,6 +6,8 @@ test.describe('shell and navigation', () => {
     await userPage.goto('/');
     await rail.getByRole('link', { name: 'Library' }).click();
     await expect(userPage).toHaveURL(/\/library$/);
+    await rail.getByRole('link', { name: 'Upload' }).click();
+    await expect(userPage).toHaveURL(/\/upload$/);
     await rail.getByRole('link', { name: 'Settings' }).click();
     await expect(userPage).toHaveURL(/\/settings$/);
     await rail.getByRole('link', { name: 'Lobbies' }).click();

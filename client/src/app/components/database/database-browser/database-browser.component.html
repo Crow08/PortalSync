@@ -38,10 +38,6 @@
       <input (ngModelChange)="resetScroll()" [(ngModel)]="query" aria-label="Search" matInput
         placeholder="Title, artist, series, genre" type="search"/>
     </mat-form-field>
-    <a mat-stroked-button routerLink="/upload">
-      <mat-icon>upload</mat-icon>
-      Upload
-    </a>
   </div>
 
   @if (activePlaylist; as playlist) {

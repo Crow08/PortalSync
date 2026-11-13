@@ -143,7 +143,7 @@ export class AppComponent implements OnInit {
    * Whether the page of the navigation entry is shown. Evaluated by the template instead of routerLinkActive: the
    * room entry appears only after the navigation into the room, and routerLinkActive missed that.
    */
-  isActive(page: 'room' | 'rooms' | 'library' | 'spotify' | 'settings'): boolean {
+  isActive(page: 'room' | 'rooms' | 'library' | 'upload' | 'spotify' | 'settings'): boolean {
     const url = this.router.url.split('?')[0];
     switch (page) {
       case 'room':
@@ -152,6 +152,8 @@ export class AppComponent implements OnInit {
         return url === '/';
       case 'library':
         return url.startsWith('/library');
+      case 'upload':
+        return url.startsWith('/upload');
       case 'spotify':
         return url.startsWith('/spotify');
       case 'settings':

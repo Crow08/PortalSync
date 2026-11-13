@@ -44,6 +44,10 @@
       <span>Library</span>
     </a>
     <div class="spacer"></div>
+    <a [class.active]="isActive('upload')" class="rail-item rail-upload" routerLink="upload">
+      <mat-icon>upload</mat-icon>
+      <span>Upload</span>
+    </a>
     <a [class.active]="isActive('spotify')" class="rail-item rail-spotify" routerLink="spotify/import">
       <mat-icon>library_music</mat-icon>
       <span>Spotify</span>
