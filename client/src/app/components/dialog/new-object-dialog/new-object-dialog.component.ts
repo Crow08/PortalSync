@@ -1,6 +1,7 @@
 import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
+/** The display names are translation keys. */
 export class CreationDialogInputData {
   displayName: string;
   stringProperties: { displayName: string; key: string; value: string }[];

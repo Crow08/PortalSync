@@ -7,11 +7,11 @@
     @if (sessionId && sessionInfo) {
       <a [routerLink]="['/sessions', sessionId, 'lobby']" class="session-link">
         <span class="session-name">{{ sessionInfo }}</span>
-        <span class="live-chip" role="status"><span [class.pending]="!connectionBadge.live" class="live-dot"></span>{{ connectionBadge.text }}</span>
+        <span class="live-chip" role="status"><span [class.pending]="!connectionBadge.live" class="live-dot"></span>{{ connectionBadge.key | transloco: { count: connectionBadge.count } }}</span>
       </a>
     }
     <div class="spacer"></div>
-    <button [matMenuTriggerFor]="userMenu" [attr.aria-label]="'Account menu of ' + username" class="account" type="button">
+    <button [matMenuTriggerFor]="userMenu" [attr.aria-label]="'shell.accountMenu' | transloco: { name: username }" class="account" type="button">
       <span class="user-name">{{ username }}</span>
       <span [style.background]="avatarColor" aria-hidden="true" class="avatar">{{ initials }}</span>
       <mat-icon aria-hidden="true" class="chevron">expand_more</mat-icon>
@@ -19,42 +19,42 @@
     <mat-menu #userMenu="matMenu" class="ps-menu" xPosition="before">
       <a mat-menu-item routerLink="settings">
         <mat-icon>settings</mat-icon>
-        <span>Settings</span>
+        <span>{{ 'shell.settings' | transloco }}</span>
       </a>
       <button (click)="logout()" mat-menu-item type="button">
         <mat-icon>logout</mat-icon>
-        <span>Log out</span>
+        <span>{{ 'shell.logout' | transloco }}</span>
       </button>
     </mat-menu>
   </header>
   <!-- Navigation -->
-  <nav aria-label="Main" id="rail">
+  <nav [attr.aria-label]="'shell.mainNavigation' | transloco" id="rail">
     @if (sessionId) {
       <a [routerLink]="['/sessions', sessionId, 'lobby']" [class.active]="isActive('room')" class="rail-item rail-player">
         <mat-icon>graphic_eq</mat-icon>
-        <span>Player</span>
+        <span>{{ 'shell.player' | transloco }}</span>
       </a>
     }
     <a [class.active]="isActive('rooms')" class="rail-item rail-lobbies" routerLink="/">
       <mat-icon>video_library</mat-icon>
-      <span>Lobbies</span>
+      <span>{{ 'shell.lobbies' | transloco }}</span>
     </a>
     <a [class.active]="isActive('library')" class="rail-item rail-library" routerLink="library">
       <mat-icon>playlist_play</mat-icon>
-      <span>Library</span>
+      <span>{{ 'shell.library' | transloco }}</span>
     </a>
     <div class="spacer"></div>
     <a [class.active]="isActive('upload')" class="rail-item rail-upload" routerLink="upload">
       <mat-icon>upload</mat-icon>
-      <span>Upload</span>
+      <span>{{ 'shell.upload' | transloco }}</span>
     </a>
     <a [class.active]="isActive('spotify')" class="rail-item rail-spotify" routerLink="spotify/import">
       <mat-icon>library_music</mat-icon>
-      <span>Spotify</span>
+      <span>{{ 'shell.spotify' | transloco }}</span>
     </a>
     <a [class.active]="isActive('settings')" class="rail-item rail-settings" routerLink="settings">
       <mat-icon>tune</mat-icon>
-      <span>Settings</span>
+      <span>{{ 'shell.settings' | transloco }}</span>
     </a>
   </nav>
   <!-- router - content -->

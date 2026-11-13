@@ -1,21 +1,21 @@
 <section class="panel">
   <header>
-    <h2>Start a lobby</h2>
-    <p>Friends join from the list of lobbies. Everyone hears and sees the same moment.</p>
+    <h2>{{ 'lobbies.creator.title' | transloco }}</h2>
+    <p>{{ 'lobbies.creator.description' | transloco }}</p>
   </header>
   <form (ngSubmit)="onSubmit()" [formGroup]="sessionForm">
     @if (error) {
-      <p class="error-text" role="alert">{{ error }}</p>
+      <p class="error-text" role="alert">{{ error | transloco }}</p>
     }
     <mat-form-field appearance="outline">
-      <mat-label>Name</mat-label>
+      <mat-label>{{ 'lobbies.creator.name' | transloco }}</mat-label>
       <input [placeholder]="defaultName" formControlName="name" id="name" matInput type="text"/>
-      <mat-hint>Empty: {{ playlistName ? 'the name of the playlist' : 'your name' }} is used.</mat-hint>
+      <mat-hint>{{ (playlistName ? 'lobbies.creator.hintPlaylist' : 'lobbies.creator.hintUser') | transloco }}</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Start with</mat-label>
+      <mat-label>{{ 'lobbies.creator.startWith' | transloco }}</mat-label>
       <mat-select formControlName="playlist">
-        <mat-option value="">No playlist, an empty lobby</mat-option>
+        <mat-option value="">{{ 'lobbies.creator.noPlaylist' | transloco }}</mat-option>
         @for (playlist of playlists; track playlist.id) {
           <mat-option [value]="playlist.id">{{ playlist.name }}</mat-option>
         }
@@ -25,7 +25,7 @@
       @if (loading) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
-        Create and enter
+        {{ 'lobbies.creator.submit' | transloco }}
       }
     </button>
   </form>

@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SpotifyLoginDialogComponent } from '../dialog/spotify-login-dialog/spotify-login-dialog.component';
@@ -26,6 +27,7 @@ const IMPORT_CHUNK = 100;
     standalone: false
 })
 export class SpotifyImportComponent {
+  protected readonly tl = inject(TranslocoService);
   query = '';
   results: SpotifyTrack[] = [];
   total = 0;
@@ -59,12 +61,8 @@ export class SpotifyImportComponent {
   chosenArtist: SpotifyArtist | null = null;
   artistAlbums: SpotifyAlbum[] = [];
   loadingAlbums = false;
-  readonly albumGroups: { value: SpotifyAlbumGroup; label: string }[] = [
-    { value: 'album', label: 'Albums' },
-    { value: 'single', label: 'Singles' },
-    { value: 'compilation', label: 'Compilations' },
-    { value: 'appears_on', label: 'Appears on' },
-  ];
+  /** The groups of albums of an artist (texts: spotifyImport.catalog.groups.<group>). */
+  readonly albumGroups: SpotifyAlbumGroup[] = ['album', 'single', 'compilation', 'appears_on'];
   selectedGroups = new Set<SpotifyAlbumGroup>(['album', 'single']);
   selectedAlbums = new Set<string>();
   /** Only the songs of the chosen artist: albums such as compilations hold songs of other artists too. */
@@ -131,7 +129,8 @@ export class SpotifyImportComponent {
         this.selectedPlaylists.map((playlist) => playlist.id)
       );
       this.selected.clear();
-      this.notify(`${tracks.length} song${tracks.length === 1 ? '' : 's'} added`);
+      const key = tracks.length === 1 ? 'spotifyImport.added.one' : 'spotifyImport.added.other';
+      this.notify(this.tl.translate(key, { count: tracks.length }));
     } catch (error) {
       this.searchError = this.describe(error);
     } finally {
@@ -174,21 +173,22 @@ export class SpotifyImportComponent {
       return;
     }
     this.playlistError = '';
-    this.importing = `Reading ${playlist.name}`;
+    this.importing = this.tl.translate('spotifyImport.progress.reading', { name: playlist.name });
     try {
       const tracks = await this.spotifyService.getPlaylistTracks(playlist.id, (loaded, total) => {
-        this.importing = `Reading ${playlist.name}: ${loaded} of ${total}`;
+        this.importing = this.tl.translate('spotifyImport.progress.readingCount', { name: playlist.name, done: loaded, total });
       });
       if (tracks.length === 0) {
-        this.playlistError = `${playlist.name} has no songs that can be imported.`;
+        this.playlistError = this.tl.translate('spotifyImport.noSongs', { name: playlist.name });
         return;
       }
-      this.importing = `Creating the playlist ${playlist.name}`;
+      this.importing = this.tl.translate('spotifyImport.progress.creating', { name: playlist.name });
       const playlistId = await this.httpHelperService.post<number>('/api/v1/playlists/', playlist.name);
       await this.importTracks(tracks, [playlistId], (done) => {
-        this.importing = `Importing ${playlist.name}: ${done} of ${tracks.length}`;
+        const params = { name: playlist.name, done, total: tracks.length };
+        this.importing = this.tl.translate('spotifyImport.progress.importing', params);
       });
-      this.notify(`${playlist.name}: ${tracks.length} songs imported`);
+      this.notify(this.tl.translate('spotifyImport.imported', { name: playlist.name, count: tracks.length }));
     } catch (error) {
       this.playlistError = this.describe(error);
     } finally {
@@ -250,10 +250,10 @@ export class SpotifyImportComponent {
           this.catalogTotal = 1;
           break;
         case 'playlist':
-          this.catalogError = 'This is a playlist: import it in the panel for playlists.';
+          this.catalogError = this.tl.translate('spotifyImport.catalog.isPlaylist');
           break;
         default:
-          this.catalogError = 'This is no link to a Spotify artist or album.';
+          this.catalogError = this.tl.translate('spotifyImport.catalog.noLink');
       }
     } catch (error) {
       this.catalogError = this.describe(error);
@@ -309,25 +309,29 @@ export class SpotifyImportComponent {
     try {
       const tracks = new Map<string, SpotifyTrack>();
       for (const [index, album] of albums.entries()) {
-        this.catalogImporting = `Reading ${album.name} (${index + 1} of ${albums.length})`;
+        this.catalogImporting = this.tl.translate('spotifyImport.progress.readingAlbum', {
+          name: album.name,
+          index: index + 1,
+          total: albums.length,
+        });
         (await this.spotifyService.getAlbumTracks(album, onlyArtistId)).forEach(
           (track) => tracks.has(track.uri) || tracks.set(track.uri, track)
         );
       }
       if (tracks.size === 0) {
-        this.catalogError = `${name} has no songs that can be imported.`;
+        this.catalogError = this.tl.translate('spotifyImport.noSongs', { name });
         return;
       }
       const playlistIds = this.catalogPlaylists.map((playlist) => playlist.id);
       if (this.createCatalogPlaylist) {
-        this.catalogImporting = `Creating the playlist ${name}`;
+        this.catalogImporting = this.tl.translate('spotifyImport.progress.creating', { name });
         playlistIds.push(await this.httpHelperService.post<number>('/api/v1/playlists/', name));
       }
       const list = [...tracks.values()];
       await this.importTracks(list, playlistIds, (done) => {
-        this.catalogImporting = `Importing ${name}: ${done} of ${list.length}`;
+        this.catalogImporting = this.tl.translate('spotifyImport.progress.importing', { name, done, total: list.length });
       });
-      this.notify(`${name}: ${list.length} songs imported`);
+      this.notify(this.tl.translate('spotifyImport.imported', { name, count: list.length }));
     } catch (error) {
       this.catalogError = this.describe(error);
     } finally {
@@ -343,7 +347,7 @@ export class SpotifyImportComponent {
     this.loadingAlbums = true;
     this.catalogError = '';
     try {
-      const groups = this.albumGroups.map((group) => group.value).filter((group) => this.selectedGroups.has(group));
+      const groups = this.albumGroups.filter((group) => this.selectedGroups.has(group));
       this.artistAlbums = groups.length > 0 ? await this.spotifyService.getArtistAlbums(artist.id, groups) : [];
       // all albums are chosen, the user takes out what is not wanted
       this.selectedAlbums = new Set(this.artistAlbums.map((album) => album.id));
@@ -413,22 +417,19 @@ export class SpotifyImportComponent {
     if (error instanceof SpotifyApiError) {
       switch (error.status) {
         case 401:
-          return 'You are not logged in to Spotify. Log in to Spotify again.';
+          return this.tl.translate('spotifyImport.errors.notLoggedIn');
         case 403:
-          return (
-            'Spotify refused the request. The account has to be one of the allowed users of the app, and for ' +
-            'playlists the login needs a new permission: log in to Spotify again in the settings.'
-          );
+          return this.tl.translate('spotifyImport.errors.refused');
         case 404:
-          return 'Spotify does not know this playlist.';
+          return this.tl.translate('spotifyImport.errors.unknownPlaylist');
         default:
           return error.message;
       }
     }
-    return 'The server could not import the songs.';
+    return this.tl.translate('spotifyImport.errors.server');
   }
 
   private notify(message: string): void {
-    this.snackBar.open(message, 'OK', { duration: 4000 });
+    this.snackBar.open(message, this.tl.translate('common.ok'), { duration: 4000 });
   }
 }

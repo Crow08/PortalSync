@@ -2,25 +2,25 @@
   <div class="brand">
     <img alt="PortalSync" src="assets/logo-scene.svg">
     <div>
-      <h1>Watch and listen together, on the same beat.</h1>
+      <h1>{{ 'login.tagline' | transloco }}</h1>
       <p>
-        Open source. Star or fork PortalSync on
-        <a href="https://github.com/Crow08/PortalSync" rel="noopener noreferrer" target="_blank">GitHub</a>.
+        {{ 'login.openSource' | transloco }}
+        <a href="https://github.com/Crow08/PortalSync" rel="noopener noreferrer" target="_blank">{{ 'login.github' | transloco }}</a>{{ 'login.openSourceEnd' | transloco }}
       </p>
     </div>
   </div>
   <form (ngSubmit)="onSubmit()" [formGroup]="loginForm">
-    <h2>Sign in</h2>
+    <h2>{{ 'login.title' | transloco }}</h2>
     @if (error) {
-      <p class="error-text" role="alert">{{ error }}</p>
+      <p class="error-text" role="alert">{{ error | transloco }}</p>
     }
     <mat-form-field appearance="outline">
-      <mat-label>Username</mat-label>
+      <mat-label>{{ 'common.username' | transloco }}</mat-label>
       <input [errorStateMatcher]="matcher" autocomplete="username" formControlName="username" id="username" matInput
         type="text"/>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Password</mat-label>
+      <mat-label>{{ 'common.password' | transloco }}</mat-label>
       <input [errorStateMatcher]="matcher" autocomplete="current-password" formControlName="password" id="password"
         matInput type="password"/>
     </mat-form-field>
@@ -28,9 +28,9 @@
       @if (loading) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
-        Sign in
+        {{ 'login.submit' | transloco }}
       }
     </button>
-    <p class="hint">No account yet? Ask for an invite link.</p>
+    <p class="hint">{{ 'login.noAccount' | transloco }}</p>
   </form>
 </mat-card>

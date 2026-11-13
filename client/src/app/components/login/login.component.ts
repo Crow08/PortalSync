@@ -35,6 +35,7 @@ export class LoginComponent {
   loading = false;
   submitted = false;
   returnUrl: string;
+  /** translation key of the error, empty without error */
   error = '';
   matcher = new LoginComponent.InputErrorStateMatcher();
 
@@ -81,7 +82,7 @@ export class LoginComponent {
         },
         error: (error) => {
           console.error(error);
-          this.error = 'Login failed.';
+          this.error = 'login.failed';
           this.matcher.error = true;
           this.loading = false;
         },

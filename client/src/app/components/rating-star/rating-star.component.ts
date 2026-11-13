@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 
 /**
  * The rating of the current media: a single star that expands to five stars on hover or keyboard focus. Once the user rated
@@ -12,6 +13,7 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from 
     standalone: false
 })
 export class RatingStarComponent {
+  protected readonly tl = inject(TranslocoService);
   @Input() currentRating!: number;
   @Input() songRating!: number;
   @Output() rating = new EventEmitter<number>();
@@ -38,8 +40,10 @@ export class RatingStarComponent {
 
   title(star: number): string {
     if (star === this.currentRating) {
-      return 'Remove your rating';
+      return this.tl.translate('rating.remove');
     }
-    return star === 1 && this.currentRating === 0 ? 'Rate this' : `Rate ${star} of ${this.stars.length}`;
+    return star === 1 && this.currentRating === 0
+      ? this.tl.translate('rating.rateThis')
+      : this.tl.translate('rating.rate', { star, total: this.stars.length });
   }
 }

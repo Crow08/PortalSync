@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { distinctUntilChanged, pairwise } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
@@ -46,6 +47,7 @@ const NO_MEDIA = () => new Media(-1, 'SONG', '', '', []);
   providedIn: 'root',
 })
 export class PlayerEngineService {
+  protected readonly tl = inject(TranslocoService);
   playerState: PlayerState = PlayerState.STOP;
   loopMode = false;
   /** Media are added to the queue in fair order (the users take turns) instead of at the end. */
@@ -221,7 +223,7 @@ export class PlayerEngineService {
       return;
     }
     if (!(await this.mediaService.loadSpotify(song.uri, startMediaTime / 1000))) {
-      return this.spotifyUnavailable(media, startMediaTime, 'The Spotify track could not be loaded');
+      return this.spotifyUnavailable(media, startMediaTime, this.tl.translate('player.spotify.trackFailed'));
     }
   }
 
@@ -237,7 +239,10 @@ export class PlayerEngineService {
   /** The others must not wait for a client that can not play the media: it reports ready right away. */
   private spotifyUnavailable(media: MinimalMedia, startMediaTime: number, reason: string): void {
     console.error(`Spotify is not available: ${reason}`);
-    this.playbackHint = `${reason || 'Spotify is not available'}, ${media.title} can not be played here.`;
+    this.playbackHint = this.tl.translate('player.spotify.unplayable', {
+      reason: reason || this.tl.translate('player.spotify.unavailable'),
+      title: media.title,
+    });
     this.userStatusService.setState('UNAVAILABLE');
     this.indicateReadyFor(media.id, startMediaTime);
   }
@@ -409,7 +414,7 @@ export class PlayerEngineService {
         break;
       case 'SessionDeleted':
         this.sessionService.sessionDeleted();
-        this.wsService.errors.next({ message: 'The session has been deleted', destination: '' });
+        this.wsService.errors.next({ message: this.tl.translate('player.sessionDeleted'), destination: '' });
         break;
       case 'Jump':
         this.lastReadyEvent = null;

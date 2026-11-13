@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { Media } from 'src/app/models/media';
 import { Song } from 'src/app/models/song';
@@ -44,6 +45,7 @@ const TILE_GRADIENTS = [
     standalone: false
 })
 export class DatabaseBrowserComponent implements OnInit, OnDestroy {
+  protected readonly tl = inject(TranslocoService);
   readonly rowHeight = ROW_HEIGHT;
   @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport | undefined;
   isLoadingResults = false;
@@ -193,7 +195,8 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
 
   /** Artist of a song, series of a video. */
   subtitle(media: Media): string {
-    return this.isVideo(media) ? ((media as Video).series?.name ?? 'Video') : ((media as Song).artist?.name ?? 'Song');
+    return this.isVideo(media) ? ((media as Video).series?.name ?? this.tl.translate('common.video'))
+      : ((media as Song).artist?.name ?? this.tl.translate('common.song'));
   }
 
   gradient(media: Media): string {
@@ -203,26 +206,30 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   /** The file format shown in the detail panel, e.g. "MP4". */
   format(media: Media): string {
     const extension = media.uri?.split('.').pop();
-    return extension && extension !== media.uri ? extension.toUpperCase() : 'Spotify';
+    return extension && extension !== media.uri ? extension.toUpperCase() : this.tl.translate('library.details.spotify');
   }
 
+  /** The rows of the detail panel; the labels are translation keys. */
   details(media: Media): { label: string; value: string }[] {
     const song = media as Song;
     const video = media as Video;
     const rows: { label: string; value: string }[] = [
-      { label: 'Type', value: this.isVideo(media) ? 'Video' : 'Song' },
-      { label: 'Format', value: this.format(media) },
+      { label: 'library.details.type', value: this.tl.translate(this.isVideo(media) ? 'common.video' : 'common.song') },
+      { label: 'library.details.format', value: this.format(media) },
     ];
     if (this.isVideo(media)) {
-      rows.push({ label: 'Series', value: video.series?.name ?? '' }, { label: 'Season', value: video.season?.name ?? '' });
+      rows.push(
+        { label: 'library.details.series', value: video.series?.name ?? '' },
+        { label: 'library.details.season', value: video.season?.name ?? '' }
+      );
     } else {
       rows.push(
-        { label: 'Artist', value: song.artist?.name ?? '' },
-        { label: 'Album', value: song.album?.name ?? '' },
-        { label: 'Genres', value: (song.genres ?? []).map((genre) => genre.name).join(', ') }
+        { label: 'common.artist', value: song.artist?.name ?? '' },
+        { label: 'common.album', value: song.album?.name ?? '' },
+        { label: 'common.genres', value: (song.genres ?? []).map((genre) => genre.name).join(', ') }
       );
     }
-    rows.push({ label: 'Tags', value: (media.tags ?? []).map((tag) => tag.name).join(', ') });
+    rows.push({ label: 'common.tags', value: (media.tags ?? []).map((tag) => tag.name).join(', ') });
     return rows.filter((row) => row.value !== '');
   }
 
@@ -289,11 +296,17 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   }
 
   addOwner(user: User): void {
-    this.changeOwnership((id) => this.httpHelperService.put(`/api/v1/playlists/${id}/owners/${user.id}`, null), 'Owner added');
+    this.changeOwnership(
+      (id) => this.httpHelperService.put(`/api/v1/playlists/${id}/owners/${user.id}`, null),
+      'library.ownerAdded'
+    );
   }
 
   removeOwner(owner: PlaylistOwner): void {
-    this.changeOwnership((id) => this.httpHelperService.delete(`/api/v1/playlists/${id}/owners/${owner.id}`), 'Owner removed');
+    this.changeOwnership(
+      (id) => this.httpHelperService.delete(`/api/v1/playlists/${id}/owners/${owner.id}`),
+      'library.ownerRemoved'
+    );
   }
 
   setPublicOwnership(isPublic: boolean): void {
@@ -303,7 +316,7 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     }
     this.changeOwnership(
       (id) => this.httpHelperService.put(`/api/v1/playlists/${id}/public/${isPublic}`, null),
-      isPublic ? 'Everyone can change this playlist now' : 'Only the owners can change this playlist now'
+      isPublic ? 'library.nowPublic' : 'library.nowOwnersOnly'
     );
   }
 
@@ -322,9 +335,9 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       width: '420px',
       maxWidth: '92vw',
       data: {
-        title: `Delete the playlist "${playlist.name}"? The media stay in the library.`,
-        yesButton: 'Delete',
-        noButton: 'Keep',
+        title: this.tl.translate('library.deletePlaylistConfirm', { name: playlist.name }),
+        yesButton: this.tl.translate('common.delete'),
+        noButton: this.tl.translate('common.keep'),
       },
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
@@ -336,18 +349,17 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
         .then(() => {
           this.selectCollection(null);
           this.loadPlaylists();
-          this.showMessage('Playlist deleted');
+          this.showMessage('library.playlistDeleted');
         })
         .catch((error) => {
           this.loadPlaylists();
-          const forbidden = 'Only an owner or an admin can delete this playlist';
-          this.showMessage(error?.status === 403 ? forbidden : 'Deleting the playlist failed');
+          this.showMessage(error?.status === 403 ? 'library.deletePlaylistForbidden' : 'library.deletePlaylistFailed');
         });
     });
   }
 
   /** Changes the owners of the shown playlist or whether it is public, then shows its new state. */
-  private changeOwnership(request: (playlistId: number) => Promise<unknown>, message: string): void {
+  private changeOwnership(request: (playlistId: number) => Promise<unknown>, messageKey: string): void {
     const playlist = this.activePlaylist;
     if (!playlist) {
       return;
@@ -355,17 +367,17 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     request(playlist.id)
       .then(() => {
         this.loadPlaylists();
-        this.showMessage(message);
+        this.showMessage(messageKey);
       })
       .catch((error) => {
         // the state shown may be outdated
         this.loadPlaylists();
         this.showMessage(
           error?.status === 403
-            ? 'Only an owner or an admin can do that'
+            ? 'library.forbidden'
             : error?.status === 409
-              ? 'A playlist needs at least one owner'
-              : 'The change failed'
+              ? 'library.lastOwner'
+              : 'library.changeFailed'
         );
       });
   }
@@ -382,31 +394,35 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       .then(() => {
         this.selection.clear();
         this.load();
-        this.showMessage(media.length === 1 ? 'Removed from the playlist' : `${media.length} removed from the playlist`);
+        this.showMessage(media.length === 1 ? 'library.removed.one' : 'library.removed.other', { count: media.length });
       })
       .catch((error) => {
-        const forbidden = 'Only an owner or an admin can change this playlist';
-        this.showMessage(error?.status === 403 ? forbidden : 'Removing from the playlist failed');
+        this.showMessage(error?.status === 403 ? 'library.changeForbidden' : 'library.removeFailed');
       });
   }
 
   deleteSong(media: Media): void {
-    this.confirmDelete('Send this item into oblivion?', 'Hell yeah!', 'God, no!', () =>
+    this.confirmDelete('library.deleteOne', () =>
       this.httpHelperService.put(`/api/v1/media/deleteSongById/${media.id}`, null)
     );
   }
 
   deleteSongs(mediaList: Media[]): void {
-    this.confirmDelete('Delete all selected items?', 'With pleasure!', 'Nah!', () =>
+    this.confirmDelete('library.deleteMany', () =>
       this.httpHelperService.put(`/api/v1/media/deleteSongs`, mediaList)
     );
   }
 
-  private confirmDelete(title: string, yesButton: string, noButton: string, remove: () => Promise<unknown>): void {
+  /** Asks before deleting; `texts` is the translation key of the title and the buttons (title, yes, no). */
+  private confirmDelete(texts: string, remove: () => Promise<unknown>): void {
     const dialogRef = this.dialog.open(YesNoDialogComponent, {
       width: '420px',
       maxWidth: '92vw',
-      data: { title, yesButton, noButton },
+      data: {
+        title: this.tl.translate(`${texts}.title`),
+        yesButton: this.tl.translate(`${texts}.yes`),
+        noButton: this.tl.translate(`${texts}.no`),
+      },
     });
     dialogRef.afterClosed().subscribe((dialogResult) => {
       if (!dialogResult) {
@@ -416,41 +432,44 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
         .then(() => {
           this.selection.clear();
           this.load();
-          this.showMessage('Deleted');
+          // a random text of messages.deleted
+          this.snackBar.openFromComponent(CustomSnackBarComponent, { data: { message: 'deleteMessage' }, duration: 2000 });
         })
         .catch(() => this.snackBar.openFromComponent(ServerResultErrorSnackBarComponent, { duration: 2000 }));
     });
   }
 
   addMediaToQueue(media: Media): void {
-    this.publishWithFeedback(`addMediaToQueue`, JSON.stringify(media), 'Added to the queue');
+    this.publishWithFeedback(`addMediaToQueue`, JSON.stringify(media), 'library.addedToQueue');
   }
 
   addMediaListToQueue(mediaList: Media[]): void {
     // only the ids: the server reads nothing else, and a long list of whole media exceeds its message size limit,
     // which closes the connection
     const ids = mediaList.map((media) => ({ id: media.id }));
-    this.publishWithFeedback(`addMediaListToQueue`, JSON.stringify(ids), 'Added to the queue');
+    this.publishWithFeedback(`addMediaListToQueue`, JSON.stringify(ids), 'library.addedToQueue');
   }
 
   playMediaNext(media: Media): void {
-    this.publishWithFeedback(`playMediaNext`, JSON.stringify(media), 'Playing next');
+    this.publishWithFeedback(`playMediaNext`, JSON.stringify(media), 'library.playingNext');
   }
 
   playMediaNow(media: Media): void {
-    this.publishWithFeedback(`playMediaNow`, JSON.stringify(media), 'Playing now');
+    this.publishWithFeedback(`playMediaNow`, JSON.stringify(media), 'library.playingNow');
   }
 
   /** Errors are shown app-wide (see AppComponent), so only success needs to be shown here. */
-  private publishWithFeedback(command: string, body: string, message: string): void {
+  private publishWithFeedback(command: string, body: string, messageKey: string): void {
     this.wsService.publishSessionCommandWithResult(command, body).then((success) => {
       if (success) {
-        this.showMessage(message);
+        this.showMessage(messageKey);
       }
     });
   }
 
-  private showMessage(message: string): void {
+  /** Shows the text of a translation key. */
+  private showMessage(key: string, params?: Record<string, unknown>): void {
+    const message = this.tl.translate(key, params);
     this.snackBar.openFromComponent(CustomSnackBarComponent, { data: { message }, duration: 2000 });
   }
 }

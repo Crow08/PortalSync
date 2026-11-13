@@ -5,8 +5,8 @@
 @use "tokens" as *;
 @use "art" as *;
 
-// the room while the session plays (the play button then offers "Pause")
-$playing: ":has(.play[aria-label='Pause'])";
+// the room while the session plays (the play button then has the class playing)
+$playing: ":has(.play.playing)";
 
 #{$a} app-room {
   // ---------------------------------------------------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ $playing: ":has(.play[aria-label='Pause'])";
   }
 
   // JoJo: the next title is "to be continued", the time skip is King Crimson; Re:Zero: previous is Return by Death
-  .buttons [aria-label="Next"]:hover::after {
+  .buttons .btn-next:hover::after {
     @include shout-bubble("TO BE CONTINUED ⟹");
     border-radius: 0;
     background: #c9a227;
@@ -336,17 +336,17 @@ $playing: ":has(.play[aria-label='Pause'])";
     padding-right: 18px;
   }
 
-  .buttons [aria-label="Previous"]:hover::after {
+  .buttons .btn-previous:hover::after {
     @include shout-bubble("死に戻り!( Return by Death)");
   }
 
-  .buttons [aria-label^="Skip "]:hover::after {
+  .buttons .btn-skip:hover::after {
     @include shout-bubble("KING CRIMSON!");
     background: var(--ani-red);
     color: #fff;
   }
 
-  .options [aria-label="Fullscreen"]:hover::after {
+  .options .btn-fullscreen:hover::after {
     @include shout-bubble("GEAR 5!");
   }
 
@@ -446,25 +446,25 @@ $playing: ":has(.play[aria-label='Pause'])";
   }
 
   // Naruto: shuffle spins like a Rasengan
-  .queue-head [aria-label="Shuffle queue"]:hover .mat-icon {
+  .queue-head .btn-shuffle:hover .mat-icon {
     color: var(--ani-ki);
     text-shadow: 0 0 8px var(--ani-ki), 0 0 16px var(--ani-ki);
     animation: ani-spin 0.35s linear infinite;
   }
 
   // Gurren Lagann: the add button is a drill that pierces the heavens
-  .queue-head [aria-label="Add from the library"]:hover .mat-icon {
+  .queue-head .btn-add-from-library:hover .mat-icon {
     color: var(--ani-orange);
     animation: ani-spin 0.25s linear infinite;
   }
 
   // One Piece: "scroll to the current media" is a Log Pose
-  .queue-head [aria-label^="Scroll to the current"] .mat-icon {
+  .queue-head .btn-scroll-current .mat-icon {
     color: transparent;
     background: $log-pose center / 20px no-repeat;
   }
 
-  .queue-head [aria-label^="Scroll to the current"]:hover .mat-icon {
+  .queue-head .btn-scroll-current:hover .mat-icon {
     animation: ani-needle 0.8s ease-in-out infinite;
   }
 

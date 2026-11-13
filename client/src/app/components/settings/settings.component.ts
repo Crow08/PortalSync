@@ -3,8 +3,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ServerResultSuccessSnackBarComponent } from '../messages/server-result-success-snack-bar.component';
 import { AuthenticationService } from '../../services/authentication.service';
+import { LANGUAGES, Language, LanguageService } from '../../services/language.service';
 import {
   Background,
+  NO_BACKGROUND,
   SettingsService,
   SPOTIFY_DEFAULT_LATENCY,
   THEMES,
@@ -23,6 +25,8 @@ import { SpotifyPlayerService } from '../../services/spotify-player.service';
 export class SettingsComponent {
   readonly spotifyDefaultLatency = SPOTIFY_DEFAULT_LATENCY;
   readonly themes = THEMES;
+  readonly languages = LANGUAGES;
+  readonly noBackground = NO_BACKGROUND;
   /** The Spotify login URL; null while it is loaded and when the server has no Spotify client id. */
   spotifyAuthUrl: string | null = null;
   /** Whether the server told whether Spotify is set up. */
@@ -33,7 +37,8 @@ export class SettingsComponent {
     private spotifyService: SpotifyService,
     public spotifyPlayer: SpotifyPlayerService,
     private authenticationService: AuthenticationService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private languageService: LanguageService
   ) {
     this.spotifyService
       .getAuthUrl()
@@ -46,6 +51,7 @@ export class SettingsComponent {
   newPassword = '';
   repeatPassword = '';
   passwordBusy = false;
+  /** translation key of the error, empty without error */
   passwordError = '';
   passwordChanged = false;
 
@@ -70,10 +76,10 @@ export class SettingsComponent {
       error: (error: HttpErrorResponse) => {
         this.passwordError =
           error.status === 403
-            ? 'The current password is wrong.'
+            ? 'settings.account.wrongPassword'
             : error.status === 400
-              ? 'The new password is not valid (empty or longer than 72 bytes).'
-              : 'The password could not be changed.';
+              ? 'settings.account.invalidPassword'
+              : 'settings.account.failed';
         this.passwordBusy = false;
       },
     });
@@ -105,6 +111,14 @@ export class SettingsComponent {
     if (target instanceof HTMLInputElement && target.value !== '' && isFinite(Number(target.value))) {
       this.settingsService.spotifyLatencyCorrection = Number(target.value);
     }
+  }
+
+  getLanguage(): Language {
+    return this.languageService.language;
+  }
+
+  setLanguage(value: Language): void {
+    this.languageService.language = value;
   }
 
   getTheme(): Theme {

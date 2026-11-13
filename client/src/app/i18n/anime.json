@@ -1,0 +1,91 @@
+{
+  "shell": {
+    "logout": "Log out (El Psy Kongroo)",
+    "live": "On air · {{ count }} nakama",
+    "connecting": "Charging ki…",
+    "offline": "Signal lost… reconnecting, dattebayo"
+  },
+  "common": {
+    "ok": "OK."
+  },
+  "login": {
+    "tagline": "Watch and listen together, at a perfect sync ratio.",
+    "noAccount": "No account yet? Every hero needs an invitation: ask for a link."
+  },
+  "register": {
+    "created": "Account created. Welcome to the crew!"
+  },
+  "lobbies": {
+    "owner": "Captain: {{ name }}",
+    "deleteTip": "Delete lobby: EXPLOSION!",
+    "now": "Now fighting: {{ title }}",
+    "listening": "{{ count }} nakama",
+    "join": "Fight!",
+    "empty": "No battlefields yet. Open one on the right. Plus Ultra!",
+    "noMatch": "Your Log Pose points nowhere."
+  },
+  "library": {
+    "noPlaylists": "No crew yet. Every crew starts with one nakama: add media to a playlist.",
+    "playlistEmpty": "This playlist is as empty as Saitama's hairline.",
+    "libraryEmpty": "Not even Index has anything to read. Summon something on the upload page!",
+    "nothingMatches": "Nothing matches. Not even the Byakugan sees it."
+  },
+  "messages": {
+    "serverError": "NANI?! Something went wrong",
+    "serverSuccess": "Mission complete! (S-rank)"
+  },
+  "player": {
+    "nothingPlaying": "See you, Space Cowboy…",
+    "unknownArtist": "A mysterious stranger (??? arc)",
+    "addSomething": "The stage is empty. Summon a track from the library!",
+    "sessionEmpty": "No enemies in sight… yet.",
+    "mutedHint": "Muted like a shinobi. Click anywhere to break the silence!",
+    "allReady": "Power level: stable",
+    "someReady": "{{ ready }} / {{ total }} fighters charged",
+    "maxDrift": "sync ratio [[ syncRatio({{ drift }}) ]] · drift {{ drift }} ms",
+    "tip": {
+      "chapters": "Episode list",
+      "previous": "Previous: Return by Death",
+      "next": "Next episode!",
+      "play": "Play: KA-ME-HA-ME-HA!",
+      "pause": "Pause: ZA WARUDO! Toki wo tomare!",
+      "nextChapter": "Next arc: {{ title }}",
+      "skip": "King Crimson: erase {{ seconds }} s",
+      "volume": "Power level",
+      "fullscreen": "Gear 5 (fullscreen)",
+      "exitFullscreen": "Power down (exit fullscreen)",
+      "resize": "Gum-Gum stretch: drag to resize, double click to reset",
+      "position": "Episode / length of the season",
+      "shuffle": "Shuffle: Rasengan!",
+      "loopOn": "Loop: on (the Endless Eight)",
+      "loopOff": "Loop: off (no time leap)",
+      "fairQueueOn": "Fair queue: on. Equivalent exchange: everyone takes a turn to duel",
+      "fairQueueOff": "Fair queue: off. Added titles go to the end of the line",
+      "scrollToCurrent": {
+        "song": "Log Pose: point to the current song",
+        "video": "Log Pose: point to the current video"
+      },
+      "addFromLibrary": "Summon from the library: pierce the heavens!",
+      "remove": "Write its name in the Death Note (remove)",
+      "latency": "Ki delay (round trip to the server)",
+      "drift": "Sync ratio drift (+: behind, -: ahead)",
+      "backToPlayer": "Back to the cockpit"
+    }
+  },
+  "rating": {
+    "average": "Average power level",
+    "remove": "Turn the Dragon Ball back to stone",
+    "rateThis": "Rate this: collect the Dragon Balls",
+    "rate": "The {{ star }}-star Dragon Ball"
+  },
+  "upload": {
+    "dropzone": "Drop songs into the summoning circle (or choose files)"
+  },
+  "spotifyImport": {
+    "added": {
+      "one": "{{ count }} song added. Gotta catch 'em all!",
+      "other": "{{ count }} songs added. Gotta catch 'em all!"
+    },
+    "imported": "{{ name }}: {{ count }} songs imported. Nakama acquired!"
+  }
+}

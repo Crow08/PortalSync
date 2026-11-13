@@ -284,7 +284,7 @@ $position: calc(var(--time-width) + (100% - var(--time-width)) * var(--ani-progr
 }
 
 // ZA WARUDO: while the session is paused, time (and the beam) stands still
-#{$a} :is(app-room, app-mini-player):has(.play[aria-label="Play"]) .kamehameha {
+#{$a} :is(app-room, app-mini-player):has(.play:not(.playing)) .kamehameha {
   filter: saturate(0.35);
 
   *,

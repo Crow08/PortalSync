@@ -1,11 +1,14 @@
-import { NgModule, inject, provideAppInitializer } from '@angular/core';
+import { NgModule, inject, isDevMode, provideAppInitializer } from '@angular/core';
+import { FunctionalTranspiler, TranslocoModule, provideTransloco, provideTranslocoTranspiler } from '@jsverse/transloco';
+import { LayeredTranslocoLoader } from './i18n/transloco-loader';
+import { ACTIVE_LANGUAGE_IDS, DEFAULT_LANGUAGE, LanguageService } from './services/language.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { AuthGuard } from './auth.guard';
 import { AppComponent } from './app.component';
-import { AnimeThemeService } from './themes/anime/anime-theme.service';
+import { AnimeThemeService, SyncRatioTranspiler } from './themes/anime/anime-theme.service';
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { SessionBrowserComponent } from './components/sessions/browser/session-browser.component';
@@ -118,15 +121,31 @@ import { InviteComponent } from './components/invite/invite.component';
             },
             { path: '**', redirectTo: '' },
         ], {}),
-        MaterialModule], providers: [
+        MaterialModule,
+        TranslocoModule], providers: [
         {
             provide: OverlayContainer,
             useClass: ThemeAwareOverlayContainer,
         },
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
-        // the anime theme needs a little script (easter eggs, texts); it watches the chosen theme from the start
+        provideTransloco({
+            config: {
+                // the languages with the overlays of themes, e.g. 'en+anime'
+                availableLangs: ACTIVE_LANGUAGE_IDS,
+                defaultLang: DEFAULT_LANGUAGE,
+                reRenderOnLangChange: true,
+                prodMode: !isDevMode(),
+            },
+            loader: LayeredTranslocoLoader,
+        }),
+        // [[ fn(...) ]] in translations calls a provider named fn (the anime layer: syncRatio)
+        provideTranslocoTranspiler(FunctionalTranspiler),
+        { provide: 'syncRatio', useClass: SyncRatioTranspiler },
+        // the anime theme needs a little script (easter eggs, its translation layer); it watches the chosen theme from the
+        // start. The texts are loaded before the app starts, so no key flashes up.
         provideAppInitializer(() => {
             inject(AnimeThemeService);
+            return inject(LanguageService).apply();
         }),
     ] })
 export class AppModule {}

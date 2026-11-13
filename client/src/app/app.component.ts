@@ -1,7 +1,8 @@
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WsService } from './services/ws.service';
 import { CustomSnackBarComponent } from './components/messages/custom-snack-bar.component';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AuthenticationService } from './services/authentication.service';
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit {
   sessionId: number | null = null;
   connectionState: RxStompState = RxStompState.CLOSED;
   private readonly sessionNames = new Map<number, string>();
+  private readonly tl = inject(TranslocoService);
 
   constructor(
     private router: Router,
@@ -89,10 +91,10 @@ export class AppComponent implements OnInit {
     this.sessionInfo = this.sessionNames.get(id) ?? '';
     this.httpHelperService
       .get(`/api/v1/sessions/${id}`, Session)
-      .then((session) => session?.name || `Session ${id}`)
+      .then((session) => session?.name || this.tl.translate('shell.sessionFallback', { id }))
       .catch((error) => {
         console.error(error);
-        return `Session ${id}`;
+        return this.tl.translate('shell.sessionFallback', { id });
       })
       .then((name) => {
         this.sessionNames.set(id, name);
@@ -103,14 +105,14 @@ export class AppComponent implements OnInit {
   }
 
   /** The badge next to the room name: whether the connection to the session is up, and how many people are in it. */
-  get connectionBadge(): { text: string; live: boolean } {
+  get connectionBadge(): { key: string; count?: number; live: boolean } {
     switch (this.connectionState) {
       case RxStompState.OPEN:
-        return { text: `Live · ${this.playerEngine.sessionUsers.length} here`, live: true };
+        return { key: 'shell.live', count: this.playerEngine.sessionUsers.length, live: true };
       case RxStompState.CONNECTING:
-        return { text: 'Connecting…', live: false };
+        return { key: 'shell.connecting', live: false };
       default:
-        return { text: 'Offline, reconnecting', live: false };
+        return { key: 'shell.offline', live: false };
     }
   }
 

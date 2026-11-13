@@ -1,5 +1,12 @@
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
+import { TranslocoService } from '@jsverse/transloco';
+
+/** Messages with these values show a random text of the list under the translation key (one text in plain English). */
+const RANDOM_MESSAGES: Record<string, string> = {
+  successMessage: 'messages.saved',
+  deleteMessage: 'messages.deleted',
+};
 
 @Component({
   selector: 'app-snack-bar-component-custom',
@@ -10,51 +17,16 @@ import { MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
 })
 export class CustomSnackBarComponent {
   message: string;
-  successMessages: string[] = [
-    //positive
-    'Yay, it worked!',
-    'Wow, good job!',
-    'It worked, be proud!',
-    'You made the world a better place',
-    'You made the right choice',
-    'You rock!',
-    'Great success!',
-    'Mission accomplished!',
-    //ironic
-    'You did it, but at what cost?',
-    'So you went with that one, huh?',
-    'Are you sure about that?',
-    'Well, if you say so...',
-    'Success! Wait what?',
-    'Guess that worked...',
-  ];
-  deleteMessages: string[] = [
-    //evil
-    'Muhahahaha!',
-    'Punish the weak!',
-    'Burn in hell!',
-    'Yes! Yes! Yeeees!',
-    "Finally someone's cleaning up that mess",
-    //sad
-    'Damn, I liked that one',
-    'What a waste',
-    'Noooooooooooo!',
-    'You will regret that!',
-    'You monster!',
-  ];
 
   constructor(@Inject(MAT_SNACK_BAR_DATA) { message }: { message: string }) {
     // set message at the start. message is always there
-    switch (message) {
-      case 'successMessage':
-        this.message = this.successMessages[Math.floor(Math.random() * this.successMessages.length)];
-        break;
-      case 'deleteMessage':
-        this.message = this.deleteMessages[Math.floor(Math.random() * this.deleteMessages.length)];
-        break;
-      default:
-        this.message = message;
-        break;
+    const key = RANDOM_MESSAGES[message];
+    if (!key) {
+      this.message = message;
+      return;
     }
+    const texts: unknown = inject(TranslocoService).translateObject(key);
+    const list = Array.isArray(texts) ? texts.filter((text): text is string => typeof text === 'string') : [];
+    this.message = list.length > 0 ? list[Math.floor(Math.random() * list.length)] : '';
   }
 }

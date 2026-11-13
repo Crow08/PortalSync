@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Session } from '../../../models/session';
@@ -32,6 +33,7 @@ const MAX_AVATARS = 4;
     standalone: false
 })
 export class SessionBrowserComponent implements OnInit, OnDestroy {
+  protected readonly tl = inject(TranslocoService);
   sessions: Session[] = [];
   filter: RoomFilter = 'all';
   query = '';
@@ -105,10 +107,10 @@ export class SessionBrowserComponent implements OnInit, OnDestroy {
         width: '420px',
         maxWidth: '92vw',
         data: {
-          title: `Delete lobby "${session.name}"?`,
-          message: 'Everyone still in it is kicked.',
-          yesButton: 'Delete',
-          noButton: 'Keep',
+          title: this.tl.translate('lobbies.deleteConfirm', { name: session.name }),
+          message: this.tl.translate('lobbies.deleteMessage'),
+          yesButton: this.tl.translate('common.delete'),
+          noButton: this.tl.translate('common.keep'),
         },
       })
       .afterClosed()
@@ -119,7 +121,10 @@ export class SessionBrowserComponent implements OnInit, OnDestroy {
         this.httpHelperService
           .delete(`/api/v1/sessions/${session.id}`)
           .catch((error) =>
-            this.wsService.errors.next({ message: error?.error?.message ?? 'Deleting the session failed', destination: '' })
+            this.wsService.errors.next({
+              message: error?.error?.message ?? this.tl.translate('lobbies.deleteFailed'),
+              destination: '',
+            })
           )
           .finally(() => this.loadSessions());
       });
@@ -130,33 +135,35 @@ export class SessionBrowserComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl(`/sessions/${id}/lobby`).catch(console.error);
   }
 
-  kind(session: Session): string {
+  /** What the lobby plays (class kind-<id>, text lobbies.kind.<id>). */
+  kind(session: Session): 'video' | 'music' | 'empty' {
     const type = session.queue?.currentMedia?.type;
-    return type === 'VIDEO' ? 'Video' : type === 'SONG' ? 'Music' : 'Empty';
+    return type === 'VIDEO' ? 'video' : type === 'SONG' ? 'music' : 'empty';
   }
 
   /** The icon of the media that is playing: a video, a song, or nothing yet. */
   kindIcon(session: Session): string {
     switch (this.kind(session)) {
-      case 'Video':
+      case 'video':
         return 'local_movies';
-      case 'Music':
+      case 'music':
         return 'music_note';
       default:
         return 'hourglass_empty';
     }
   }
 
-  stateLabel(session: Session): string {
+  /** The playback state (class state-<id>, text lobbies.state.<id>). */
+  state(session: Session): 'playing' | 'paused' | 'idle' {
     switch (session.sessionState) {
       case 'PLAY':
       case 'SYNC_PLAY':
-        return 'Playing';
+        return 'playing';
       case 'PAUSE':
       case 'SYNC_PAUSE':
-        return 'Paused';
+        return 'paused';
       default:
-        return 'Idle';
+        return 'idle';
     }
   }
 
@@ -165,8 +172,9 @@ export class SessionBrowserComponent implements OnInit, OnDestroy {
     return this.userNames.get(session.creatorId) ?? '';
   }
 
-  nowPlaying(session: Session): string {
-    return session.queue?.currentMedia?.title ?? 'Waiting for the first title';
+  /** The title that is playing, null before the first one. */
+  nowPlaying(session: Session): string | null {
+    return session.queue?.currentMedia?.title ?? null;
   }
 
   gradient(session: Session): string {

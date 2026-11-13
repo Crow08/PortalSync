@@ -1,3 +1,5 @@
+import { inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { MediaService } from '../../services/media.service';
 import { Song } from '../../models/song';
 import { Video } from '../../models/video';
@@ -21,6 +23,7 @@ const CHAPTER_RESTART_THRESHOLD = 3;
  * {@link PlayerEngineService}, so it does not depend on which of these components exists.
  */
 export abstract class PlayerComponent {
+  protected readonly tl = inject(TranslocoService);
   protected constructor(
     protected readonly engine: PlayerEngineService,
     protected readonly mediaService: MediaService,
@@ -205,18 +208,19 @@ export abstract class PlayerComponent {
     }
   }
 
+  /** Translation key of the playback state of a listener. */
   getStateText(status: UserStatus | undefined): string {
     switch (status?.state) {
       case 'READY':
-        return 'Ready';
+        return 'player.state.ready';
       case 'LOADING':
-        return 'Loading / buffering';
+        return 'player.state.loading';
       case 'IDLE':
-        return 'No media loaded';
+        return 'player.state.idle';
       case 'UNAVAILABLE':
-        return 'Can not play the current media (e.g. Spotify not connected)';
+        return 'player.state.unavailable';
       default:
-        return 'Status unknown';
+        return 'player.state.unknown';
     }
   }
 

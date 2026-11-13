@@ -1,39 +1,51 @@
-<h1 class="page-title">Settings</h1>
+<h1 class="page-title">{{ 'settings.title' | transloco }}</h1>
 <div class="grid">
   <section class="panel">
-    <h2>Appearance</h2>
+    <h2>{{ 'settings.appearance' | transloco }}</h2>
     <div class="setting">
-      <h3 id="theme-label">Color theme</h3>
+      <h3 id="language-label">{{ 'settings.language' | transloco }}</h3>
+      <mat-button-toggle-group (valueChange)="setLanguage($event)" [value]="getLanguage()" aria-labelledby="language-label"
+        hideSingleSelectionIndicator>
+        @for (language of languages; track language.value) {
+          <mat-button-toggle [attr.lang]="language.htmlLang" [value]="language.value">{{ language.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      <p class="hint">{{ 'settings.languageHint' | transloco }}</p>
+    </div>
+    <div class="setting">
+      <h3 id="theme-label">{{ 'settings.theme' | transloco }}</h3>
       <mat-button-toggle-group (valueChange)="setTheme($event)" [value]="getTheme()" aria-labelledby="theme-label"
         hideSingleSelectionIndicator>
         @for (theme of themes; track theme.value) {
           <mat-button-toggle [value]="theme.value">
             <span [style.--swatch-accent]="theme.accent" [style.--swatch-surface]="theme.surface" aria-hidden="true" class="swatch"></span>
-            {{ theme.label }}
+            {{ 'settings.themes.' + theme.value | transloco }}
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
-      <p class="hint">Accent color and surfaces of the whole app. Saved in this browser.</p>
+      <p class="hint">{{ 'settings.themeHint' | transloco }}</p>
     </div>
     @if (backgrounds.length > 1) {
       <div class="setting">
-        <h3 id="background-label">Background picture</h3>
+        <h3 id="background-label">{{ 'settings.background' | transloco }}</h3>
         <mat-button-toggle-group (valueChange)="setBackground($event)" [value]="getBackground()" aria-labelledby="background-label"
           hideSingleSelectionIndicator>
           @for (background of backgrounds; track background.value) {
-            <mat-button-toggle [value]="background.value">{{ background.label }}</mat-button-toggle>
+            <mat-button-toggle [value]="background.value">
+              {{ background.value === noBackground ? ('settings.gradient' | transloco) : background.label }}
+            </mat-button-toggle>
           }
         </mat-button-toggle-group>
-        <p class="hint">Shown behind all pages except the player.</p>
+        <p class="hint">{{ 'settings.backgroundHint' | transloco }}</p>
       </div>
     }
   </section>
 
   <section class="panel">
-    <h2>Playback</h2>
+    <h2>{{ 'settings.playback' | transloco }}</h2>
 
     <div class="setting">
-      <h3 id="volume-label">Default player volume</h3>
+      <h3 id="volume-label">{{ 'settings.volume' | transloco }}</h3>
       <div class="slider-row">
         <mat-slider [displayWith]="volumeLabel" [max]="0.5" [min]="0" [step]="0.005" class="ps-slider" id="volume-slider">
           <input (valueChange)="setVolume($event)" aria-labelledby="volume-label" matSliderThumb #slider
@@ -44,7 +56,7 @@
     </div>
 
     <div class="setting">
-      <h3 id="skip-label">Time skip length</h3>
+      <h3 id="skip-label">{{ 'settings.timeSkip' | transloco }}</h3>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input (input)="setCurrentTimeSkipLength($event.target)" aria-labelledby="skip-label" matInput type="number"
           value="{{ getCurrentTimeSkipLength() }}"/>
@@ -54,13 +66,10 @@
   </section>
 
   <section class="panel">
-    <h2>Spotify</h2>
-    <p class="hint">
-      Spotify songs are played by your own Spotify Premium account in this browser. Without a connected account you can not
-      hear them, the session does not wait for you.
-    </p>
+    <h2>{{ 'settings.spotify.title' | transloco }}</h2>
+    <p class="hint">{{ 'settings.spotify.hint' | transloco }}</p>
     <p class="status">
-      Status: <b>{{ spotifyPlayer.connection | async }}</b>
+      {{ 'settings.spotify.status' | transloco }} <b>{{ 'settings.spotify.connection.' + (spotifyPlayer.connection | async) | transloco }}</b>
       @if (spotifyPlayer.error | async; as error) {
         <span> ({{ error }})</span>
       }
@@ -68,62 +77,60 @@
     <div class="buttons">
       @if (!spotifyLoggedIn) {
         @if (spotifyAuthUrl) {
-          <a [href]="spotifyAuthUrl" color="primary" mat-flat-button>Login with Spotify</a>
+          <a [href]="spotifyAuthUrl" color="primary" mat-flat-button>{{ 'common.loginWithSpotify' | transloco }}</a>
         } @else if (spotifyChecked) {
-          <span class="hint">Spotify is not set up on this server (no Spotify client id).</span>
+          <span class="hint">{{ 'common.spotifyNotSetUp' | transloco }}</span>
         }
       } @else {
         <button (click)="connectSpotify()" color="primary" mat-flat-button type="button"
           [disabled]="(spotifyPlayer.connection | async) === 'connected' || (spotifyPlayer.connection | async) === 'connecting'">
-          Connect player
+          {{ 'settings.spotify.connect' | transloco }}
         </button>
-        <button (click)="disconnectSpotify()" mat-stroked-button type="button">Disconnect</button>
+        <button (click)="disconnectSpotify()" mat-stroked-button type="button">{{ 'settings.spotify.disconnect' | transloco }}</button>
       }
     </div>
 
     <div class="setting">
-      <h3 id="latency-label">Latency correction</h3>
+      <h3 id="latency-label">{{ 'settings.spotify.latency' | transloco }}</h3>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input (input)="setSpotifyLatencyCorrection($event.target)" aria-labelledby="latency-label" matInput step="10"
           type="number" value="{{ getSpotifyLatencyCorrection() }}"/>
         <span matTextSuffix>ms</span>
       </mat-form-field>
       <p class="hint">
-        Spotify starts about {{ spotifyDefaultLatency }} ms after it is told to (measured with built-in loudspeakers). Use a
-        positive value if Spotify starts later than the others for you (e.g. Bluetooth loudspeakers), a negative value if it
-        starts earlier. Used in total: {{ getSpotifyLatency() }} ms.
+        {{ 'settings.spotify.latencyHint' | transloco: { default: spotifyDefaultLatency, total: getSpotifyLatency() } }}
       </p>
     </div>
   </section>
 
   <section class="panel">
-    <h2>Account</h2>
+    <h2>{{ 'settings.account.title' | transloco }}</h2>
     <form (ngSubmit)="changePassword()" class="password-form">
-      <h3 id="password-label">Change password</h3>
+      <h3 id="password-label">{{ 'settings.account.changePassword' | transloco }}</h3>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Current password</mat-label>
+        <mat-label>{{ 'settings.account.currentPassword' | transloco }}</mat-label>
         <input [(ngModel)]="currentPassword" autocomplete="current-password" matInput name="currentPassword" type="password"/>
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>New password</mat-label>
+        <mat-label>{{ 'settings.account.newPassword' | transloco }}</mat-label>
         <input [(ngModel)]="newPassword" autocomplete="new-password" matInput name="newPassword" type="password"/>
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Repeat new password</mat-label>
+        <mat-label>{{ 'settings.account.repeatPassword' | transloco }}</mat-label>
         <input [(ngModel)]="repeatPassword" autocomplete="new-password" matInput name="repeatPassword" type="password"/>
       </mat-form-field>
       @if (repeatPassword && newPassword !== repeatPassword) {
-        <p class="hint error">The passwords do not match.</p>
+        <p class="hint error">{{ 'settings.account.mismatch' | transloco }}</p>
       }
       @if (passwordError) {
-        <p class="hint error">{{ passwordError }}</p>
+        <p class="hint error">{{ passwordError | transloco }}</p>
       }
       @if (passwordChanged) {
-        <p class="hint success">Password changed.</p>
+        <p class="hint success">{{ 'settings.account.changed' | transloco }}</p>
       }
       <div class="buttons">
         <button [disabled]="!passwordFormValid || passwordBusy" color="primary" mat-flat-button type="submit">
-          Change password
+          {{ 'settings.account.changePassword' | transloco }}
         </button>
       </div>
     </form>

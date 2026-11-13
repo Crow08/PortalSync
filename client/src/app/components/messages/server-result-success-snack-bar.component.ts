@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-snack-bar-component-upload-success',
-  template: `<mat-icon aria-hidden="true">check_circle</mat-icon><span>Success</span>`,
+  template: `<mat-icon aria-hidden="true">check_circle</mat-icon><span>{{ 'messages.serverSuccess' | transloco }}</span>`,
   styles: [
     `
       :host {

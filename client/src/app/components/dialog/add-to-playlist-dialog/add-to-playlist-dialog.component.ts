@@ -1,4 +1,5 @@
-import { Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { HttpHelperService } from '../../../services/http-helper.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -17,6 +18,7 @@ import { Playlist } from '../../../models/playlist';
     standalone: false
 })
 export class AddToPlaylistDialogComponent implements OnInit {
+  protected readonly tl = inject(TranslocoService);
   songIds: number[] = [];
   /** The playlists the user may change, the others are read only. */
   playlists: Playlist[] = [];
@@ -49,7 +51,7 @@ export class AddToPlaylistDialogComponent implements OnInit {
       .catch((error) => {
         console.error(error);
         this.snackBar.openFromComponent(CustomSnackBarComponent, {
-          data: { message: 'The playlists could not be loaded' },
+          data: { message: this.tl.translate('dialogs.addToPlaylist.loadFailed') },
           duration: 3000,
         });
       })
@@ -62,7 +64,8 @@ export class AddToPlaylistDialogComponent implements OnInit {
   }
 
   get itemsLabel(): string {
-    return this.songIds.length === 1 ? '1 item' : `${this.songIds.length} items`;
+    const key = this.songIds.length === 1 ? 'library.items.one' : 'library.items.other';
+    return this.tl.translate(key, { count: this.songIds.length });
   }
 
   select(playlist: Playlist): void {
@@ -90,7 +93,7 @@ export class AddToPlaylistDialogComponent implements OnInit {
       .catch((error) => {
         console.error(error);
         this.snackBar.openFromComponent(CustomSnackBarComponent, {
-          data: { message: 'Creating the playlist failed' },
+          data: { message: this.tl.translate('dialogs.addToPlaylist.createFailed') },
           duration: 3000,
         });
       })
@@ -117,7 +120,7 @@ export class AddToPlaylistDialogComponent implements OnInit {
         this.snackBar.openFromComponent(ServerResultSuccessSnackBarComponent, { duration: 2000 });
         this.dialogRef.close(true);
       })
-      .catch((e) => this.showError(e.status, 'Duplicate Song! Try for more variety!'));
+      .catch((e) => this.showError(e.status, 'dialogs.addToPlaylist.duplicate'));
   }
 
   private addSongsToPlaylist(songIds: number[], playlistId: number): Promise<void> {
@@ -127,17 +130,18 @@ export class AddToPlaylistDialogComponent implements OnInit {
         this.messageHandler.customMessage(result);
         this.dialogRef.close(true);
       })
-      .catch((e) => this.showError(e.status, 'All selected songs are already in the playlist!'));
+      .catch((e) => this.showError(e.status, 'dialogs.addToPlaylist.allDuplicates'));
   }
 
-  private showError(status: number, conflictMessage: string): void {
+  /** `conflictKey`: translation key of the message for a conflict (409). */
+  private showError(status: number, conflictKey: string): void {
     if (status === 403) {
       this.snackBar.openFromComponent(CustomSnackBarComponent, {
-        data: { message: 'Only an owner or an admin can change this playlist' },
+        data: { message: this.tl.translate('library.changeForbidden') },
         duration: 3000,
       });
       return;
     }
-    this.messageHandler.calculateReturnCodeMessage(status, { e409: conflictMessage, e404: 'Playlist not found!' });
+    this.messageHandler.calculateReturnCodeMessage(status, { e409: conflictKey, e404: 'dialogs.addToPlaylist.notFound' });
   }
 }

@@ -1,0 +1,503 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save",
+    "add": "Add",
+    "delete": "Delete",
+    "keep": "Keep",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "edit": "Edit",
+    "search": "Search",
+    "lookUp": "Look up",
+    "import": "Import",
+    "showMore": "Show more",
+    "selectAll": "Select all",
+    "all": "All",
+    "video": "Video",
+    "song": "Song",
+    "videos": "Videos",
+    "songs": "Songs",
+    "username": "Username",
+    "password": "Password",
+    "artist": "Artist",
+    "album": "Album",
+    "genres": "Genres",
+    "tags": "Tags",
+    "playlists": "Playlists",
+    "loginWithSpotify": "Login with Spotify",
+    "spotifyNotSetUp": "Spotify is not set up on this server (no Spotify client id)."
+  },
+  "shell": {
+    "accountMenu": "Account menu of {{ name }}",
+    "settings": "Settings",
+    "logout": "Log out",
+    "mainNavigation": "Main",
+    "player": "Player",
+    "lobbies": "Lobbies",
+    "library": "Library",
+    "upload": "Upload",
+    "spotify": "Spotify",
+    "sessionFallback": "Session {{ id }}",
+    "live": "Live · {{ count }} here",
+    "connecting": "Connecting…",
+    "offline": "Offline, reconnecting"
+  },
+  "login": {
+    "tagline": "Watch and listen together, on the same beat.",
+    "openSource": "Open source. Star or fork PortalSync on",
+    "github": "GitHub",
+    "openSourceEnd": ".",
+    "title": "Sign in",
+    "submit": "Sign in",
+    "noAccount": "No account yet? Ask for an invite link.",
+    "failed": "Login failed."
+  },
+  "register": {
+    "tagline": "You are invited. Pick a name and a password.",
+    "description": "Videos, songs and playlists play in step on every device in the lobby.",
+    "title": "Create account",
+    "confirmPassword": "Confirm password",
+    "created": "Account created.",
+    "goToSignIn": "Go to sign in",
+    "submit": "Create account",
+    "invalidInvite": "Invalid invite link.",
+    "failed": "Registration failed."
+  },
+  "invite": {
+    "title": "Invite someone",
+    "description": "The link lets one person register. It works for one hour.",
+    "create": "Create invite link",
+    "link": "Invite link",
+    "copy": "Copy link"
+  },
+  "lobbies": {
+    "filter": "Filter lobbies",
+    "mine": "Mine",
+    "find": "Find a lobby",
+    "kind": {
+      "video": "Video",
+      "music": "Music",
+      "empty": "Empty"
+    },
+    "state": {
+      "playing": "Playing",
+      "paused": "Paused",
+      "idle": "Idle"
+    },
+    "owner": "Owner: {{ name }}",
+    "delete": "Delete lobby",
+    "deleteTip": "{{ lobbies.delete }}",
+    "now": "Now: {{ title }}",
+    "waiting": "Waiting for the first title",
+    "listening": "{{ count }} listening",
+    "join": "Join",
+    "empty": "No lobbies yet. Start one on the right.",
+    "noMatch": "No lobby matches.",
+    "deleteConfirm": "Delete lobby \"{{ name }}\"?",
+    "deleteMessage": "Everyone still in it is kicked.",
+    "deleteFailed": "Deleting the session failed",
+    "creator": {
+      "title": "Start a lobby",
+      "description": "Friends join from the list of lobbies. Everyone hears and sees the same moment.",
+      "name": "Name",
+      "hintPlaylist": "Empty: the name of the playlist is used.",
+      "hintUser": "Empty: your name is used.",
+      "startWith": "Start with",
+      "noPlaylist": "No playlist, an empty lobby",
+      "submit": "Create and enter",
+      "nameRequired": "Enter a name for the lobby.",
+      "failed": "Creating the lobby failed."
+    }
+  },
+  "library": {
+    "collections": "Collections",
+    "allMedia": "All media",
+    "noPlaylists": "No playlists yet. Add media to a playlist and it shows up here.",
+    "mediaType": "Media type",
+    "sortBy": "Sort by",
+    "sort": {
+      "title": "Title A to Z",
+      "recent": "Recently added",
+      "playlist": "Playlist order"
+    },
+    "searchPlaceholder": "Title, artist, series, genre",
+    "owners": "Owners",
+    "removeOwner": "Remove {{ name }} as an owner",
+    "nobody": "nobody",
+    "addOwner": "Add an owner",
+    "everyoneOwner": "Everyone is an owner already.",
+    "playlistOptions": "Playlist options",
+    "whoCanChange": "Who can change this playlist",
+    "onlyOwnersTip": "Only the owners can change this playlist",
+    "onlyOwners": "Only the owners",
+    "everyoneTip": "Everyone can add and remove songs",
+    "everyone": "Everyone",
+    "deletePlaylist": "Delete this playlist",
+    "publicChip": "Public: everyone can change it",
+    "readOnly": "Read only",
+    "selection": "Selection",
+    "selected": "{{ count }} selected",
+    "addToQueue": "Add to queue",
+    "addToPlaylist": "Add to playlist",
+    "removeFromPlaylist": "Remove from playlist",
+    "removeFromThisPlaylist": "Remove from this playlist",
+    "clear": "Clear",
+    "select": "Select {{ title }}",
+    "loading": "Loading the library…",
+    "loadFailed": "The library could not be loaded.",
+    "tryAgain": "Try again",
+    "playlistEmpty": "This playlist is empty.",
+    "libraryEmpty": "The library is empty. Upload something first.",
+    "nothingMatches": "Nothing matches.",
+    "deselectAll": "Deselect all",
+    "items": {
+      "one": "{{ count }} item",
+      "other": "{{ count }} items"
+    },
+    "itemsOf": " of {{ total }}",
+    "playNow": "Play now",
+    "playNext": "Play next",
+    "joinToPlay": "Join a lobby to play this.",
+    "pickItem": "Pick an item to see its details and play it.",
+    "details": {
+      "type": "Type",
+      "format": "Format",
+      "series": "Series",
+      "season": "Season",
+      "spotify": "Spotify"
+    },
+    "ownerAdded": "Owner added",
+    "ownerRemoved": "Owner removed",
+    "nowPublic": "Everyone can change this playlist now",
+    "nowOwnersOnly": "Only the owners can change this playlist now",
+    "deletePlaylistConfirm": "Delete the playlist \"{{ name }}\"? The media stay in the library.",
+    "playlistDeleted": "Playlist deleted",
+    "deletePlaylistForbidden": "Only an owner or an admin can delete this playlist",
+    "deletePlaylistFailed": "Deleting the playlist failed",
+    "forbidden": "Only an owner or an admin can do that",
+    "lastOwner": "A playlist needs at least one owner",
+    "changeFailed": "The change failed",
+    "removed": {
+      "one": "Removed from the playlist",
+      "other": "{{ count }} removed from the playlist"
+    },
+    "changeForbidden": "Only an owner or an admin can change this playlist",
+    "removeFailed": "Removing from the playlist failed",
+    "deleteOne": {
+      "title": "Delete this item?",
+      "yes": "Delete",
+      "no": "Keep"
+    },
+    "deleteMany": {
+      "title": "Delete all selected items?",
+      "yes": "Delete",
+      "no": "Keep"
+    },
+    "addedToQueue": "Added to the queue",
+    "playingNext": "Playing next",
+    "playingNow": "Playing now"
+  },
+  "dialogs": {
+    "addToPlaylist": {
+      "hint": "{{ items }} selected. Choose a playlist you can change or start a new one.",
+      "newPlaylist": "New playlist",
+      "newPlaylistName": "Name of a new playlist",
+      "find": "Find a playlist",
+      "public": "Public",
+      "loading": "Loading the playlists…",
+      "none": "You have no playlist you can change yet. Create one above.",
+      "noMatch": "No playlist matches.",
+      "loadFailed": "The playlists could not be loaded",
+      "createFailed": "Creating the playlist failed",
+      "duplicate": "The song is already in the playlist",
+      "allDuplicates": "All selected songs are already in the playlist",
+      "notFound": "Playlist not found"
+    },
+    "editSong": {
+      "title": "Edit Song",
+      "songTitle": "Song title",
+      "notFound": "Song not found"
+    },
+    "newObject": {
+      "title": "New {{ name }}"
+    },
+    "spotifyLogin": {
+      "title": "Log in to Spotify",
+      "message": "This function needs your Spotify account. After the login you come back to this page."
+    }
+  },
+  "inputs": {
+    "label": "{{ name }}:",
+    "name": "Name",
+    "album": "Album",
+    "artist": "Artist",
+    "genre": "Genre",
+    "playlist": "Playlist",
+    "tag": "Tag",
+    "tags": "Tags",
+    "addNew": "Add new",
+    "selected": "Selected",
+    "none": "(None)"
+  },
+  "messages": {
+    "serverError": "Something went wrong",
+    "serverSuccess": "Success",
+    "saved": [
+      "Saved"
+    ],
+    "deleted": [
+      "Deleted"
+    ],
+    "http": {
+      "conflict": "Data conflict",
+      "notFound": "Not found",
+      "serverError": "The server could not handle the request",
+      "unknown": "An unexpected error occurred"
+    }
+  },
+  "player": {
+    "nothingPlaying": "Nothing playing",
+    "unknownArtist": "Unknown artist",
+    "addSomething": "Add something to the queue",
+    "sessionEmpty": "Session is empty",
+    "chapters": "Chapters",
+    "previous": "Previous",
+    "next": "Next",
+    "play": "Play",
+    "pause": "Pause",
+    "nextChapter": "Next chapter",
+    "previousChapter": "Previous chapter",
+    "skip": "Skip {{ seconds }} s",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "mutedHint": "Playing muted. Click anywhere to unmute.",
+    "sideWidth": "Width of the side panel",
+    "sidePanel": "Side panel",
+    "queue": "Queue",
+    "people": "People",
+    "shuffle": "Shuffle queue",
+    "loop": "Loop the queue",
+    "fairQueue": "Fair queue",
+    "scrollToCurrent": {
+      "song": "Scroll to the current song",
+      "video": "Scroll to the current video"
+    },
+    "addFromLibrary": "Add from the library",
+    "playTitle": "Play {{ title }}",
+    "remove": "Remove",
+    "backToPlayer": "Back to the player",
+    "allReady": "All ready",
+    "someReady": "{{ ready }} of {{ total }} ready",
+    "maxDrift": "max drift {{ drift }} ms",
+    "state": {
+      "ready": "Ready",
+      "loading": "Loading / buffering",
+      "idle": "No media loaded",
+      "unavailable": "Can not play the current media (e.g. Spotify not connected)",
+      "unknown": "Status unknown"
+    },
+    "tip": {
+      "chapters": "{{ player.chapters }}",
+      "previous": "{{ player.previous }}",
+      "next": "{{ player.next }}",
+      "play": "{{ player.play }}",
+      "pause": "{{ player.pause }}",
+      "nextChapter": "Next chapter: {{ title }}",
+      "skip": "Skip {{ seconds }} s",
+      "volume": "Volume",
+      "fullscreen": "{{ player.fullscreen }}",
+      "exitFullscreen": "{{ player.exitFullscreen }}",
+      "resize": "Drag to resize, double click to reset",
+      "position": "Position of the current media / length of the playlist",
+      "shuffle": "{{ player.shuffle }}",
+      "loopOn": "Loop: on",
+      "loopOff": "Loop: off",
+      "fairQueueOn": "Fair queue: on (added titles take turns between the users)",
+      "fairQueueOff": "Fair queue: off (added titles go to the end)",
+      "scrollToCurrent": {
+        "song": "{{ player.scrollToCurrent.song }}",
+        "video": "{{ player.scrollToCurrent.video }}"
+      },
+      "addFromLibrary": "{{ player.addFromLibrary }}",
+      "remove": "{{ player.remove }}",
+      "latency": "Latency (round trip to the server)",
+      "drift": "Drift from the session position (+: behind, -: ahead)",
+      "backToPlayer": "{{ player.backToPlayer }}"
+    },
+    "spotify": {
+      "trackFailed": "The Spotify track could not be loaded",
+      "unavailable": "Spotify is not available",
+      "unplayable": "{{ reason }}, {{ title }} can not be played here."
+    },
+    "sessionDeleted": "The session has been deleted"
+  },
+  "rating": {
+    "label": "Rating",
+    "stars": {
+      "one": "{{ count }} star",
+      "other": "{{ count }} stars"
+    },
+    "average": "Average rating",
+    "remove": "Remove your rating",
+    "rateThis": "Rate this",
+    "rate": "Rate {{ star }} of {{ total }}"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "languageHint": "Language and tone of the texts. Saved in this browser.",
+    "theme": "Color theme",
+    "themes": {
+      "ocean": "Ocean",
+      "mint": "Mint",
+      "violet": "Violet",
+      "amber": "Amber",
+      "mono": "Mono",
+      "synthwave": "Synthwave",
+      "anime": "Hawky's Theme"
+    },
+    "themeHint": "Accent color and surfaces of the whole app. Saved in this browser.",
+    "background": "Background picture",
+    "gradient": "Gradient",
+    "backgroundHint": "Shown behind all pages except the player.",
+    "playback": "Playback",
+    "volume": "Default player volume",
+    "timeSkip": "Time skip length",
+    "spotify": {
+      "title": "Spotify",
+      "hint": "Spotify songs are played by your own Spotify Premium account in this browser. Without a connected account you can not hear them, the session does not wait for you.",
+      "status": "Status:",
+      "connection": {
+        "disconnected": "disconnected",
+        "connecting": "connecting",
+        "connected": "connected",
+        "unavailable": "unavailable"
+      },
+      "connect": "Connect player",
+      "disconnect": "Disconnect",
+      "latency": "Latency correction",
+      "latencyHint": "Spotify starts about {{ default }} ms after it is told to (measured with built-in loudspeakers). Use a positive value if Spotify starts later than the others for you (e.g. Bluetooth loudspeakers), a negative value if it starts earlier. Used in total: {{ total }} ms."
+    },
+    "account": {
+      "title": "Account",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "repeatPassword": "Repeat new password",
+      "mismatch": "The passwords do not match.",
+      "changed": "Password changed.",
+      "wrongPassword": "The current password is wrong.",
+      "invalidPassword": "The new password is not valid (empty or longer than 72 bytes).",
+      "failed": "The password could not be changed."
+    }
+  },
+  "upload": {
+    "title": "Upload",
+    "songsOnly": "Songs only. Videos are not uploaded here.",
+    "dropzone": "Drop songs here or choose files",
+    "remove": "Remove {{ name }}",
+    "noFiles": "No songs chosen yet.",
+    "details": "Details",
+    "detailsHint": "Everything here is optional and applies to all songs of this upload.",
+    "summary": {
+      "one": "{{ count }} song, {{ size }}",
+      "other": "{{ count }} songs, {{ size }}"
+    },
+    "submit": "Upload"
+  },
+  "spotifyImport": {
+    "title": "Import from Spotify",
+    "notLoggedIn": "You are not logged in to Spotify.",
+    "logInInSettings": "Log in in the settings",
+    "notLoggedInEnd": "first, or just run a function below and the login opens.",
+    "searchSongs": "Search songs",
+    "searchPlaceholder": "Title, artist or album",
+    "results": "{{ count }} of {{ total }} results",
+    "selected": {
+      "one": "{{ count }} song selected. They are added to the library; choose playlists to add them to as well.",
+      "other": "{{ count }} songs selected. They are added to the library; choose playlists to add them to as well."
+    },
+    "addToLibrary": "Add to the library",
+    "clearSelection": "Clear selection",
+    "songs": "{{ count }} songs",
+    "playlist": {
+      "title": "Import a playlist",
+      "hint": "The songs are added to the library and to a new playlist with the name of the Spotify playlist. Spotify only lets this app read the songs of playlists you created or collaborate on.",
+      "reload": "Reload my playlists",
+      "show": "Show my playlists",
+      "importTip": "Import the songs",
+      "notReadableTip": "Spotify does not allow this app to read the songs of this playlist",
+      "none": "You have no playlists.",
+      "link": "The link of a playlist",
+      "linkPlaceholder": "Or the link of a playlist",
+      "notReadable": "Spotify does not allow this app to read its songs"
+    },
+    "catalog": {
+      "title": "Import an artist or an album",
+      "hint": "All songs of an album, or of the albums of an artist that you choose, are added to the library. Songs that are already in the library are not added twice.",
+      "kind": "What to search",
+      "artists": "Artists",
+      "albums": "Albums",
+      "artistName": "Name of the artist",
+      "albumName": "Name of the album",
+      "link": "The link of an artist or an album",
+      "linkPlaceholder": "Or the link of an artist or an album",
+      "back": "Back to the results",
+      "groups": {
+        "album": "Albums",
+        "single": "Singles",
+        "compilation": "Compilations",
+        "appears_on": "Appears on"
+      },
+      "selectNone": "Select none",
+      "albumsSelected": "{{ count }} of {{ total }} albums",
+      "noAlbums": "No albums in the chosen groups.",
+      "onlyArtist": "Only songs by {{ name }}",
+      "chooseAlbums": "Choose albums",
+      "createPlaylistArtist": "Also create a playlist with the name of the artist",
+      "createPlaylistAlbum": "Also create a playlist with the name of the album",
+      "importAlbums": {
+        "one": "Import {{ count }} album ({{ songs }} songs at most)",
+        "other": "Import {{ count }} albums ({{ songs }} songs at most)"
+      },
+      "isPlaylist": "This is a playlist: import it in the panel for playlists.",
+      "noLink": "This is no link to a Spotify artist or album."
+    },
+    "added": {
+      "one": "{{ count }} song added",
+      "other": "{{ count }} songs added"
+    },
+    "imported": "{{ name }}: {{ count }} songs imported",
+    "noSongs": "{{ name }} has no songs that can be imported.",
+    "progress": {
+      "reading": "Reading {{ name }}",
+      "readingCount": "Reading {{ name }}: {{ done }} of {{ total }}",
+      "readingAlbum": "Reading {{ name }} ({{ index }} of {{ total }})",
+      "creating": "Creating the playlist {{ name }}",
+      "importing": "Importing {{ name }}: {{ done }} of {{ total }}"
+    },
+    "errors": {
+      "notLoggedIn": "You are not logged in to Spotify. Log in to Spotify again.",
+      "refused": "Spotify refused the request. The account has to be one of the allowed users of the app, and for playlists the login needs a new permission: log in to Spotify again in the settings.",
+      "unknownPlaylist": "Spotify does not know this playlist.",
+      "server": "The server could not import the songs."
+    }
+  },
+  "spotify": {
+    "notLoggedIn": "Not logged in to Spotify",
+    "playerLoadFailed": "The Spotify player could not be loaded",
+    "premiumRequired": "Spotify Premium is required",
+    "loginFailed": "Spotify login failed, please log in again",
+    "noEme": "This browser can not play Spotify (EME)",
+    "connectFailed": "The Spotify player could not connect",
+    "notReady": "The Spotify player did not become ready",
+    "noArtistLink": "This is no Spotify artist link",
+    "noAlbumLink": "This is no Spotify album link",
+    "noPlaylistLink": "This is no Spotify playlist link",
+    "answered": "Spotify answered {{ status }}"
+  }
+}

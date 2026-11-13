@@ -1,5 +1,6 @@
 ///<reference types="@types/spotify-web-playback-sdk"/>
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { HttpHelperService } from './http-helper.service';
 import { AuthenticationService } from './authentication.service';
 import { HttpParams } from '@angular/common/http';
@@ -83,6 +84,7 @@ interface LoginToken {
   providedIn: 'root',
 })
 export class SpotifyService {
+  private readonly tl = inject(TranslocoService);
   private static refreshJob: number;
   /** Date.now() at which the access token expires. */
   private static expiresAt = 0;
@@ -350,7 +352,7 @@ export class SpotifyService {
   async getArtist(idOrUrl: string): Promise<SpotifyArtist> {
     const id = SpotifyService.parseId(idOrUrl, 'artist');
     if (!id) {
-      throw new SpotifyApiError(400, 'This is no Spotify artist link');
+      throw new SpotifyApiError(400, this.tl.translate('spotify.noArtistLink'));
     }
     const artist = await this.api(`/artists/${id}`);
     return { id: artist.id, name: artist.name };
@@ -360,7 +362,7 @@ export class SpotifyService {
   async getAlbum(idOrUrl: string): Promise<SpotifyAlbum> {
     const id = SpotifyService.parseId(idOrUrl, 'album');
     if (!id) {
-      throw new SpotifyApiError(400, 'This is no Spotify album link');
+      throw new SpotifyApiError(400, this.tl.translate('spotify.noAlbumLink'));
     }
     return this.toAlbum(await this.api(`/albums/${id}`));
   }
@@ -400,7 +402,7 @@ export class SpotifyService {
   async getPlaylist(idOrUrl: string): Promise<SpotifyPlaylist> {
     const id = SpotifyService.parsePlaylistId(idOrUrl);
     if (!id) {
-      throw new SpotifyApiError(400, 'This is no Spotify playlist link');
+      throw new SpotifyApiError(400, this.tl.translate('spotify.noPlaylistLink'));
     }
     const [me, playlist] = await Promise.all([
       this.api('/me'),
@@ -443,7 +445,7 @@ export class SpotifyService {
   /** Calls the Web API with the login of the user. */
   private async api(path: string, params: Record<string, string | number> = {}): Promise<any> {
     if (!(await this.restore())) {
-      throw new SpotifyApiError(401, 'Not logged in to Spotify');
+      throw new SpotifyApiError(401, this.tl.translate('spotify.notLoggedIn'));
     }
     const url = new URL(API_URL + path);
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
@@ -460,7 +462,10 @@ export class SpotifyService {
     }
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      throw new SpotifyApiError(response.status, body?.error?.message ?? `Spotify answered ${response.status}`);
+      throw new SpotifyApiError(
+        response.status,
+        body?.error?.message ?? this.tl.translate('spotify.answered', { status: response.status })
+      );
     }
     return response.json();
   }

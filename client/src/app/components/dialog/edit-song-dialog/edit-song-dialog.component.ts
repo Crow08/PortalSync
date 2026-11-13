@@ -66,7 +66,7 @@ export class EditSongDialogComponent {
       })
       .catch((e) => {
         this.messageHandler.calculateReturnCodeMessage(e.status, {
-          e404: 'Song not found! How did you do that?',
+          e404: 'dialogs.editSong.notFound',
         });
       });
   }

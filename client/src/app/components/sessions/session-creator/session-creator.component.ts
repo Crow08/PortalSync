@@ -17,6 +17,7 @@ export class SessionCreatorComponent {
   sessionForm: UntypedFormGroup;
   loading = false;
   submitted = false;
+  /** translation key of the error, empty without error */
   error = '';
 
   playlists: Playlist[] = [];
@@ -72,7 +73,7 @@ export class SessionCreatorComponent {
 
     // stop here without a name: neither typed in nor a default
     if (!this.lobbyName) {
-      this.error = 'Enter a name for the lobby.';
+      this.error = 'lobbies.creator.nameRequired';
       return;
     }
 
@@ -86,7 +87,7 @@ export class SessionCreatorComponent {
 
   private failed(error: unknown): void {
     console.error(error);
-    this.error = 'Creating the lobby failed.';
+    this.error = 'lobbies.creator.failed';
     this.loading = false;
   }
 

@@ -1,0 +1,60 @@
+{
+  "library": {
+    "deleteOne": {
+      "title": "Send this item into oblivion?",
+      "yes": "Hell yeah!",
+      "no": "God, no!"
+    },
+    "deleteMany": {
+      "title": "Delete all selected items?",
+      "yes": "With pleasure!",
+      "no": "Nah!"
+    }
+  },
+  "dialogs": {
+    "addToPlaylist": {
+      "duplicate": "Duplicate Song! Try for more variety!",
+      "allDuplicates": "All selected songs are already in the playlist!",
+      "notFound": "Playlist not found!"
+    },
+    "editSong": {
+      "notFound": "Song not found! How did you do that?"
+    }
+  },
+  "messages": {
+    "saved": [
+      "Yay, it worked!",
+      "Wow, good job!",
+      "It worked, be proud!",
+      "You made the world a better place",
+      "You made the right choice",
+      "You rock!",
+      "Great success!",
+      "Mission accomplished!",
+      "You did it, but at what cost?",
+      "So you went with that one, huh?",
+      "Are you sure about that?",
+      "Well, if you say so...",
+      "Success! Wait what?",
+      "Guess that worked..."
+    ],
+    "deleted": [
+      "Muhahahaha!",
+      "Punish the weak!",
+      "Burn in hell!",
+      "Yes! Yes! Yeeees!",
+      "Finally someone's cleaning up that mess",
+      "Damn, I liked that one",
+      "What a waste",
+      "Noooooooooooo!",
+      "You will regret that!",
+      "You monster!"
+    ],
+    "http": {
+      "conflict": "Data conflict!",
+      "notFound": "Not found!",
+      "serverError": "Something went terribly wrong!",
+      "unknown": "There was an error, but I don't know what it means!"
+    }
+  }
+}

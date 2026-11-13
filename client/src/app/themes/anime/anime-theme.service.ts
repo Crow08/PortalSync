@@ -1,4 +1,6 @@
 import { DOCUMENT, Injectable, NgZone, inject } from '@angular/core';
+import { TranslocoTranspilerFunction } from '@jsverse/transloco';
+import { LanguageService } from '../../services/language.service';
 import { SettingsService } from '../../services/settings.service';
 
 /*
@@ -6,12 +8,13 @@ import { SettingsService } from '../../services/settings.service';
  * ANIME THEME · SCRIPT BLOCK
  * ======================================================================================================================
  * Everything of the anime theme that CSS can not do. It only runs while the theme 'anime' is chosen; switching to another
- * theme removes every listener, element and class and puts the original texts back. The styles (and the Easter Egg Index)
+ * theme removes every listener, element and class and the translation layer. The styles (and the Easter Egg Index)
  * are in anime.scss next to this file.
  *
  *   1. Fonts         loads the display fonts (Google Fonts, like the rest of the app) only while the theme is active
- *   2. Copy          rewrites visible texts and tooltips in anime voice (a MutationObserver keeps up with Angular; the
- *                    aria labels stay plain for screen readers)
+ *   2. Copy          switches the translation layer 'anime' on (src/app/i18n/anime.json, on top of the chosen language):
+ *                    visible texts and tooltips in anime voice; the aria labels have their own keys and stay plain for
+ *                    screen readers. Its function syncRatio is SyncRatioTranspiler below.
  *   3. Konami code   ↑ ↑ ↓ ↓ ← → ← → B A toggles the Super Saiyan mode (class anime-ssj on <html>)
  *   4. Logo          seven clicks summon the eternal dragon and grant a wish (class anime-wish on <html>)
  *   5. Settings      three quick clicks on the Settings icon transmute
@@ -24,9 +27,6 @@ import { SettingsService } from '../../services/settings.service';
  * Nothing here changes the behaviour of the app: no event is cancelled, no state is touched. The listeners run outside of
  * Angular, so they do not cause change detection.
  */
-
-type Replacement = string | ((...match: string[]) => string);
-type Rule = [RegExp, Replacement];
 
 /** The seek bars that get a Kamehameha. */
 const TRACK = 'app-player-track .progress-wrapper';
@@ -41,7 +41,7 @@ const FONTS_URL =
   '&family=Rajdhani:wght@500;600;700&family=Russo+One&family=Noto+Sans+JP:wght@700;900&display=swap';
 
 /** Evangelion: the sync ratio from the largest drift. Zero drift is Shinji's 400 %, a huge drift is Mob's ???%. */
-function syncRatio(drift: number): string {
+export function syncRatio(drift: number): string {
   if (drift === 0) {
     return '400 %';
   }
@@ -51,88 +51,15 @@ function syncRatio(drift: number): string {
   return `${Math.max(0, 100 - drift / 20).toFixed(1)} %`;
 }
 
-/** Visible texts (the whole trimmed text of a text node has to match). */
-const TEXT_RULES: Rule[] = [
-  [/^Nothing playing$/, 'See you, Space Cowboy…'],
-  [/^Add something to the queue$/, 'The stage is empty. Summon a track from the library!'],
-  [/^Unknown artist$/, 'A mysterious stranger (??? arc)'],
-  [/^Session is empty$/, 'No enemies in sight… yet.'],
-  [/^All ready$/, 'Power level: stable'],
-  [/^(\d+) of (\d+) ready$/, '$1 / $2 fighters charged'],
-  [/^max drift (\d+) ms$/, (_, drift) => `sync ratio ${syncRatio(Number(drift))} · drift ${drift} ms`],
-  [/^Live · (\d+) here$/, 'On air · $1 nakama'],
-  [/^Connecting…$/, 'Charging ki…'],
-  [/^Offline, reconnecting$/, 'Signal lost… reconnecting, dattebayo'],
-  [/^Playing muted\. Click anywhere to unmute\.$/, 'Muted like a shinobi. Click anywhere to break the silence!'],
-  [/^No lobbies yet\. Start one on the right\.$/, 'No battlefields yet. Open one on the right. Plus Ultra!'],
-  [/^No lobby matches\.$/, 'Your Log Pose points nowhere.'],
-  [/^(\d+) listening$/, '$1 nakama'],
-  [/^Now: (.*)$/, 'Now fighting: $1'],
-  [/^Join$/, 'Fight!'],
-  [/^This playlist is empty\.$/, "This playlist is as empty as Saitama's hairline."],
-  [
-    /^The library is empty\. Upload something first\.$/,
-    'Not even Index has anything to read. Summon something on the upload page!',
-  ],
-  [/^Nothing matches\.$/, 'Nothing matches. Not even the Byakugan sees it.'],
-  [
-    /^No playlists yet\. Add media to a playlist and it shows up here\.$/,
-    'No crew yet. Every crew starts with one nakama: add media to a playlist.',
-  ],
-  [/^Something went wrong$/, 'NANI?! Something went wrong'],
-  [/^Success$/, 'Mission complete! (S-rank)'],
-  [/^OK$/, 'OK.'],
-  [/^Log out$/, 'Log out (El Psy Kongroo)'],
-  [/^(\d+) songs? added$/, "$&. Gotta catch 'em all!"],
-  [/^(.+): (\d+) songs imported$/, '$1: $2 songs imported. Nakama acquired!'],
-  [/^Account created\.$/, 'Account created. Welcome to the crew!'],
-  [/^Drop songs here or choose files$/, 'Drop songs into the summoning circle (or choose files)'],
-  [/^Watch and listen together, on the same beat\.$/, 'Watch and listen together, at a perfect sync ratio.'],
-  [/^No account yet\? Ask for an invite link\.$/, 'No account yet? Every hero needs an invitation: ask for a link.'],
-];
-
-/** Tooltips (title attributes). */
-const TITLE_RULES: Rule[] = [
-  [/^Previous$/, 'Previous: Return by Death'],
-  [/^Next$/, 'Next episode!'],
-  [/^Play$/, 'Play: KA-ME-HA-ME-HA!'],
-  [/^Pause$/, 'Pause: ZA WARUDO! Toki wo tomare!'],
-  [/^Chapters$/, 'Episode list'],
-  [/^Next chapter: (.*)$/, 'Next arc: $1'],
-  [/^Skip (\d+) s$/, 'King Crimson: erase $1 s'],
-  [/^Volume$/, 'Power level'],
-  [/^Fullscreen$/, 'Gear 5 (fullscreen)'],
-  [/^Exit fullscreen$/, 'Power down (exit fullscreen)'],
-  [/^Shuffle queue$/, 'Shuffle: Rasengan!'],
-  [/^Loop: on$/, 'Loop: on (the Endless Eight)'],
-  [/^Loop: off$/, 'Loop: off (no time leap)'],
-  [/^Fair queue: on/, 'Fair queue: on. Equivalent exchange: everyone takes a turn to duel'],
-  [/^Fair queue: off/, 'Fair queue: off. Added titles go to the end of the line'],
-  [/^Scroll to the current (\w+)$/, 'Log Pose: point to the current $1'],
-  [/^Add from the library$/, 'Summon from the library: pierce the heavens!'],
-  [/^Remove$/, 'Write its name in the Death Note (remove)'],
-  [/^Drag to resize, double click to reset$/, 'Gum-Gum stretch: drag to resize, double click to reset'],
-  [/^Latency \(round trip to the server\)$/, 'Ki delay (round trip to the server)'],
-  [/^Drift from the session position/, 'Sync ratio drift (+: behind, -: ahead)'],
-  [/^Average rating$/, 'Average power level'],
-  [/^Rate this$/, 'Rate this: collect the Dragon Balls'],
-  [/^Rate (\d) of (\d)$/, 'The $1-star Dragon Ball'],
-  [/^Remove your rating$/, 'Turn the Dragon Ball back to stone'],
-  [/^Delete lobby$/, 'Delete lobby: EXPLOSION!'],
-  [/^Owner: (.*)$/, 'Captain: $1'],
-  [/^Position of the current media \/ length of the playlist$/, 'Episode / length of the season'],
-  [/^Back to the player$/, 'Back to the cockpit'],
-];
-
-/** The rewritten text, or null if no rule matches. */
-function rewrite(rules: Rule[], value: string): string | null {
-  for (const [pattern, replacement] of rules) {
-    const match = value.match(pattern);
-    if (match) {
-      return typeof replacement === 'string' ? value.replace(pattern, replacement) : replacement(...match);
-    }
+/**
+ * [[ syncRatio(drift) ]] in a translation (anime.json: player.maxDrift). Transloco looks the function up by its provider
+ * name 'syncRatio' (AppModule).
+ */
+@Injectable()
+export class SyncRatioTranspiler implements TranslocoTranspilerFunction {
+  transpile(drift: string): string {
+    return syncRatio(Number(drift));
   }
-  return null;
 }
 
 /** The console greeting is shown once per page load. */
@@ -140,13 +67,11 @@ let greeted = false;
 
 const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 
-/** Elements whose texts are never rewritten. */
-const SKIP = 'input, textarea, select, script, style, [contenteditable], .anime-fx-root';
-
 @Injectable({ providedIn: 'root' })
 export class AnimeThemeService {
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
+  private readonly language = inject(LanguageService);
 
   private active = false;
   private fxRoot: HTMLElement | null = null;
@@ -156,9 +81,6 @@ export class AnimeThemeService {
   private typed = '';
   private logoClicks: number[] = [];
   private settingsClicks: number[] = [];
-  /** rewritten nodes with their original and shown text, to put the originals back */
-  private readonly texts = new Map<Text, { original: string; shown: string }>();
-  private readonly titles = new Map<Element, { original: string; shown: string }>();
 
   /** 6. Secret words: typed letters, matched at the end of the typed text. */
   private readonly secretWords: Record<string, () => void> = {
@@ -197,6 +119,8 @@ export class AnimeThemeService {
       return;
     }
     this.active = active;
+    // 2. Copy: inside Angular, the new texts have to be rendered
+    this.language.setOverlay('anime', active);
     this.zone.runOutsideAngular(() => (active ? this.start() : this.stop()));
   }
 
@@ -218,16 +142,15 @@ export class AnimeThemeService {
     this.originalTitle = doc.title;
     doc.title = `${this.originalTitle} · 全力全開!`;
 
-    // 2. Copy
-    this.rewriteTree(doc.body);
+    // 8. Kamehameha: new seek bars and the value of the sliders
+    this.addBeams(doc.body);
     this.observer = new MutationObserver((records) => this.mutated(records));
     this.observer.observe(doc.body, {
       subtree: true,
       childList: true,
-      characterData: true,
       attributes: true,
-      // aria-valuetext: the seek slider writes its value there (8. Kamehameha)
-      attributeFilter: ['title', 'aria-valuetext'],
+      // the seek slider writes its value there
+      attributeFilter: ['aria-valuetext'],
     });
 
     doc.addEventListener('keydown', this.onKeyDown, true);
@@ -241,18 +164,6 @@ export class AnimeThemeService {
     doc.removeEventListener('click', this.onClick, true);
     this.observer?.disconnect();
     this.observer = null;
-    for (const [node, text] of this.texts) {
-      if (node.data === text.shown) {
-        node.data = text.original;
-      }
-    }
-    for (const [element, title] of this.titles) {
-      if (element.getAttribute('title') === title.shown) {
-        element.setAttribute('title', title.original);
-      }
-    }
-    this.texts.clear();
-    this.titles.clear();
     doc.querySelectorAll(`${TRACK} > .kamehameha`).forEach((beam) => beam.remove());
     doc.querySelectorAll<HTMLElement>(TRACK).forEach((track) => track.style.removeProperty('--ani-progress'));
     doc.getElementById('anime-theme-fonts')?.remove();
@@ -262,85 +173,14 @@ export class AnimeThemeService {
     doc.documentElement.classList.remove('anime-ssj', 'anime-wish');
   }
 
-  // ---------------------------------------------------------------------------------------------------------------------
-  // 2. Copy
-  // ----------------------------------------------------------------------------------------------------------------------
   private mutated(records: MutationRecord[]): void {
     for (const record of records) {
-      if (record.type === 'characterData') {
-        this.rewriteText(record.target as Text);
-      } else if (record.attributeName === 'aria-valuetext') {
+      if (record.type === 'attributes') {
         this.followSlider(record.target as Element);
-      } else if (record.type === 'attributes') {
-        this.rewriteTitle(record.target as Element);
       } else {
-        record.addedNodes.forEach((node) => this.rewriteTree(node));
+        record.addedNodes.forEach((node) => node instanceof Element && this.addBeams(node));
       }
     }
-    // nodes that left the page (virtual scroll rows, closed menus) are not kept
-    if (this.texts.size + this.titles.size > 500) {
-      this.texts.forEach((_, node) => {
-        if (!node.isConnected) {
-          this.texts.delete(node);
-        }
-      });
-      this.titles.forEach((_, element) => {
-        if (!element.isConnected) {
-          this.titles.delete(element);
-        }
-      });
-    }
-  }
-
-  private rewriteTree(node: Node): void {
-    if (node instanceof Text) {
-      this.rewriteText(node);
-      return;
-    }
-    if (!(node instanceof Element) || node.closest(SKIP)) {
-      return;
-    }
-    this.addBeams(node);
-    if (node.hasAttribute('title')) {
-      this.rewriteTitle(node);
-    }
-    node.querySelectorAll('[title]').forEach((element) => this.rewriteTitle(element));
-    const walker = this.document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
-    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
-      this.rewriteText(text as Text);
-    }
-  }
-
-  private rewriteText(node: Text): void {
-    const value = node.data;
-    const known = this.texts.get(node);
-    if (known?.shown === value) {
-      return; // our own change
-    }
-    const trimmed = value.trim();
-    const rewritten = trimmed && trimmed.length < 200 ? rewrite(TEXT_RULES, trimmed) : null;
-    if (rewritten === null || node.parentElement?.closest(SKIP)) {
-      this.texts.delete(node);
-      return;
-    }
-    const shown = value.replace(trimmed, () => rewritten);
-    this.texts.set(node, { original: value, shown });
-    node.data = shown;
-  }
-
-  private rewriteTitle(element: Element): void {
-    const value = element.getAttribute('title') ?? '';
-    const known = this.titles.get(element);
-    if (known?.shown === value) {
-      return;
-    }
-    const rewritten = value ? rewrite(TITLE_RULES, value) : null;
-    if (rewritten === null) {
-      this.titles.delete(element);
-      return;
-    }
-    this.titles.set(element, { original: value, shown: rewritten });
-    element.setAttribute('title', rewritten);
   }
 
   // ---------------------------------------------------------------------------------------------------------------------

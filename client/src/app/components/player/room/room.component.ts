@@ -163,8 +163,8 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
     return this.hasMedia && this.isVideoMode();
   }
 
-  /** "video" or "song", for the labels that name the current media. */
-  get mediaNoun(): string {
+  /** "video" or "song", for the labels that name the current media (player.scrollToCurrent.<kind>). */
+  get mediaKind(): 'video' | 'song' {
     return this.currentMedia.type === 'VIDEO' ? 'video' : 'song';
   }
 
@@ -184,7 +184,9 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
   get readySummary(): string {
     const users = this.sessionUsers;
     const ready = users.filter((user) => this.getUserStatus(user.id)?.state === 'READY').length;
-    return users.length > 0 && ready === users.length ? 'All ready' : `${ready} of ${users.length} ready`;
+    return users.length > 0 && ready === users.length
+      ? this.tl.translate('player.allReady')
+      : this.tl.translate('player.someReady', { ready, total: users.length });
   }
 
   /** The largest drift (ms) of the listeners, null while nobody is playing. */

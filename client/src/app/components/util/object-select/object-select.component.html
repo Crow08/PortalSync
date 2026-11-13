@@ -1,7 +1,7 @@
 @if (selectObjectData) {
   <div>
     <mat-form-field [appearance]="appearance">
-      <mat-label>{{selectObjectData.displayName}}:</mat-label>
+      <mat-label>{{ 'inputs.label' | transloco: { name: (selectObjectData.displayName | transloco) } }}</mat-label>
       <input (change)="selectionChanged()" [formControl]="objectControl" [matAutocomplete]="objectAC" matInput
         type="text" value="selectedOptions[0]?.name">
       <mat-autocomplete #objectAC="matAutocomplete" (optionSelected)="selectionChanged()" [displayWith]="display">

@@ -1,7 +1,7 @@
-<h2 class="title" mat-dialog-title>Edit Song</h2>
+<h2 class="title" mat-dialog-title>{{ 'dialogs.editSong.title' | transloco }}</h2>
 <mat-dialog-content>
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Song title</mat-label>
+    <mat-label>{{ 'dialogs.editSong.songTitle' | transloco }}</mat-label>
     <input [(ngModel)]="selectedTitle" autocomplete="off" matInput/>
   </mat-form-field>
   <app-input-artist [(selectedOptions)]="selectedArtist"></app-input-artist>
@@ -10,6 +10,6 @@
   <app-input-tag [(selectedOptions)]="selectedTags"></app-input-tag>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close type="button">Cancel</button>
-  <button (click)="saveSong()" color="primary" mat-flat-button type="button">Save</button>
+  <button mat-button mat-dialog-close type="button">{{ 'common.cancel' | transloco }}</button>
+  <button (click)="saveSong()" color="primary" mat-flat-button type="button">{{ 'common.save' | transloco }}</button>
 </mat-dialog-actions>

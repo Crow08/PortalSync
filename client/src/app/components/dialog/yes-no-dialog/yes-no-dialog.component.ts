@@ -1,5 +1,6 @@
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 
 export interface DialogData {
   title: string;
@@ -16,10 +17,14 @@ export interface DialogData {
     standalone: false
 })
 export class YesNoDialogComponent {
-  yesButton: string = 'Yes';
-  noButton: string = 'No';
+  protected readonly tl = inject(TranslocoService);
+  yesButton: string;
+  noButton: string;
 
+  /** The texts are already translated by the caller; the buttons default to Yes and No. */
   constructor(public dialogRef: MatDialogRef<YesNoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {
+    this.yesButton = this.tl.translate('common.yes');
+    this.noButton = this.tl.translate('common.no');
     if (data.yesButton) {
       this.yesButton = data.yesButton;
     }

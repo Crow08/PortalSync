@@ -173,11 +173,11 @@ test.describe('library', () => {
     const detail = userPage.locator('aside.detail');
 
     await detail.getByRole('button', { name: 'Delete' }).click();
-    await userPage.getByRole('button', { name: 'God, no!' }).click();
+    await userPage.getByRole('dialog').getByRole('button', { name: 'Keep' }).click();
     await expect(libraryRow(userPage, song.title)).toBeVisible();
 
     await detail.getByRole('button', { name: 'Delete' }).click();
-    await userPage.getByRole('button', { name: 'Hell yeah!' }).click();
+    await userPage.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(libraryRow(userPage, song.title)).toHaveCount(0);
   });
 
@@ -190,7 +190,7 @@ test.describe('library', () => {
     await expect(userPage.locator('.list .row')).toHaveCount(2);
     await userPage.getByRole('button', { name: 'Select all' }).click();
     await userPage.getByRole('toolbar', { name: 'Selection' }).getByRole('button', { name: 'Delete' }).click();
-    await userPage.getByRole('button', { name: 'With pleasure!' }).click();
+    await userPage.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(userPage.locator('.list .row')).toHaveCount(0);
   });
 

@@ -40,6 +40,7 @@ export class RegisterComponent {
   registerForm: UntypedFormGroup;
   loading = false;
   submitted = false;
+  /** translation key of the error, empty without error */
   error = '';
   matcher = new RegisterComponent.InputErrorStateMatcher();
 
@@ -74,7 +75,7 @@ export class RegisterComponent {
     }
     const psu = this.getRegisterPSU();
     if (psu === null) {
-      this.error = 'Invalid invite link.';
+      this.error = 'register.invalidInvite';
       this.matcher.error = true;
       this.loading = false;
       return;
@@ -92,7 +93,7 @@ export class RegisterComponent {
       })
       .catch((error) => {
         console.error(error);
-        this.error = 'Registration failed.';
+        this.error = 'register.failed';
         this.matcher.error = true;
         this.loading = false;
       });

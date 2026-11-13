@@ -3,8 +3,8 @@
  * ====================================================================
  * Chosen in the settings (Color theme: Anime). Everything is scoped to .graphite-theme.theme-anime, the other themes do not
  * see any of it. The palette is in _tokens.scss (CSS custom properties --ani-*), the pictures are inline SVG in _art.scss,
- * the few things CSS can not do (Konami code, click counters, secret words, rewritten texts, fonts) are in
- * anime-theme.service.ts. Everything respects prefers-reduced-motion.
+ * the few things CSS can not do (Konami code, click counters, secret words, fonts) are in anime-theme.service.ts, the
+ * texts are a translation layer (src/app/i18n/anime.json). Everything respects prefers-reduced-motion.
  *
  *   _tokens.scss      palette, fonts, shape mixins
  *   _art.scss         SVG artwork (fighter, Jolly Roger, magic and transmutation circles, sakura, hexagons, clouds, kunai, ...)
@@ -29,8 +29,8 @@
  *                      shinzou (Attack on Titan), pochita (Chainsaw Man), peanuts (Spy x Family), yareyare (JoJo),
  *                      traceon (Fate), onepunch (One Punch Man), gomugomu (One Piece)
  *   Dev tools        Open the console.
- *   Texts            Tooltips, empty states, toasts and status texts speak anime (visible texts only; aria labels stay
- *                    plain for screen readers).
+ *   Texts            Tooltips, empty states, toasts and status texts speak anime: src/app/i18n/anime.json, a layer on top
+ *                    of the chosen language (visible texts only; aria labels have their own keys and stay plain).
  *
  * Hover and look closely (CSS only):
  *   Dragon Ball      The seek bar is a Kamehameha: fighter, beam, energy ball; "KA… ME…" at 25 %, "KA-ME-HA-ME-HA!!" at

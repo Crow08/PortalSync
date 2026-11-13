@@ -5,8 +5,8 @@
     <div class="now">
       <div class="now-cover" [style.background]="coverGradient"></div>
       <div class="now-text">
-        <div class="now-title">{{ hasMedia ? currentMedia.title : 'Nothing playing' }}</div>
-        <div class="now-sub">{{ getSubTitle() || (hasMedia ? 'Unknown artist' : 'Add something to the queue') }}</div>
+        <div class="now-title">{{ hasMedia ? currentMedia.title : ('player.nothingPlaying' | transloco) }}</div>
+        <div class="now-sub">{{ getSubTitle() || ((hasMedia ? 'player.unknownArtist' : 'player.addSomething') | transloco) }}</div>
       </div>
       @if (hasMedia) {
         <app-rating-star (rating)="onRating($event)" [currentRating]="userSongRating" [songRating]="songRating"></app-rating-star>
@@ -15,32 +15,38 @@
 
     <div class="buttons">
       @if (chapters.length > 0) {
-        <button [matMenuTriggerFor]="chapterMenu" aria-label="Chapters" mat-icon-button title="Chapters" type="button">
+        <button [matMenuTriggerFor]="chapterMenu" [attr.aria-label]="'player.chapters' | transloco" class="btn-chapters" mat-icon-button
+          [title]="'player.tip.chapters' | transloco" type="button">
           <mat-icon>format_list_bulleted</mat-icon>
         </button>
       } @else {
         <!-- keeps the play button centered between the two outer buttons -->
         <span aria-hidden="true" class="slot"></span>
       }
-      <button (click)="publishCommand('previous')" aria-label="Previous" mat-icon-button title="Previous" type="button">
+      <button (click)="publishCommand('previous')" [attr.aria-label]="'player.previous' | transloco" class="btn-previous" mat-icon-button
+        [title]="'player.tip.previous' | transloco" type="button">
         <mat-icon>skip_previous</mat-icon>
       </button>
-      <button (click)="togglePlayback()" [attr.aria-label]="playerState === 'PLAY' ? 'Pause' : 'Play'" class="play" color="primary"
-        mat-flat-button [title]="playerState === 'PLAY' ? 'Pause' : 'Play'" type="button">
+      <button (click)="togglePlayback()" [attr.aria-label]="(playerState === 'PLAY' ? 'player.pause' : 'player.play') | transloco" class="play"
+        [class.playing]="playerState === 'PLAY'" color="primary" mat-flat-button
+        [title]="(playerState === 'PLAY' ? 'player.tip.pause' : 'player.tip.play') | transloco" type="button">
         <mat-icon>{{ playerState === 'PLAY' ? 'pause' : 'play_arrow' }}</mat-icon>
       </button>
-      <button (click)="publishCommand('skip')" aria-label="Next" mat-icon-button title="Next" type="button">
+      <button (click)="publishCommand('skip')" [attr.aria-label]="'player.next' | transloco" class="btn-next" mat-icon-button
+        [title]="'player.tip.next' | transloco" type="button">
         <mat-icon>skip_next</mat-icon>
       </button>
       <!-- with chapters, "next chapter" replaces the time skip, which moves into the chapter menu -->
       @if (chapters.length > 0) {
-        <button (click)="nextChapter()" [disabled]="isLastChapter()" [title]="'Next chapter: ' + (getNextChapter()?.title ?? '')"
-          aria-label="Next chapter" mat-icon-button type="button">
+        <button (click)="nextChapter()" [disabled]="isLastChapter()"
+          [title]="'player.tip.nextChapter' | transloco: { title: getNextChapter()?.title ?? '' }"
+          [attr.aria-label]="'player.nextChapter' | transloco" class="btn-next-chapter" mat-icon-button type="button">
           <mat-icon>fast_forward</mat-icon>
         </button>
       } @else {
-        <button (click)="timeSkip()" [attr.aria-label]="'Skip ' + settingsService.defaultTimeSkipLength + ' s'"
-          [title]="'Skip ' + settingsService.defaultTimeSkipLength + ' s'" mat-icon-button type="button">
+        <button (click)="timeSkip()" [attr.aria-label]="'player.skip' | transloco: { seconds: settingsService.defaultTimeSkipLength }"
+          [title]="'player.tip.skip' | transloco: { seconds: settingsService.defaultTimeSkipLength }" class="btn-skip" mat-icon-button
+          type="button">
           <mat-icon>update</mat-icon>
         </button>
       }
@@ -48,16 +54,17 @@
 
     <div class="options">
       <mat-icon class="volume-icon">volume_up</mat-icon>
-      <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" title="Volume">
+      <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" [title]="'player.tip.volume' | transloco">
         <input (valueChange)="setVolume($event)" matSliderThumb value="{{ getVolume() }}"/>
       </mat-slider>
       @if (isFullscreen) {
-        <button (click)="exitFullscreen()" aria-label="Exit fullscreen" mat-icon-button title="Exit fullscreen" type="button">
+        <button (click)="exitFullscreen()" [attr.aria-label]="'player.exitFullscreen' | transloco" class="btn-exit-fullscreen" mat-icon-button
+          [title]="'player.tip.exitFullscreen' | transloco" type="button">
           <mat-icon>fullscreen_exit</mat-icon>
         </button>
       } @else {
-        <button (click)="fullscreen()" [hidden]="!isVideoMode()" aria-label="Fullscreen" mat-icon-button title="Fullscreen"
-          type="button">
+        <button (click)="fullscreen()" [hidden]="!isVideoMode()" [attr.aria-label]="'player.fullscreen' | transloco" class="btn-fullscreen"
+          mat-icon-button [title]="'player.tip.fullscreen' | transloco" type="button">
           <mat-icon>fullscreen</mat-icon>
         </button>
       }
@@ -66,15 +73,15 @@
   <mat-menu #chapterMenu="matMenu" class="ps-menu chapter-menu">
     <button (click)="previousChapter()" mat-menu-item type="button">
       <mat-icon>fast_rewind</mat-icon>
-      <span>Previous chapter</span>
+      <span>{{ 'player.previousChapter' | transloco }}</span>
     </button>
     <button (click)="nextChapter()" [disabled]="isLastChapter()" mat-menu-item type="button">
       <mat-icon>fast_forward</mat-icon>
-      <span>Next chapter</span>
+      <span>{{ 'player.nextChapter' | transloco }}</span>
     </button>
     <button (click)="timeSkip()" mat-menu-item type="button">
       <mat-icon>update</mat-icon>
-      <span>Skip {{ settingsService.defaultTimeSkipLength }} s</span>
+      <span>{{ 'player.skip' | transloco: { seconds: settingsService.defaultTimeSkipLength } }}</span>
     </button>
     <mat-divider></mat-divider>
     @for (chapter of chapters; track chapter; let i = $index) {
@@ -94,7 +101,7 @@
       <div class="cover-stage">
         <div class="cover" [style.background]="coverGradient"><mat-icon>music_note</mat-icon></div>
         <div class="cover-text">
-          <div class="cover-title">{{ hasMedia ? currentMedia.title : 'Nothing playing' }}</div>
+          <div class="cover-title">{{ hasMedia ? currentMedia.title : ('player.nothingPlaying' | transloco) }}</div>
           <div class="cover-sub">{{ getSubTitle() }}</div>
         </div>
       </div>
@@ -113,7 +120,7 @@
       }
       @if (autoplayBlocked) {
         <span class="chip hint" role="status">
-          <mat-icon>volume_off</mat-icon>Playing muted. Click anywhere to unmute.
+          <mat-icon>volume_off</mat-icon>{{ 'player.mutedHint' | transloco }}
         </span>
       }
     </div>
@@ -130,36 +137,39 @@
   <!-- the border of the panel: dragging it (or the arrow keys) changes the width, a double click resets it -->
   <div (dblclick)="resetSideWidth()" (keydown)="onResizeKey($event)" (lostpointercapture)="endResize()" (pointercancel)="endResize()"
     (pointerdown)="startResize($event)" (pointermove)="resize($event)" (pointerup)="endResize()" [attr.aria-valuemax]="sideWidthMax"
-    [attr.aria-valuemin]="sideWidthMin" [attr.aria-valuenow]="sideWidth" aria-label="Width of the side panel" aria-orientation="vertical"
-    class="resize-handle" role="separator" tabindex="0" title="Drag to resize, double click to reset"></div>
-  <mat-button-toggle-group (valueChange)="tab = $event" [value]="tab" aria-label="Side panel" class="tabs" hideSingleSelectionIndicator>
-    <mat-button-toggle value="queue">Queue <span class="count">{{ queue.length + (hasMedia ? 1 : 0) }}</span></mat-button-toggle>
-    <mat-button-toggle value="people">People <span class="count">{{ sessionUsers.length }}</span></mat-button-toggle>
+    [attr.aria-valuemin]="sideWidthMin" [attr.aria-valuenow]="sideWidth" [attr.aria-label]="'player.sideWidth' | transloco" aria-orientation="vertical"
+    class="resize-handle" role="separator" tabindex="0" [title]="'player.tip.resize' | transloco"></div>
+  <mat-button-toggle-group (valueChange)="tab = $event" [value]="tab" [attr.aria-label]="'player.sidePanel' | transloco" class="tabs" hideSingleSelectionIndicator>
+    <mat-button-toggle value="queue">{{ 'player.queue' | transloco }} <span class="count">{{ queue.length + (hasMedia ? 1 : 0) }}</span></mat-button-toggle>
+    <mat-button-toggle value="people">{{ 'player.people' | transloco }} <span class="count">{{ sessionUsers.length }}</span></mat-button-toggle>
   </mat-button-toggle-group>
 
   <div [hidden]="tab !== 'queue'" class="panel queue-panel">
     <div class="queue-head">
-      <span class="label" title="Position of the current media / length of the playlist">
+      <span class="label" [title]="'player.tip.position' | transloco">
         {{ history.length + (hasMedia ? 1 : 0) }} / {{ playlistRows.length - (hasMedia ? 0 : 1) }}
       </span>
       <span class="spacer"></span>
-      <button (click)="publishCommand('shuffle')" aria-label="Shuffle queue" mat-icon-button title="Shuffle queue" type="button">
+      <button (click)="publishCommand('shuffle')" [attr.aria-label]="'player.shuffle' | transloco" class="btn-shuffle" mat-icon-button
+        [title]="'player.tip.shuffle' | transloco" type="button">
         <mat-icon>shuffle</mat-icon>
       </button>
       <button (click)="publishCommand('loop/' + !loopMode)" [attr.aria-pressed]="loopMode" [class.on]="loopMode"
-        [title]="loopMode ? 'Loop: on' : 'Loop: off'" aria-label="Loop the queue" mat-icon-button type="button">
+        [title]="(loopMode ? 'player.tip.loopOn' : 'player.tip.loopOff') | transloco" [attr.aria-label]="'player.loop' | transloco"
+        mat-icon-button type="button">
         <mat-icon>{{ loopMode ? 'repeat_on' : 'repeat' }}</mat-icon>
       </button>
       <button (click)="publishCommand('fairQueue/' + !fairQueue)" [attr.aria-pressed]="fairQueue" [class.on]="fairQueue"
-        [title]="fairQueue ? 'Fair queue: on (added titles take turns between the users)' : 'Fair queue: off (added titles go to the end)'"
-        aria-label="Fair queue" mat-icon-button type="button">
+        [title]="(fairQueue ? 'player.tip.fairQueueOn' : 'player.tip.fairQueueOff') | transloco"
+        [attr.aria-label]="'player.fairQueue' | transloco" mat-icon-button type="button">
         <mat-icon>balance</mat-icon>
       </button>
-      <button (click)="scrollToCurrent()" [attr.aria-label]="'Scroll to the current ' + mediaNoun" mat-icon-button
-        [title]="'Scroll to the current ' + mediaNoun" type="button">
+      <button (click)="scrollToCurrent()" [attr.aria-label]="'player.scrollToCurrent.' + mediaKind | transloco" class="btn-scroll-current"
+        mat-icon-button [title]="'player.tip.scrollToCurrent.' + mediaKind | transloco" type="button">
         <mat-icon>my_location</mat-icon>
       </button>
-      <a aria-label="Add from the library" mat-icon-button routerLink="/library" title="Add from the library">
+      <a [attr.aria-label]="'player.addFromLibrary' | transloco" class="btn-add-from-library" mat-icon-button routerLink="/library"
+        [title]="'player.tip.addFromLibrary' | transloco">
         <mat-icon>add</mat-icon>
       </a>
     </div>
@@ -173,15 +183,15 @@
         <div *cdkDragPlaceholder class="row placeholder">{{ row.media.title }}</div>
         @if (row.type === 'current') {
           <mat-icon class="lead">equalizer</mat-icon>
-          <span class="row-title">{{ row.media.title || 'Nothing playing' }}</span>
+          <span class="row-title">{{ row.media.title || ('player.nothingPlaying' | transloco) }}</span>
         } @else {
           <button (click)="jumpTo(combinedIndex(row), row.media.id)" class="row-open" type="button"
-            [attr.aria-label]="'Play ' + row.media.title">
+            [attr.aria-label]="'player.playTitle' | transloco: { title: row.media.title }">
             <mat-icon class="lead">drag_indicator</mat-icon>
             <span class="row-title">{{ row.media.title }}</span>
           </button>
-          <button (click)="removeSongFromQueueOrHistory(row.index, row.type, row.media.id)" aria-label="Remove" class="row-remove"
-            mat-icon-button title="Remove" type="button">
+          <button (click)="removeSongFromQueueOrHistory(row.index, row.type, row.media.id)" [attr.aria-label]="'player.remove' | transloco"
+            class="row-remove" mat-icon-button [title]="'player.tip.remove' | transloco" type="button">
             <mat-icon>close</mat-icon>
           </button>
         }
@@ -197,9 +207,9 @@
           <div class="person-info">
             <span class="person-name">{{ user.username }}</span>
             <span class="person-details">
-              <span title="Latency (round trip to the server)">{{ formatLatency(listener.status) }}</span>
+              <span [title]="'player.tip.latency' | transloco">{{ formatLatency(listener.status) }}</span>
               @if (hasDrift(listener.status)) {
-                <span [class.out-of-sync]="isOutOfSync(listener.status)" title="Drift from the session position (+: behind, -: ahead)">
+                <span [class.out-of-sync]="isOutOfSync(listener.status)" [title]="'player.tip.drift' | transloco">
                   @if (isOutOfSync(listener.status)) {
                     <mat-icon class="out-of-sync-icon">sync_problem</mat-icon>
                   }
@@ -208,7 +218,7 @@
               }
             </span>
           </div>
-          <mat-icon [title]="getStateText(listener.status)" class="state" [class.ready]="listener.status?.state === 'READY'">
+          <mat-icon [title]="getStateText(listener.status) | transloco" class="state" [class.ready]="listener.status?.state === 'READY'">
             {{ getStateIcon(listener.status) }}
           </mat-icon>
         </div>
@@ -225,7 +235,7 @@
     <div class="summary-text">
       <div>{{ readySummary }}</div>
       @if (maxDrift !== null) {
-        <div class="summary-sub">max drift {{ maxDrift }} ms</div>
+        <div class="summary-sub">{{ 'player.maxDrift' | transloco: { drift: maxDrift } }}</div>
       }
     </div>
   </footer>

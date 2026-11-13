@@ -1,9 +1,9 @@
-<div (mouseleave)="hovered = 0" aria-label="Rating" class="rating" role="group">
+<div (mouseleave)="hovered = 0" [attr.aria-label]="'rating.label' | transloco" class="rating" role="group">
   @for (star of stars; track star) {
-    <button (click)="setRatingValue(star)" (mouseenter)="hovered = star" [attr.aria-label]="star + (star === 1 ? ' star' : ' stars')"
+    <button (click)="setRatingValue(star)" (mouseenter)="hovered = star" [attr.aria-label]="(star === 1 ? 'rating.stars.one' : 'rating.stars.other') | transloco: { count: star }"
       [class.extra]="star > 1" [class.filled]="star <= shown" [title]="title(star)" class="star" type="button">
       <mat-icon>{{ star <= shown ? 'star' : 'star_outline' }}</mat-icon>
     </button>
   }
-  <span class="average" title="Average rating">({{ songRating }})</span>
+  <span class="average" [title]="'rating.average' | transloco">({{ songRating }})</span>
 </div>

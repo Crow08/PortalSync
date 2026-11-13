@@ -22,17 +22,20 @@ export type Background = string;
 export const NO_BACKGROUND = 'none';
 const BACKGROUND_LIST_URL = 'assets/backgrounds/backgrounds.json';
 
-/** The color theme; ids and colors: src/app/themes/themes.scss (class theme-<id>), the colors here only draw the choice. */
+/**
+ * The color theme; ids and colors: src/app/themes/themes.scss (class theme-<id>), the colors here only draw the choice. The
+ * names are translated (settings.themes.<id>).
+ */
 export type Theme = 'ocean' | 'mint' | 'violet' | 'amber' | 'mono' | 'synthwave' | 'anime';
 export const DEFAULT_THEME: Theme = 'ocean';
-export const THEMES: { value: Theme; label: string; accent: string; surface: string }[] = [
-  { value: 'ocean', label: 'Ocean', accent: '#3fb4ff', surface: '#101826' },
-  { value: 'mint', label: 'Mint', accent: '#86dbc2', surface: '#121a18' },
-  { value: 'violet', label: 'Violet', accent: '#b794ff', surface: '#19171e' },
-  { value: 'amber', label: 'Amber', accent: '#ffbe5c', surface: '#1c1711' },
-  { value: 'mono', label: 'Mono', accent: '#cfcfcf', surface: '#181818' },
-  { value: 'synthwave', label: 'Synthwave', accent: '#f92aad', surface: '#241b2f' },
-  { value: 'anime', label: "Hawky's Theme", accent: '#ff6a13', surface: '#13152e' },
+export const THEMES: { value: Theme; accent: string; surface: string }[] = [
+  { value: 'ocean', accent: '#3fb4ff', surface: '#101826' },
+  { value: 'mint', accent: '#86dbc2', surface: '#121a18' },
+  { value: 'violet', accent: '#b794ff', surface: '#19171e' },
+  { value: 'amber', accent: '#ffbe5c', surface: '#1c1711' },
+  { value: 'mono', accent: '#cfcfcf', surface: '#181818' },
+  { value: 'synthwave', accent: '#f92aad', surface: '#241b2f' },
+  { value: 'anime', accent: '#ff6a13', surface: '#13152e' },
 ];
 
 @Injectable({
@@ -106,7 +109,7 @@ export class SettingsService {
     }
   }
 
-  /** The pictures that exist plus the gradient. */
+  /** The pictures that exist plus the gradient (its label is translated by the settings page). */
   get backgrounds(): BackgroundPicture[] {
     return [...this.pictures, { value: NO_BACKGROUND, label: 'Gradient', file: '' }];
   }

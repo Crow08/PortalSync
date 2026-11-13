@@ -1,66 +1,66 @@
-<nav aria-label="Collections" class="collections">
-  <h2>Collections</h2>
+<nav [attr.aria-label]="'library.collections' | transloco" class="collections">
+  <h2>{{ 'library.collections' | transloco }}</h2>
   <button (click)="selectCollection(null)" [class.on]="!activePlaylist" class="collection" type="button">
     <mat-icon>all_inclusive</mat-icon>
-    <span class="name">All media</span>
+    <span class="name">{{ 'library.allMedia' | transloco }}</span>
   </button>
-  <h2 class="group">Playlists</h2>
+  <h2 class="group">{{ 'common.playlists' | transloco }}</h2>
   @for (playlist of playlists; track playlist.id) {
     <button (click)="selectCollection(playlist)" [class.on]="activePlaylist?.id === playlist.id" class="collection" type="button">
       <mat-icon>playlist_play</mat-icon>
       <span class="name">{{ playlist.name }}</span>
     </button>
   } @empty {
-    <p class="hint">No playlists yet. Add media to a playlist and it shows up here.</p>
+    <p class="hint">{{ 'library.noPlaylists' | transloco }}</p>
   }
 </nav>
 
 <section class="library">
   <div class="toolbar">
-    <mat-button-toggle-group (valueChange)="typeFilter = $event; resetScroll()" [value]="typeFilter" aria-label="Media type"
+    <mat-button-toggle-group (valueChange)="typeFilter = $event; resetScroll()" [value]="typeFilter" [attr.aria-label]="'library.mediaType' | transloco"
       hideSingleSelectionIndicator>
-      <mat-button-toggle value="all">All</mat-button-toggle>
-      <mat-button-toggle value="VIDEO">Videos</mat-button-toggle>
-      <mat-button-toggle value="SONG">Songs</mat-button-toggle>
+      <mat-button-toggle value="all">{{ 'common.all' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="VIDEO">{{ 'common.videos' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="SONG">{{ 'common.songs' | transloco }}</mat-button-toggle>
     </mat-button-toggle-group>
     <mat-form-field appearance="outline" class="sort" subscriptSizing="dynamic">
-      <mat-select (selectionChange)="resetScroll()" [(value)]="sortMode" aria-label="Sort by">
-        <mat-option value="title">Title A to Z</mat-option>
-        <mat-option value="recent">Recently added</mat-option>
+      <mat-select (selectionChange)="resetScroll()" [(value)]="sortMode" [aria-label]="'library.sortBy' | transloco">
+        <mat-option value="title">{{ 'library.sort.title' | transloco }}</mat-option>
+        <mat-option value="recent">{{ 'library.sort.recent' | transloco }}</mat-option>
         @if (activePlaylist) {
-          <mat-option value="playlist">Playlist order</mat-option>
+          <mat-option value="playlist">{{ 'library.sort.playlist' | transloco }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
     <div class="spacer"></div>
     <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
       <mat-icon matPrefix>search</mat-icon>
-      <input (ngModelChange)="resetScroll()" [(ngModel)]="query" aria-label="Search" matInput
-        placeholder="Title, artist, series, genre" type="search"/>
+      <input (ngModelChange)="resetScroll()" [(ngModel)]="query" [attr.aria-label]="'common.search' | transloco" matInput
+        [placeholder]="'library.searchPlaceholder' | transloco" type="search"/>
     </mat-form-field>
   </div>
 
   @if (activePlaylist; as playlist) {
     <div class="playlist-bar">
-      <div aria-label="Owners" class="owners" role="list">
-        <span class="label">Owners</span>
+      <div [attr.aria-label]="'library.owners' | transloco" class="owners" role="list">
+        <span class="label">{{ 'library.owners' | transloco }}</span>
         @for (owner of playlist.owners; track owner.id) {
           <span class="owner" role="listitem">
             <span aria-hidden="true" class="avatar">{{ owner.username.slice(0, 2).toUpperCase() }}</span>
             {{ owner.username }}
             @if (canManagePlaylist && playlist.owners.length > 1) {
-              <button (click)="removeOwner(owner)" [attr.aria-label]="'Remove ' + owner.username + ' as an owner'" class="remove"
+              <button (click)="removeOwner(owner)" [attr.aria-label]="'library.removeOwner' | transloco: { name: owner.username }" class="remove"
                 type="button">
                 <mat-icon>close</mat-icon>
               </button>
             }
           </span>
         } @empty {
-          <span class="none">nobody</span>
+          <span class="none">{{ 'library.nobody' | transloco }}</span>
         }
         @if (canManagePlaylist) {
-          <button (menuOpened)="loadUsers()" [matMenuTriggerFor]="ownerMenu" aria-label="Add an owner" mat-icon-button
-            title="Add an owner" type="button">
+          <button (menuOpened)="loadUsers()" [matMenuTriggerFor]="ownerMenu" [attr.aria-label]="'library.addOwner' | transloco" mat-icon-button
+            [title]="'library.addOwner' | transloco" type="button">
             <mat-icon>person_add</mat-icon>
           </button>
           <mat-menu #ownerMenu="matMenu" class="ps-menu">
@@ -70,7 +70,7 @@
                 <span>{{ candidate.username }}</span>
               </button>
             } @empty {
-              <span class="menu-hint">Everyone is an owner already.</span>
+              <span class="menu-hint">{{ 'library.everyoneOwner' | transloco }}</span>
             }
           </mat-menu>
         }
@@ -78,62 +78,62 @@
       <div class="access">
         @if (canManagePlaylist) {
           <!-- who can change the playlist and deleting it: behind one button, the bar stays quiet -->
-          <button [matMenuTriggerFor]="playlistMenu" aria-label="Playlist options" mat-icon-button title="Playlist options"
+          <button [matMenuTriggerFor]="playlistMenu" [attr.aria-label]="'library.playlistOptions' | transloco" mat-icon-button [title]="'library.playlistOptions' | transloco"
             type="button">
             <mat-icon>more_vert</mat-icon>
           </button>
           <mat-menu #playlistMenu="matMenu" class="ps-menu" xPosition="before">
-            <span class="menu-hint">Who can change this playlist</span>
+            <span class="menu-hint">{{ 'library.whoCanChange' | transloco }}</span>
             <button (click)="setPublicOwnership(false)" [attr.aria-checked]="!playlist.publicOwnership" mat-menu-item
-              role="menuitemradio" title="Only the owners can change this playlist" type="button">
+              role="menuitemradio" [title]="'library.onlyOwnersTip' | transloco" type="button">
               <mat-icon>{{ playlist.publicOwnership ? '' : 'check' }}</mat-icon>
-              <span>Only the owners</span>
+              <span>{{ 'library.onlyOwners' | transloco }}</span>
             </button>
             <button (click)="setPublicOwnership(true)" [attr.aria-checked]="playlist.publicOwnership" mat-menu-item
-              role="menuitemradio" title="Everyone can add and remove songs" type="button">
+              role="menuitemradio" [title]="'library.everyoneTip' | transloco" type="button">
               <mat-icon>{{ playlist.publicOwnership ? 'check' : '' }}</mat-icon>
-              <span>Everyone</span>
+              <span>{{ 'library.everyone' | transloco }}</span>
             </button>
             @if (canDeletePlaylist) {
               <mat-divider></mat-divider>
               <button (click)="deletePlaylist()" mat-menu-item type="button">
                 <mat-icon>delete</mat-icon>
-                <span>Delete this playlist</span>
+                <span>{{ 'library.deletePlaylist' | transloco }}</span>
               </button>
             }
           </mat-menu>
         } @else {
-          <span class="access-chip">{{ playlist.publicOwnership ? 'Public: everyone can change it' : 'Read only' }}</span>
+          <span class="access-chip">{{ (playlist.publicOwnership ? 'library.publicChip' : 'library.readOnly') | transloco }}</span>
         }
       </div>
     </div>
   }
 
   @if (!selection.isEmpty()) {
-    <div class="bulk" role="toolbar" aria-label="Selection">
-      <span>{{ selection.selected.length }} selected</span>
+    <div class="bulk" role="toolbar" [attr.aria-label]="'library.selection' | transloco">
+      <span>{{ 'library.selected' | transloco: { count: selection.selected.length } }}</span>
       <div class="spacer"></div>
       @if (inSession) {
         <button (click)="addMediaListToQueue(selection.selected)" mat-button type="button">
           <mat-icon>queue</mat-icon>
-          Add to queue
+          {{ 'library.addToQueue' | transloco }}
         </button>
       }
       <button (click)="openPlaylistDialog(selection.selected)" mat-button type="button">
         <mat-icon>playlist_add</mat-icon>
-        Add to playlist
+        {{ 'library.addToPlaylist' | transloco }}
       </button>
       @if (canEditPlaylist) {
         <button (click)="removeFromPlaylist(selection.selected)" mat-button type="button">
           <mat-icon>playlist_remove</mat-icon>
-          Remove from playlist
+          {{ 'library.removeFromPlaylist' | transloco }}
         </button>
       }
       <button (click)="deleteSongs(selection.selected)" mat-button type="button">
         <mat-icon>delete</mat-icon>
-        Delete
+        {{ 'common.delete' | transloco }}
       </button>
-      <button (click)="selection.clear()" mat-button type="button">Clear</button>
+      <button (click)="selection.clear()" mat-button type="button">{{ 'library.clear' | transloco }}</button>
     </div>
   }
 
@@ -141,7 +141,7 @@
     <!-- only the visible rows are rendered, the library can hold thousands of items -->
     <cdk-virtual-scroll-viewport [itemSize]="rowHeight" class="list">
       <div *cdkVirtualFor="let media of filtered; trackBy: trackById" [class.on]="detail?.id === media.id" class="row">
-        <mat-checkbox (change)="toggleSelected(media)" [attr.aria-label]="'Select ' + media.title" [checked]="selection.isSelected(media)"
+        <mat-checkbox (change)="toggleSelected(media)" [attr.aria-label]="'library.select' | transloco: { title: media.title }" [checked]="selection.isSelected(media)"
           class="pick"></mat-checkbox>
         <button (click)="showDetail(media)" class="open" type="button">
           <span class="cover" [style.background]="gradient(media)">
@@ -153,32 +153,32 @@
               <span class="sub">{{ creator(media) }}</span>
             }
           </span>
-          <span class="kind" [class.video]="isVideo(media)">{{ isVideo(media) ? 'Video' : 'Song' }}</span>
+          <span class="kind" [class.video]="isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
         </button>
       </div>
     </cdk-virtual-scroll-viewport>
   } @else {
     <p class="empty">
       @if (isLoadingResults) {
-        Loading the library…
+        {{ 'library.loading' | transloco }}
       } @else if (loadFailed) {
-        The library could not be loaded.
-        <button (click)="load()" mat-button type="button">Try again</button>
+        {{ 'library.loadFailed' | transloco }}
+        <button (click)="load()" mat-button type="button">{{ 'library.tryAgain' | transloco }}</button>
       } @else if (items.length === 0) {
-        {{ activePlaylist ? 'This playlist is empty.' : 'The library is empty. Upload something first.' }}
+        {{ (activePlaylist ? 'library.playlistEmpty' : 'library.libraryEmpty') | transloco }}
       } @else {
-        Nothing matches.
+        {{ 'library.nothingMatches' | transloco }}
       }
     </p>
   }
 
   <div class="footer">
     <button (click)="toggleAll()" [disabled]="filtered.length === 0" mat-button type="button">
-      {{ allSelected ? 'Deselect all' : 'Select all' }}
+      {{ (allSelected ? 'library.deselectAll' : 'common.selectAll') | transloco }}
     </button>
     <div class="spacer"></div>
-    <span class="count">{{ filtered.length }} {{ filtered.length === 1 ? 'item' : 'items' }}@if (filtered.length !== items.length) {
-      <span> of {{ items.length }}</span>
+    <span class="count">{{ (filtered.length === 1 ? 'library.items.one' : 'library.items.other') | transloco: { count: filtered.length } }}@if (filtered.length !== items.length) {
+      <span>{{ 'library.itemsOf' | transloco: { total: items.length } }}</span>
     }</span>
   </div>
 </section>
@@ -189,7 +189,7 @@
       <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
     </div>
     <div class="head">
-      <span class="chip" [class.video]="isVideo(media)" [class.song]="!isVideo(media)">{{ isVideo(media) ? 'Video' : 'Song' }}</span>
+      <span class="chip" [class.video]="isVideo(media)" [class.song]="!isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
       <h2>{{ media.title }}</h2>
       <p>{{ subtitle(media) }}</p>
     </div>
@@ -197,35 +197,35 @@
       @if (inSession) {
         <button (click)="playMediaNow(media)" color="primary" mat-flat-button type="button">
           <mat-icon>play_arrow</mat-icon>
-          Play now
+          {{ 'library.playNow' | transloco }}
         </button>
         <div class="pair">
-          <button (click)="playMediaNext(media)" mat-stroked-button type="button">Play next</button>
-          <button (click)="addMediaToQueue(media)" mat-stroked-button type="button">Add to queue</button>
+          <button (click)="playMediaNext(media)" mat-stroked-button type="button">{{ 'library.playNext' | transloco }}</button>
+          <button (click)="addMediaToQueue(media)" mat-stroked-button type="button">{{ 'library.addToQueue' | transloco }}</button>
         </div>
       } @else {
-        <p class="hint">Join a lobby to play this. <a routerLink="/">Lobbies</a></p>
+        <p class="hint">{{ 'library.joinToPlay' | transloco }} <a routerLink="/">{{ 'shell.lobbies' | transloco }}</a></p>
       }
-      <button (click)="openPlaylistDialog([media])" mat-stroked-button type="button">Add to playlist</button>
+      <button (click)="openPlaylistDialog([media])" mat-stroked-button type="button">{{ 'library.addToPlaylist' | transloco }}</button>
       @if (canEditPlaylist) {
-        <button (click)="removeFromPlaylist([media])" mat-stroked-button type="button">Remove from this playlist</button>
+        <button (click)="removeFromPlaylist([media])" mat-stroked-button type="button">{{ 'library.removeFromThisPlaylist' | transloco }}</button>
       }
       <div class="pair">
         @if (!isVideo(media)) {
-          <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">Edit</button>
+          <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">{{ 'common.edit' | transloco }}</button>
         }
-        <button (click)="deleteSong(media)" mat-stroked-button type="button">Delete</button>
+        <button (click)="deleteSong(media)" mat-stroked-button type="button">{{ 'common.delete' | transloco }}</button>
       </div>
     </div>
     <dl class="meta">
       @for (row of details(media); track row.label) {
         <div>
-          <dt>{{ row.label }}</dt>
+          <dt>{{ row.label | transloco }}</dt>
           <dd>{{ row.value }}</dd>
         </div>
       }
     </dl>
   } @else {
-    <p class="hint">Pick an item to see its details and play it.</p>
+    <p class="hint">{{ 'library.pickItem' | transloco }}</p>
   }
 </aside>

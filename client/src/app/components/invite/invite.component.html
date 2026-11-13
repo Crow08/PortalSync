@@ -1,18 +1,18 @@
 <section class="panel">
   <header>
-    <h2>Invite someone</h2>
-    <p>The link lets one person register. It works for one hour.</p>
+    <h2>{{ 'invite.title' | transloco }}</h2>
+    <p>{{ 'invite.description' | transloco }}</p>
   </header>
   @if (!link) {
-    <button (click)="getInviteLink()" mat-stroked-button type="button">Create invite link</button>
+    <button (click)="getInviteLink()" mat-stroked-button type="button">{{ 'invite.create' | transloco }}</button>
   } @else {
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Invite link</mat-label>
-      <input [value]="link" aria-label="Invite link" matInput readonly type="text"/>
+      <mat-label>{{ 'invite.link' | transloco }}</mat-label>
+      <input [value]="link" [attr.aria-label]="'invite.link' | transloco" matInput readonly type="text"/>
     </mat-form-field>
     <button [cdkCopyToClipboard]="link" mat-stroked-button type="button">
       <mat-icon>file_copy</mat-icon>
-      Copy link
+      {{ 'invite.copy' | transloco }}
     </button>
   }
 </section>

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-snack-bar-component-upload-error',
-  template: `<mat-icon aria-hidden="true">error</mat-icon><span>Something went wrong</span>`,
+  template: `<mat-icon aria-hidden="true">error</mat-icon><span>{{ 'messages.serverError' | transloco }}</span>`,
   styles: [
     `
       :host {

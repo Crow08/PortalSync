@@ -1,5 +1,6 @@
 ///<reference types="@types/spotify-web-playback-sdk"/>
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SpotifyService } from './spotify.service';
 
@@ -24,6 +25,7 @@ export type SpotifyConnection = 'disconnected' | 'connecting' | 'connected' | 'u
   providedIn: 'root',
 })
 export class SpotifyPlayerService {
+  protected readonly tl = inject(TranslocoService);
   readonly connection = new BehaviorSubject<SpotifyConnection>('disconnected');
   /** Why the player is not available, empty while it is. */
   readonly error = new BehaviorSubject<string>('');
@@ -191,12 +193,12 @@ export class SpotifyPlayerService {
     this.connection.next('connecting');
     this.error.next('');
     if (!(await this.spotifyService.restore())) {
-      return this.fail('Not logged in to Spotify');
+      return this.fail(this.tl.translate('spotify.notLoggedIn'));
     }
     try {
       await this.loadSdk();
     } catch (error) {
-      return this.fail('The Spotify player could not be loaded');
+      return this.fail(this.tl.translate('spotify.playerLoadFailed'));
     }
     const player = new Spotify.Player({
       name: 'PortalSync',
@@ -210,17 +212,17 @@ export class SpotifyPlayerService {
     }
     player.addListener('player_state_changed', (state) => this.onState(state));
     player.addListener('autoplay_failed', () => this.autoplayFailed.next());
-    player.addListener('account_error', () => this.fail('Spotify Premium is required'));
-    player.addListener('authentication_error', () => this.fail('Spotify login failed, please log in again'));
-    player.addListener('initialization_error', () => this.fail('This browser can not play Spotify (EME)'));
+    player.addListener('account_error', () => this.fail(this.tl.translate('spotify.premiumRequired')));
+    player.addListener('authentication_error', () => this.fail(this.tl.translate('spotify.loginFailed')));
+    player.addListener('initialization_error', () => this.fail(this.tl.translate('spotify.noEme')));
     player.addListener('playback_error', ({ message }) => console.error(`Spotify playback error: ${message}`));
     const ready = new Promise<string>((resolve) => player.addListener('ready', ({ device_id }) => resolve(device_id)));
     if (!(await player.connect())) {
-      return this.fail('The Spotify player could not connect');
+      return this.fail(this.tl.translate('spotify.connectFailed'));
     }
     const deviceId = await Promise.race([ready, new Promise<string>((resolve) => setTimeout(() => resolve(''), WAIT_TIMEOUT))]);
     if (!deviceId) {
-      return this.fail('The Spotify player did not become ready');
+      return this.fail(this.tl.translate('spotify.notReady'));
     }
     this.player = player;
     this.spotifyService.deviceId = deviceId;

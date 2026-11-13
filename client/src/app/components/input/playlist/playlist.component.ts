@@ -29,8 +29,8 @@ export class PlaylistComponent extends InputObjectDirective implements OnInit {
 
   ngOnInit(): void {
     this.addObjectInputData = new AddObjectInputData(
-      'Playlist',
-      [{ displayName: 'Name', key: 'name', value: '' }],
+      'inputs.playlist',
+      [{ displayName: 'inputs.name', key: 'name', value: '' }],
       '/api/v1/playlists/'
     );
     this.getData();
@@ -45,7 +45,7 @@ export class PlaylistComponent extends InputObjectDirective implements OnInit {
       .getDataForSelect('/api/v1/playlists/all', Playlist)
       .then((value) => {
         this.selectObjectData = new ObjectSelectInputData(
-          'Playlist',
+          'inputs.playlist',
           // songs are only added to playlists the user may change, the others are read only
           value
             .filter((object) => object.canEdit(this.authenticationService.currentUserValue))
