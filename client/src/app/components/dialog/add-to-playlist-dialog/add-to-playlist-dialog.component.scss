@@ -32,9 +32,10 @@ mat-dialog-content {
     min-width: 0;
   }
 
+  // as high as the field next to it (44 px at the field density of theme.scss)
   button {
     flex: none;
-    height: 56px;
+    height: 44px;
   }
 }
 

@@ -65,6 +65,13 @@ $default-theme: map.get($themes, 'ocean');
 .graphite-theme {
   @include mat.all-component-themes(material-theme($default-theme));
   @include app-colors(mat.m2-define-palette(map.get($default-theme, primary)));
+
+  // text fields and dropdowns are denser than the other controls: density -3 makes them 44 px instead of 56 px high. All
+  // fields of the app are outlined, so their labels stay (Material only hides the labels of filled fields below 52 px).
+  // Buttons next to a field that match its height: add-object-button, add-to-playlist-dialog.
+  @include mat.form-field-density(-3);
+  @include mat.select-density(-3);
+  @include mat.autocomplete-density(-3);
 }
 
 @each $id, $t in $themes {

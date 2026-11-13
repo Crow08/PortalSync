@@ -1,7 +1,7 @@
-// as high as an outlined form field, so it lines up with the field next to it
+// as high as an outlined form field (44 px at the field density of theme.scss), so it lines up with the field next to it
 .add_btn {
-  min-width: 56px;
-  height: 56px;
+  min-width: 44px;
+  height: 44px;
   padding: 0;
 
   // Material leaves room for a label next to the icon (negative left, positive right margin): without a label the icon sits off center
