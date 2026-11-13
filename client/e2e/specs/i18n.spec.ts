@@ -12,7 +12,7 @@ test.describe('languages', () => {
   test('casual English changes the tone of the texts and is remembered', async ({ userPage, user }) => {
     const song = await uploadSong(user, `${unique('casual')}.mp3`);
     await userPage.goto('/settings');
-    await userPage.getByRole('radio', { name: 'English (casual)' }).click();
+    await userPage.getByRole('radio', { name: 'English (fun)' }).click();
     expect(await userPage.evaluate(() => localStorage.getItem('msc_language'))).toBe('en-casual');
 
     // a reload keeps the language; keys missing in the casual file fall back to plain English

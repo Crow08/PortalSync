@@ -9,7 +9,7 @@ export const DEFAULT_LANGUAGE: Language = 'en';
 /** The labels are shown in their own language and are not translated. */
 export const LANGUAGES: { value: Language; label: string; htmlLang: string }[] = [
   { value: 'en', label: 'English', htmlLang: 'en' },
-  { value: 'en-casual', label: 'English (casual)', htmlLang: 'en' },
+  { value: 'en-casual', label: 'English (fun)', htmlLang: 'en' },
 ];
 
 /** The translation layers of themes (src/app/i18n/<overlay>.json), see LanguageService.setOverlay. */
