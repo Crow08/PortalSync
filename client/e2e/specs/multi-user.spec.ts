@@ -182,7 +182,7 @@ test.describe('autoplay and layout', () => {
     await startRoom(userPage, name, [A]);
 
     // a browser with the default autoplay policy (the fixture browser allows autoplay)
-    const strict = await chromium.launch();
+    const strict = await chromium.launch({ args: ['--mute-audio'] });
     try {
       const ctx = await strict.newContext({
         baseURL: BASE_URL,

@@ -17,7 +17,9 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
+    // --mute-audio: the generated test songs are sine tones; the browser plays them silently (the app still sees normal,
+    // unmuted media elements)
+    launchOptions: { args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'] },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
