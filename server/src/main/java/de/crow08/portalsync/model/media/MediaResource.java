@@ -17,7 +17,9 @@ import de.crow08.portalsync.model.playlists.PlaylistAccess;
 import de.crow08.portalsync.model.playlists.PlaylistRepository;
 import de.crow08.portalsync.model.tag.Tag;
 import de.crow08.portalsync.model.tag.TagRepository;
+import de.crow08.portalsync.utils.MediaFiles;
 import de.crow08.portalsync.utils.Mp4ChapterReader;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -147,7 +149,9 @@ public class MediaResource {
     Iterable<Tag> tags = tagRepository.findAllById(tagIds);
 
     for (MultipartFile mpFile : files) {
-      String fileName = Objects.requireNonNull(mpFile.getOriginalFilename());
+      // only the plain name is used: a path in the name must not place the file outside the directory of the artist
+      String fileName = MediaFiles.fileName(mpFile.getOriginalFilename())
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file name"));
       String songPath = "/songs/" + artistId;
       Path fullPath = Paths.get(this.storagePath.toString(), songPath);
       // Create new song
@@ -216,6 +220,12 @@ public class MediaResource {
           newSongs.add(existing.get());
           continue;
         }
+      }
+
+      // every other song is a file: its uri has to be a path inside the storage directory
+      if (!songNode.path("spotify").asBoolean(false)
+          && MediaFiles.resolve(storagePath, songNode.path("uri").asString("")).isEmpty()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid uri of a song");
       }
 
       JsonNode artistNode = songNode.get("artist");
@@ -378,12 +388,12 @@ public class MediaResource {
     if (video.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    Path file = Paths.get(storagePath.toString(), video.get().getUri());
-    if (!Files.isReadable(file)) {
+    Optional<Path> file = MediaFiles.resolve(storagePath, video.get().getUri()).filter(Files::isReadable);
+    if (file.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     try {
-      return ResponseEntity.ok(Mp4ChapterReader.read(file));
+      return ResponseEntity.ok(Mp4ChapterReader.read(file.get()));
     } catch (IOException e) {
       // chapters are optional: a file that cannot be parsed just has none
       return ResponseEntity.ok(List.of());

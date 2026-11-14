@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import de.crow08.portalsync.utils.MediaFiles;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,8 @@ import org.springframework.web.servlet.resource.ResourceResolverChain;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -162,15 +166,11 @@ public class SecurityConfig implements WebMvcConfigurer {
       } catch (NumberFormatException e) {
         return null;
       }
-      if (file.isPresent()) {
-        for (Resource location : locations) {
-          Resource resource = location.createRelative(file.get());
-          if (resource.isReadable()) {
-            return resource;
-          }
-        }
-      }
-      return null;
+      // the uri is data from clients (import): only files inside the storage directory are served
+      return file.flatMap(uri -> MediaFiles.resolve(Paths.get(clientStoragePath), uri))
+          .filter(path -> Files.isRegularFile(path) && Files.isReadable(path))
+          .<Resource>map(FileSystemResource::new)
+          .orElse(null);
     }
   }
 
