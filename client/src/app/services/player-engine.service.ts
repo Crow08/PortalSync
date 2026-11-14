@@ -76,6 +76,8 @@ export class PlayerEngineService {
 
   /** Client time at which the current playback started at the given media position, used to correct drift. */
   private playbackAnchor: { mediaId: number; startTime: number; mediaTime: number } | null = null;
+  /** The pending start of the playback (see schedulePlay), null if none is scheduled. */
+  private playTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSeekCorrection = 0;
   private mediaInfoRequest = 0;
   /** Media whose thumbnails and chapters were requested. */
@@ -590,6 +592,7 @@ export class PlayerEngineService {
   }
 
   private clearPlaybackAnchor(): void {
+    this.cancelScheduledPlay();
     this.playbackAnchor = null;
     this.mediaService.setPlaybackRate(1);
     this.userStatusService.setDrift(null);
@@ -602,11 +605,13 @@ export class PlayerEngineService {
    * @param mediaTime media position in ms at the start time, defaults to the position the media is prepared at.
    */
   private schedulePlay(startTime: number, mediaTime = Math.round(this.mediaService.getCurrentTime() * 1000)): void {
+    this.cancelScheduledPlay();
     this.playerState = PlayerState.WAITING;
     this.playbackAnchor = { mediaId: this.preparedMediaId, startTime, mediaTime };
     // the Spotify player starts audibly later than the call: the call is made ahead, the position is corrected if it is late
     const latency = this.mediaService.startLatency;
-    setTimeout(() => {
+    this.playTimer = setTimeout(() => {
+      this.playTimer = null;
       // the start command may arrive late, or the timeout fires late: start where the others already are
       const lateness = new Date().getTime() - (startTime - this.mediaService.startLatency);
       if (lateness > LATE_START_TOLERANCE) {
@@ -626,6 +631,17 @@ export class PlayerEngineService {
       }
       this.playerState = PlayerState.PLAY;
     }, startTime - latency - new Date().getTime());
+  }
+
+  /**
+   * A start that is still pending must not happen after the session paused, stopped, jumped or changed the media in the
+   * meantime (e.g. a pause within the lead time of a resume or a join).
+   */
+  private cancelScheduledPlay(): void {
+    if (this.playTimer !== null) {
+      clearTimeout(this.playTimer);
+      this.playTimer = null;
+    }
   }
 
   /**
