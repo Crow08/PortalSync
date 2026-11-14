@@ -1,6 +1,7 @@
 package de.crow08.portalsync.model.media;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.crow08.portalsync.model.playlists.Playlist;
 import de.crow08.portalsync.model.tag.Tag;
 
@@ -36,6 +37,12 @@ public class Media {
 
   @Column(nullable = false)
   private String uri;
+
+  // the user who uploaded or imported the media, null if unknown (e.g. media added by SQL). Read only: it is set by the
+  // server and never taken from a request
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @Column(name = "owner_id")
+  private Long ownerId;
 
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(name = "media_tag",
@@ -90,6 +97,14 @@ public class Media {
 
   public void setUri(String path) {
     this.uri = path;
+  }
+
+  public Long getOwnerId() {
+    return ownerId;
+  }
+
+  public void setOwnerId(Long ownerId) {
+    this.ownerId = ownerId;
   }
 
   public Set<Tag> getTags() {

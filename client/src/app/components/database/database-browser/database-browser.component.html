@@ -129,10 +129,12 @@
           {{ 'library.removeFromPlaylist' | transloco }}
         </button>
       }
-      <button (click)="deleteSongs(selection.selected)" mat-button type="button">
-        <mat-icon>delete</mat-icon>
-        {{ 'common.delete' | transloco }}
-      </button>
+      @if (canChangeAll(selection.selected)) {
+        <button (click)="deleteSongs(selection.selected)" mat-button type="button">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.delete' | transloco }}
+        </button>
+      }
       <button (click)="selection.clear()" mat-button type="button">{{ 'library.clear' | transloco }}</button>
     </div>
   }
@@ -210,12 +212,14 @@
       @if (canEditPlaylist) {
         <button (click)="removeFromPlaylist([media])" mat-stroked-button type="button">{{ 'library.removeFromThisPlaylist' | transloco }}</button>
       }
-      <div class="pair">
-        @if (!isVideo(media)) {
-          <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">{{ 'common.edit' | transloco }}</button>
-        }
-        <button (click)="deleteSong(media)" mat-stroked-button type="button">{{ 'common.delete' | transloco }}</button>
-      </div>
+      @if (canChangeMedia(media)) {
+        <div class="pair">
+          @if (!isVideo(media)) {
+            <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">{{ 'common.edit' | transloco }}</button>
+          }
+          <button (click)="deleteSong(media)" mat-stroked-button type="button">{{ 'common.delete' | transloco }}</button>
+        </div>
+      }
     </div>
     <dl class="meta">
       @for (row of details(media); track row.label) {

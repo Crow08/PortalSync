@@ -277,6 +277,17 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     return !!this.activePlaylist?.canEdit(this.authenticationService.currentUserValue);
   }
 
+  /** Whether the user may edit and delete the media: its owner and admins, the server checks that as well. */
+  canChangeMedia(media: Media): boolean {
+    const user = this.authenticationService.currentUserValue;
+    return !!user && (user.admin || (media.ownerId != null && media.ownerId === user.id));
+  }
+
+  /** Whether the user may delete all of the media, e.g. the selection. */
+  canChangeAll(mediaList: Media[]): boolean {
+    return mediaList.every((media) => this.canChangeMedia(media));
+  }
+
   /** Whether the user may change the owners of the shown playlist and whether it is public: owners and admins. */
   get canManagePlaylist(): boolean {
     return !!this.activePlaylist?.canManage(this.authenticationService.currentUserValue);

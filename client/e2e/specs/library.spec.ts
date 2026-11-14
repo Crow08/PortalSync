@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/auth';
-import { unique } from '../fixtures/api';
+import { createUser, unique } from '../fixtures/api';
 import { libraryRow, openMedia, pickMedia, searchLibrary } from '../fixtures/library';
-import { addSongToPlaylist, createPlaylist, playlistMedia, sharedMedia, uploadSong } from '../fixtures/media';
+import { addSongToPlaylist, api, createPlaylist, playlistMedia, sharedMedia, uploadSong } from '../fixtures/media';
 
 test.describe('library', () => {
   test('shows the shared media and filters by type and search', async ({ userPage }) => {
@@ -46,7 +46,10 @@ test.describe('library', () => {
     await expect(libraryRow(userPage, songs[0].title)).toHaveClass(/\bon\b/);
     await expect(detail.getByText('Join a lobby to play this.')).toBeVisible();
     await expect(detail.getByRole('button', { name: 'Play now' })).toHaveCount(0);
-    await expect(detail.getByRole('button', { name: 'Edit' })).toBeVisible();
+    // the shared media belong to the admin: other users can not edit or delete them
+    await expect(detail.getByRole('button', { name: 'Add to playlist' })).toBeVisible();
+    await expect(detail.getByRole('button', { name: 'Edit' })).toHaveCount(0);
+    await expect(detail.getByRole('button', { name: 'Delete' })).toHaveCount(0);
 
     await openMedia(userPage, video.title);
     await expect(detail.locator('.chip')).toHaveText('Video');
@@ -192,6 +195,37 @@ test.describe('library', () => {
     await userPage.getByRole('toolbar', { name: 'Selection' }).getByRole('button', { name: 'Delete' }).click();
     await userPage.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(userPage.locator('.list .row')).toHaveCount(0);
+  });
+
+  test('only the owner and admins can edit and delete a song', async ({ userPage, user, admin }) => {
+    const owner = await createUser(admin, unique('own'), 'pw-owner');
+    const song = await uploadSong(owner, `${unique('owned')}.mp3`);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, song.title);
+    await openMedia(userPage, song.title);
+    const detail = userPage.locator('aside.detail');
+    await expect(detail.getByRole('button', { name: 'Add to playlist' })).toBeVisible();
+    await expect(detail.getByRole('button', { name: 'Edit' })).toHaveCount(0);
+    await expect(detail.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+
+    // the server rejects it as well, a bulk delete with one foreign song deletes nothing
+    const own = await uploadSong(user, `${unique('mine')}.mp3`);
+    const json = { 'Content-Type': 'application/json' };
+    expect((await api(user, `/media/deleteSongById/${song.id}`, { method: 'PUT' })).status).toBe(403);
+    const bulk = await api(user, '/media/deleteSongs', { method: 'PUT', headers: json, body: JSON.stringify([own, song]) });
+    expect(bulk.status).toBe(403);
+    const edit = await api(user, '/media/editSong', {
+      method: 'PUT',
+      headers: json,
+      body: JSON.stringify({ id: song.id, type: 'SONG', title: 'taken over', genres: [], tags: [] }),
+    });
+    expect(edit.status).toBe(403);
+    const titles = async () =>
+      ((await (await api(user, '/media/all')).json()).content as { title: string }[]).map((m) => m.title);
+    expect(await titles()).toEqual(expect.arrayContaining([song.title, own.title]));
+
+    expect((await api(admin, `/media/deleteSongById/${song.id}`, { method: 'PUT' })).status).toBe(200);
+    expect(await titles()).not.toContain(song.title);
   });
 
   test('edit dialog renames a song', async ({ userPage, user }) => {

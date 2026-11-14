@@ -74,6 +74,8 @@ public class MediaResource {
 
   private final PlaylistAccess playlistAccess;
 
+  private final MediaAccess mediaAccess;
+
   private final GenreRepository genreRepository;
   private final AlbumRepository albumRepository;
   private final TagRepository tagRepository;
@@ -87,6 +89,7 @@ public class MediaResource {
                        ArtistRepository artistRepository,
                        PlaylistRepository playlistRepository,
                        PlaylistAccess playlistAccess,
+                       MediaAccess mediaAccess,
                        GenreRepository genreRepository,
                        AlbumRepository albumRepository,
                        TagRepository tagRepository,
@@ -97,6 +100,7 @@ public class MediaResource {
     this.artistRepository = artistRepository;
     this.playlistRepository = playlistRepository;
     this.playlistAccess = playlistAccess;
+    this.mediaAccess = mediaAccess;
     this.genreRepository = genreRepository;
     this.albumRepository = albumRepository;
     this.tagRepository = tagRepository;
@@ -156,6 +160,8 @@ public class MediaResource {
       Path fullPath = Paths.get(this.storagePath.toString(), songPath);
       // Create new song
       Song song = new Song(fileName, songPath + "/" + fileName);
+      // the uploader owns the song: only the owner and admins may edit and delete it
+      song.setOwnerId(mediaAccess.currentUserId());
       // Add artist
       song.setArtist(artist.orElse(null));
       // Add album
@@ -289,6 +295,8 @@ public class MediaResource {
       Song song = new Song(songNode.get("title").asString(), songNode.get("uri").asString());
       // A Spotify song is played by the Spotify player of each client, its uri is a Spotify uri and no file
       song.setSpotify(songNode.path("spotify").asBoolean(false));
+      // the importer owns the song; a Spotify song that exists already keeps its owner
+      song.setOwnerId(mediaAccess.currentUserId());
       // Add artist
       song.setArtist(artist.orElse(null));
       // Add album
@@ -418,7 +426,9 @@ public class MediaResource {
 
   @PutMapping(path = "/deleteSongById/{songId}")
   public void deleteSongById(@PathVariable Long songId) {
-    Media media = mediaRepository.findById(songId).orElseThrow(() -> new RuntimeException("Song not found"));
+    Media media = mediaRepository.findById(songId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
+    mediaAccess.requireChangeable(media);
     media.getPlaylists().forEach(playlist ->
         playlist.setSongs(playlist.getSongs()
             .stream()
@@ -430,8 +440,15 @@ public class MediaResource {
 
   @PutMapping(path = "/deleteSongs")
   public void deleteSongs(@RequestBody Media[] toBeDeletedMedia) {
+    // all or nothing: one media the user may not delete fails the request before anything is deleted
+    List<Media> mediaList = new ArrayList<>();
     for (Media toBeDeleted : toBeDeletedMedia) {
-      Media media = mediaRepository.findById(toBeDeleted.getId()).orElseThrow(() -> new RuntimeException("Song not found"));
+      Media media = mediaRepository.findById(toBeDeleted.getId())
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
+      mediaAccess.requireChangeable(media);
+      mediaList.add(media);
+    }
+    for (Media media : mediaList) {
       media.getPlaylists().forEach(playlist ->
           playlist.setSongs(playlist.getSongs()
               .stream()
@@ -447,6 +464,7 @@ public class MediaResource {
     Optional<Song> song = this.songRepository.findById(alteredSong.getId());
     if (song.isPresent()) {
       Song originalSong = song.get();
+      mediaAccess.requireChangeable(originalSong);
       originalSong.setTitle(alteredSong.getTitle());
       originalSong.setArtist(alteredSong.getArtist());
       originalSong.setAlbum(alteredSong.getAlbum());
