@@ -13,6 +13,8 @@ public class JoinCommand extends Command {
   MinimalMedia currentMedia;
   List<MinimalMedia> queue;
   List<MinimalMedia> history;
+  /** Version of the queue and history, see {@link QueueSnapshot}. */
+  long queueVersion;
   List<User> sessionUsers;
   List<UserStatus> userStatuses;
   Session.SessionState sessionState;
@@ -27,14 +29,15 @@ public class JoinCommand extends Command {
     super("Join");
   }
 
-  public JoinCommand(long userId, MinimalMedia currentMedia, List<MinimalMedia> queue, List<MinimalMedia> history,
+  public JoinCommand(long userId, MinimalMedia currentMedia, QueueSnapshot snapshot,
                      Session.SessionState sessionState, boolean loopMode, boolean fairQueue, long startServerTime,
                      long startMediaTime, List<User> sessionUsers, List<UserStatus> userStatuses) {
     super("Join");
     this.userId = userId;
     this.currentMedia = currentMedia;
-    this.queue = queue;
-    this.history = history;
+    this.queue = snapshot.queue();
+    this.history = snapshot.history();
+    this.queueVersion = snapshot.version();
     this.sessionState = sessionState;
     this.loopMode = loopMode;
     this.fairQueue = fairQueue;
@@ -42,6 +45,10 @@ public class JoinCommand extends Command {
     this.startMediaTime = startMediaTime;
     this.sessionUsers = sessionUsers;
     this.userStatuses = userStatuses;
+  }
+
+  public long getQueueVersion() {
+    return queueVersion;
   }
 
   public long getUserId() {

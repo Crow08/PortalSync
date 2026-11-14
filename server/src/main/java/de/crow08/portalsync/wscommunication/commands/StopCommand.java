@@ -5,33 +5,29 @@ import de.crow08.portalsync.model.media.MinimalMedia;
 import java.util.List;
 
 public class StopCommand extends Command {
+
   /** Only set when the queue ended: the last media moved into the history, there is no current media. */
-  List<MinimalMedia> queue;
-  List<MinimalMedia> history;
+  private final QueueSnapshot snapshot;
 
   public StopCommand() {
-    super("Stop");
+    this(null);
   }
 
-  public StopCommand(List<MinimalMedia> queue, List<MinimalMedia> history) {
+  public StopCommand(QueueSnapshot snapshot) {
     super("Stop");
-    this.queue = queue;
-    this.history = history;
+    this.snapshot = snapshot;
   }
 
   public List<MinimalMedia> getQueue() {
-    return queue;
-  }
-
-  public void setQueue(List<MinimalMedia> queue) {
-    this.queue = queue;
+    return snapshot != null ? snapshot.queue() : null;
   }
 
   public List<MinimalMedia> getHistory() {
-    return history;
+    return snapshot != null ? snapshot.history() : null;
   }
 
-  public void setHistory(List<MinimalMedia> history) {
-    this.history = history;
+  /** Version of the queue and history, see {@link QueueSnapshot}; null without them. */
+  public Long getQueueVersion() {
+    return snapshot != null ? snapshot.version() : null;
   }
 }

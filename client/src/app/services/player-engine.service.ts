@@ -78,6 +78,12 @@ export class PlayerEngineService {
   private playbackAnchor: { mediaId: number; startTime: number; mediaTime: number } | null = null;
   /** The pending start of the playback (see schedulePlay), null if none is scheduled. */
   private playTimer: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * Versions of the queue and history this client shows. Commands may arrive in another order than the server made the
+   * changes: a copy older than the shown one is dropped (see applyQueue).
+   */
+  private queueVersion = -1;
+  private historyVersion = -1;
   private lastSeekCorrection = 0;
   private mediaInfoRequest = 0;
   /** Media whose thumbnails and chapters were requested. */
@@ -152,6 +158,8 @@ export class PlayerEngineService {
     this.fairQueue = false;
     this.queue = [];
     this.history = [];
+    this.queueVersion = -1;
+    this.historyVersion = -1;
     this.sessionUsers = [];
     this.userStatuses = new Map();
     this.currentMedia = NO_MEDIA();
@@ -387,8 +395,7 @@ export class PlayerEngineService {
         this.currentMedia.title = commandObject.currentMedia.title;
         // the server sends the queue and history along: they can not be derived from the media id, which may occur
         // several times in both
-        this.queue = commandObject.queue;
-        this.history = commandObject.history;
+        this.applyQueue(commandObject);
         break;
       case 'Pause':
         this.clearPlaybackAnchor();
@@ -402,8 +409,7 @@ export class PlayerEngineService {
         this.playerState = PlayerState.STOP;
         // at the end of the queue the server sends the new queue and history: there is no current media any more
         if (commandObject.history) {
-          this.queue = commandObject.queue;
-          this.history = commandObject.history;
+          this.applyQueue(commandObject);
           this.currentMedia = NO_MEDIA();
         }
         break;
@@ -431,9 +437,9 @@ export class PlayerEngineService {
         if (commandObject.userId === this.authenticationService.currentUserValue?.id) {
           this.sessionService.acknowledgeJoin();
           this.userStatusService.setJoined(true);
-          // set join event as last ready object to not trigger a new sync on join.
-          this.queue = commandObject.queue;
-          this.history = commandObject.history;
+          // the join is the state of the session: it replaces whatever this client showed before (e.g. the versions
+          // of a server that was restarted in the meantime)
+          this.applyQueue(commandObject, true);
           this.loopMode = commandObject.loopMode;
           this.fairQueue = commandObject.fairQueue;
           switch (commandObject.sessionState) {
@@ -495,20 +501,34 @@ export class PlayerEngineService {
             this.fairQueue = commandObject.fairQueue;
             break;
           case 'Queue':
-            this.queue = commandObject.queue;
-            break;
           case 'History':
-            this.history = commandObject.history;
-            break;
           case 'QueueAndHistory':
-            this.queue = commandObject.queue;
-            this.history = commandObject.history;
+            this.applyQueue(commandObject);
             break;
           case 'UserStatus':
             this.userStatuses.set(commandObject.userStatus.userId, commandObject.userStatus);
             break;
         }
         break;
+    }
+  }
+
+  /**
+   * Takes over the queue and the history a command carries (one of them or both), unless this client already shows a
+   * newer copy: the server counts the changes (queueVersion), and its commands can overtake each other.
+   */
+  private applyQueue(
+    command: { queue?: { id: number; title: string }[]; history?: { id: number; title: string }[]; queueVersion?: number },
+    force = false
+  ): void {
+    const version = command.queueVersion ?? -1;
+    if (command.queue && (force || version >= this.queueVersion)) {
+      this.queue = command.queue;
+      this.queueVersion = version;
+    }
+    if (command.history && (force || version >= this.historyVersion)) {
+      this.history = command.history;
+      this.historyVersion = version;
     }
   }
 

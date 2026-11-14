@@ -2,8 +2,6 @@ package de.crow08.portalsync.sessions;
 
 import de.crow08.portalsync.model.media.Media;
 import de.crow08.portalsync.model.media.MediaType;
-import de.crow08.portalsync.model.queue.Queue;
-import de.crow08.portalsync.model.queue.QueueEntry;
 import de.crow08.portalsync.model.users.User;
 import de.crow08.portalsync.model.users.UserRepository;
 import de.crow08.portalsync.wscommunication.WebSocketSessionController;
@@ -21,23 +19,19 @@ import org.springframework.stereotype.Controller;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Controller for sessions to manage session states and organize queue, history and other data while the session is
- * being worked with. User command should be working with this controller to modify data instead of accessing the
- * session directly.
+ * Runs the sessions: it takes the lock of a session, applies a change with the current time and does what the rules
+ * can not do themselves (the sync timeout, messages to the session, the users of the WebSocket connections). The rules
+ * of the playback and the queue live in {@link Session} and {@link de.crow08.portalsync.model.queue.Queue}; user
+ * commands go through this controller instead of changing a session directly.
  */
 @Controller
 public class SessionController {
@@ -79,21 +73,6 @@ public class SessionController {
     syncTimeoutScheduler.shutdownNow();
   }
 
-  /**
-   * Playback time since the given start. A resumed playback is planned {@value #SYNC_DELAY}ms in the future, so the
-   * start may not be reached yet: that counts as no playback instead of a negative one.
-   */
-  private static Duration elapsedSince(Instant mediaStarted, Instant now) {
-    return now.isBefore(mediaStarted) ? Duration.ZERO : Duration.between(mediaStarted, now);
-  }
-
-  private static boolean isInSyncState(Session session) {
-    Session.SessionState currentState = session.getSessionState();
-    return currentState.equals(Session.SessionState.SYNC_PLAY) ||
-        currentState.equals(Session.SessionState.SYNC_PAUSE) ||
-        currentState.equals(Session.SessionState.SYNC_STOP);
-  }
-
   private void setUpListeners() {
     webSocketSessionController.addDisconnectListener((userId, sessionId) ->
         sessionRepository.findById(sessionId).ifPresent(session -> {
@@ -130,7 +109,7 @@ public class SessionController {
   public Optional<Media> getCurrentMedia(Session session) {
     synchronized (session.getLock()) {
       if (session.getQueue().getCurrentMedia() == null) {
-        this.nextMedia(session);
+        session.nextMedia();
       }
       return Optional.ofNullable(session.getQueue().getCurrentMedia());
     }
@@ -139,121 +118,47 @@ public class SessionController {
   /**
    * Gets the time the media has been played for. This time excludes pauses.
    * If the media is currently playing this represents a snapshot of the time at the moment of execution.
-   *
-   * @param session the session of the media to get the offset for.
-   * @return the duration of the elapsed time of the current media.
    */
   public Duration getMediaStartOffset(Session session) {
     synchronized (session.getLock()) {
-      Duration duration = Duration.ZERO;
-      if (session.getMediaStarted() != null) {
-        duration = duration.plus(elapsedSince(session.getMediaStarted(), Instant.now()));
-      }
-      if (duration != null) {
-        duration = duration.plus(session.getSavedProgression());
-      }
-      return duration;
+      return session.playbackOffset(Instant.now());
     }
   }
 
   /**
-   * Moves the current media play 0position by the defined offset and pauses the playback at the new position.
+   * Moves the current media play position by the defined offset and pauses the playback at the new position.
    *
-   * @param session the session of the media to move the offset for.
-   * @param offset  the amount in ms by which the current offset should be moved.
+   * @param offset the amount in ms by which the current offset should be moved.
    * @return new current media offset see {@link #getMediaStartOffset(Session)}
    */
   public Duration moveMediaStartOffset(Session session, long offset) {
     synchronized (session.getLock()) {
-      // set saved progression to current progression
-      Instant now = Instant.now();
-      if (session.getMediaStarted() != null) {
-        session.setSavedProgression(session.getSavedProgression().plus(elapsedSince(session.getMediaStarted(), now)));
-      }
-      session.setMediaStarted(null);
-      session.setSavedProgression(session.getSavedProgression().plus(offset, ChronoUnit.MILLIS));
-      return this.getMediaStartOffset(session);
+      return session.seekBy(offset, Instant.now());
     }
   }
 
-  /**
-   * This is a macro function which tries to move the next media in the queue to the current media while
-   * adding the old current media to the history.
-   *
-   * @param session for with to move to the next media
-   */
+  /** Moves on to the next media of the queue, see {@link Session#nextMedia()}. */
   public void nextMedia(Session session) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      session.setMediaStarted(null);
-      session.setSavedProgression(Duration.ZERO);
-      QueueEntry current = queue.getCurrent();
-      // Add current media to history
-      if (current != null) {
-        queue.getHistoryMedia().add(current);
-      }
-      // If queue is empty and loopMode is active, dump history into queue.
-      if (queue.getQueuedMedia().size() == 0 && session.isLoopMode() && !queue.getHistoryMedia().isEmpty()) {
-        queue.getQueuedMedia().addAll(queue.getHistoryMedia());
-        queue.getHistoryMedia().clear();
-      }
-      // Get current media from queue.
-      if (queue.getQueuedMedia().size() > 0) {
-        queue.setCurrent(queue.getQueuedMedia().remove(0));
-      } else {
-        queue.setCurrent(null);
-      }
+      session.nextMedia();
     }
   }
 
   /**
-   * Makes the media at the given index the current media: the media before it end up in the history, the media after
-   * it in the queue.
+   * Makes the media at the given index the current media, see {@link Session#skipTo(int)}.
    *
-   * @param session for which to change the current media
-   * @param index   index in the combined list of history, current media and queue
+   * @param index index in the combined list of history, current media and queue
    */
   public void skipTo(Session session, int index) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      session.setMediaStarted(null);
-      session.setSavedProgression(Duration.ZERO);
-      List<QueueEntry> all = new ArrayList<>(queue.getHistoryMedia());
-      // the slot of the current media exists in the index even without a current media
-      all.add(queue.getCurrent());
-      all.addAll(queue.getQueuedMedia());
-      queue.getHistoryMedia().clear();
-      queue.getQueuedMedia().clear();
-      all.subList(0, index).stream().filter(Objects::nonNull).forEach(queue.getHistoryMedia()::add);
-      all.subList(index + 1, all.size()).stream().filter(Objects::nonNull).forEach(queue.getQueuedMedia()::add);
-      queue.setCurrent(all.get(index));
+      session.skipTo(index);
     }
   }
 
-  /**
-   * This is a macro function which tries to place the latest media in the history in the current position.
-   * The currently played media will be pushed on top of the queue.
-   *
-   * @param session for with to move to the next media
-   */
+  /** Goes back to the latest media of the history, see {@link Session#previousMedia()}. */
   public void previousMedia(Session session) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      session.setMediaStarted(null);
-      session.setSavedProgression(Duration.ZERO);
-      QueueEntry current = queue.getCurrent();
-      if (current != null) {
-        queue.getQueuedMedia().add(0, current);
-      }
-      // if history is empty and loop mode is active use the last media int the queue instead.
-      if (queue.getHistoryMedia().size() == 0 && session.isLoopMode() && !queue.getQueuedMedia().isEmpty()) {
-        queue.setCurrent(queue.getQueuedMedia().remove(queue.getQueuedMedia().size() - 1));
-        // if the history is not empty use the latest long.
-      } else if (queue.getHistoryMedia().size() > 0) {
-        queue.setCurrent(queue.getHistoryMedia().remove(queue.getHistoryMedia().size() - 1));
-      } else {
-        queue.setCurrent(null);
-      }
+      session.previousMedia();
     }
   }
 
@@ -267,149 +172,79 @@ public class SessionController {
    */
   public void addPlaylist(Session session, List<Media> media, Long addedBy) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      boolean initialPlaylist = queue.getCurrent() == null && queue.getQueuedMedia().isEmpty()
-          && queue.getHistoryMedia().isEmpty();
+      boolean initialPlaylist = session.getQueue().hasNoMedia();
       // a lobby that starts with music is a party: everybody's songs take turns. Video lobbies keep the plain order
       if (initialPlaylist && !media.isEmpty() && media.getFirst().getType() == MediaType.SONG && !session.isFairQueue()) {
         session.setFairQueue(true);
         sendToSession(session, new UpdateFairQueueCommand(true));
       }
-      addMedia(session, media, addedBy);
+      session.addMedia(media, addedBy);
     }
   }
 
   /**
-   * Adds a list of media to the queue of the session: at the end, or with the fair queue mode of the session each
-   * media in fair order (see {@link Queue#addFair}).
+   * Adds a list of media to the queue of the session, see {@link Session#addMedia}.
    *
-   * @param session for the media to be added to
-   * @param media   list of new media
    * @param addedBy id of the user who adds the media, null if unknown
    */
   public void addMedia(Session session, List<Media> media, Long addedBy) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      for (Media added : media) {
-        QueueEntry entry = new QueueEntry(added, addedBy);
-        if (session.isFairQueue()) {
-          queue.addFair(entry);
-        } else {
-          queue.getQueuedMedia().add(entry);
-        }
-      }
+      session.addMedia(media, addedBy);
     }
   }
 
-  /**
-   * Marks the start of a media. This resets the time played of the previous media.
-   *
-   * @param session for which the media starts playing.
-   */
+  /** Marks the start of a media, see {@link Session#startPlayback()}. */
   public void start(Session session) {
     synchronized (session.getLock()) {
-      session.setMediaStarted(null);
-      session.setSavedProgression(Duration.ZERO);
-      if (isInSyncState(session)) {
-        session.setSessionState(Session.SessionState.SYNC_PLAY);
-      } else {
-        session.setSessionState(Session.SessionState.PLAY);
-      }
+      session.startPlayback();
     }
   }
 
   /**
-   * Marks the media as paused and saves the progression time since the last resume or start of this media.
-   * the current start time will be set to null.
+   * Pauses the playback, see {@link Session#pausePlayback}.
    *
-   * @param session for which the media is being paused.
-   * @return the total accumulated time across all pauses and resumes this media has been played for.
+   * @return the position the playback is paused at.
    */
   public Duration pause(Session session) {
     synchronized (session.getLock()) {
-      Instant now = Instant.now();
-      if (session.getMediaStarted() != null) {
-        session.setSavedProgression(session.getSavedProgression().plus(elapsedSince(session.getMediaStarted(), now)));
-      }
-      session.setMediaStarted(null);
-      session.setSessionState(Session.SessionState.PAUSE);
-      return this.getMediaStartOffset(session);
+      return session.pausePlayback(Instant.now());
     }
   }
 
   /**
-   * Marks this media as resumed and defines a new start time.
-   * The media is planned to start within the given {@value #SYNC_DELAY}.
+   * Resumes a paused playback within {@value #SYNC_DELAY}ms, see {@link Session#resumePlayback}.
    *
-   * @param session for which the media is being resumed.
-   * @return server time of the media start.
+   * @return server time of the media start, null if nothing starts now (not paused, or a sync round is running).
    */
   public Instant resume(Session session) {
     synchronized (session.getLock()) {
-      if (isInSyncState(session)) {
-        session.setSessionState(Session.SessionState.SYNC_PLAY);
-        return null;
-      } else {
-        Instant now = Instant.now();
-        session.setMediaStarted(now.plus(SYNC_DELAY, ChronoUnit.MILLIS));
-        session.setSessionState(Session.SessionState.PLAY);
-        return session.getMediaStarted();
-      }
+      return session.resumePlayback(Instant.now(), SYNC_DELAY);
     }
   }
 
-  /**
-   * Marks the current media as stopped deleting all process and the start time.
-   *
-   * @param session for which the media is being stopped.
-   */
+  /** Stops the playback, see {@link Session#stopPlayback()}. */
   public void stop(Session session) {
     synchronized (session.getLock()) {
-      session.setSavedProgression(Duration.ZERO);
-      session.setMediaStarted(null);
-      session.setSessionState(Session.SessionState.STOP);
+      session.stopPlayback();
     }
   }
 
-  /**
-   * Shuffles the current Queue. With the fair queue mode of the session the result is in fair order: the media of
-   * each user are shuffled, but the users still take turns (see {@link Queue#addFair}).
-   *
-   * @param session for which the queue is shuffled for.
-   */
+  /** Shuffles the queue, see {@link Session#shuffleQueue()}. */
   public void shuffleQueue(Session session) {
     synchronized (session.getLock()) {
-      Queue queue = session.getQueue();
-      Collections.shuffle(queue.getQueuedMedia());
-      if (session.isFairQueue()) {
-        List<QueueEntry> shuffled = new ArrayList<>(queue.getQueuedMedia());
-        queue.getQueuedMedia().clear();
-        shuffled.forEach(queue::addFair);
-      }
+      session.shuffleQueue();
     }
   }
 
-  /**
-   * Deletes media from the current queue.
-   *
-   * @param session    to delete from.
-   * @param queueIndex to delete.
-   */
   public void deleteMediaFromQueue(Session session, int queueIndex) {
     synchronized (session.getLock()) {
-      session.getQueue().getQueuedMedia().remove(queueIndex);
+      session.getQueue().removeQueued(queueIndex);
     }
   }
 
-  /**
-   * Deletes media from the current history.
-   *
-   * @param session      to delete from.
-   * @param historyIndex to delete.
-   */
   public void deleteMediaFromHistory(Session session, int historyIndex) {
     synchronized (session.getLock()) {
-      session.getQueue().getHistoryMedia().remove(historyIndex);
+      session.getQueue().removeHistory(historyIndex);
     }
   }
 
@@ -429,7 +264,7 @@ public class SessionController {
       sessionRepository.delete(session);
       // a pending sync timeout must not start the playback of a deleted session
       session.getSessionUserSynchronization().completeRound();
-      session.setSessionState(Session.SessionState.STOP);
+      session.stopPlayback();
       sendToSession(session, new SessionDeletedCommand());
       session.getUsers().clear();
     }
@@ -453,7 +288,7 @@ public class SessionController {
       session.removeUserStatus(oldUser.getId());
       sessionRepository.save(session);
       // the removed user might have been the last one the current sync round was waiting for
-      if (isInSyncState(session) && session.getSessionUserSynchronization().allReady(getUserIds(session))) {
+      if (session.allUsersReady()) {
         sendToSession(session, finishSync(session));
       }
     }
@@ -472,47 +307,26 @@ public class SessionController {
    */
   public Optional<Command> userIsReady(User user, Session session, long mediaId) {
     synchronized (session.getLock()) {
-      SessionUserSynchronization sync = session.getSessionUserSynchronization();
-      if (!isInSyncState(session) || !sync.addReadyUser(user.getId(), mediaId)) {
+      if (!session.userReady(user.getId(), mediaId)) {
         return Optional.empty();
       }
-      List<Long> userIds = getUserIds(session);
-      if (sync.allReady(userIds)) {
-        return Optional.ofNullable(finishSync(session));
-      }
-      return Optional.empty();
+      return Optional.ofNullable(finishSync(session));
     }
   }
 
   /**
-   * Moves the session into its sync state and starts a new sync round for the current media. Any running round is
-   * replaced. If not all users are ready within {@value #SYNC_TIMEOUT}ms the round is finished anyway.
-   *
-   * @param session the session to synchronize.
+   * Moves the session into its sync state and starts a new sync round for the current media (see
+   * {@link Session#enterSync()}). If not all users are ready within {@value #SYNC_TIMEOUT}ms the round is finished
+   * anyway.
    */
   public void enterSyncState(Session session) {
     synchronized (session.getLock()) {
-      Media currentMedia = session.getQueue().getCurrentMedia();
-      if (currentMedia == null) {
+      long round = session.enterSync();
+      if (round < 0) {
         return;
       }
-      switch (session.getSessionState()) {
-        case PLAY -> session.setSessionState(Session.SessionState.SYNC_PLAY);
-        case PAUSE -> session.setSessionState(Session.SessionState.SYNC_PAUSE);
-        case STOP -> session.setSessionState(Session.SessionState.SYNC_STOP);
-      }
-      SessionUserSynchronization sync = session.getSessionUserSynchronization();
-      long round = sync.startRound(currentMedia.getId());
-      sync.setTimeout(round, syncTimeoutScheduler.schedule(() -> onSyncTimeout(session, round), SYNC_TIMEOUT,
-          TimeUnit.MILLISECONDS));
-    }
-  }
-
-  public void leaveSyncState(Session session) {
-    switch (session.getSessionState()) {
-      case SYNC_PLAY -> session.setSessionState(Session.SessionState.PLAY);
-      case SYNC_PAUSE -> session.setSessionState(Session.SessionState.PAUSE);
-      case SYNC_STOP -> session.setSessionState(Session.SessionState.STOP);
+      session.getSessionUserSynchronization().setTimeout(round,
+          syncTimeoutScheduler.schedule(() -> onSyncTimeout(session, round), SYNC_TIMEOUT, TimeUnit.MILLISECONDS));
     }
   }
 
@@ -522,7 +336,7 @@ public class SessionController {
       if (!sync.isCurrentRound(round)) {
         return;
       }
-      if (!isInSyncState(session)) {
+      if (!session.inSyncState()) {
         // session has been paused or stopped in the meantime
         sync.completeRound();
         return;
@@ -533,28 +347,18 @@ public class SessionController {
   }
 
   /**
-   * Finishes the current sync round and leaves the sync state. Must be called while holding the session lock
-   * ({@link Session#getLock()}).
+   * Finishes the current sync round. Must be called while holding the session lock ({@link Session#getLock()}).
    *
    * @return a {@link StartCommand} if playback is pending, null otherwise.
    */
   private Command finishSync(Session session) {
-    session.getSessionUserSynchronization().completeRound();
-    boolean startPlayback = session.getSessionState().equals(Session.SessionState.SYNC_PLAY);
-    leaveSyncState(session);
-    if (startPlayback) {
-      return new StartCommand(resume(session).toEpochMilli());
-    }
-    return null;
+    Instant start = session.finishSync(Instant.now(), SYNC_DELAY);
+    return start != null ? new StartCommand(start.toEpochMilli()) : null;
   }
 
   private void sendToSession(Session session, Command command) {
     if (command != null) {
       simpMessagingTemplate.convertAndSend("/topic/sessions/" + session.getId(), command);
     }
-  }
-
-  private List<Long> getUserIds(Session session) {
-    return session.getUsers().stream().map(User::getId).collect(Collectors.toList());
   }
 }

@@ -6,22 +6,19 @@ import java.util.List;
 
 public class UpdateQueueCommand extends UpdateCommand {
 
-  List<MinimalMedia> queue;
+  private final QueueSnapshot snapshot;
 
-  public UpdateQueueCommand() {
+  public UpdateQueueCommand(QueueSnapshot snapshot) {
     super("Queue");
-  }
-
-  public UpdateQueueCommand(List<MinimalMedia> queue) {
-    super("Queue");
-    this.queue = queue;
+    this.snapshot = snapshot;
   }
 
   public List<MinimalMedia> getQueue() {
-    return queue;
+    return snapshot.queue();
   }
 
-  public void setQueue(List<MinimalMedia> queue) {
-    this.queue = queue;
+  /** Version of the queue, see {@link QueueSnapshot}. */
+  public long getQueueVersion() {
+    return snapshot.version();
   }
 }

@@ -20,6 +20,7 @@ import de.crow08.portalsync.wscommunication.commands.JumpCommand;
 import de.crow08.portalsync.wscommunication.commands.LeaveCommand;
 import de.crow08.portalsync.wscommunication.commands.NopCommand;
 import de.crow08.portalsync.wscommunication.commands.PauseCommand;
+import de.crow08.portalsync.wscommunication.commands.QueueSnapshot;
 import de.crow08.portalsync.wscommunication.commands.ResumeCommand;
 import de.crow08.portalsync.wscommunication.commands.SetMediaCommand;
 import de.crow08.portalsync.wscommunication.commands.StopCommand;
@@ -46,7 +47,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Controller
 public class PlayerControlsController {
@@ -164,7 +164,7 @@ public class PlayerControlsController {
       if (connectedUser.isPresent()) {
         webSocketSessionController.joinMusicSession(wsSessionId, sessionId);
         sessionController.addUserToSession(connectedUser.get(), session);
-        return new JoinCommand(userId, minMedia, getMediaFromQueue(session), getMediaFromHistory(session),
+        return new JoinCommand(userId, minMedia, QueueSnapshot.of(session.getQueue()),
             session.getSessionState(), session.isLoopMode(), session.isFairQueue(), startTime, startOffset, session.getUsers(),
             new ArrayList<>(session.getUserStatuses()));
       }
@@ -196,8 +196,10 @@ public class PlayerControlsController {
   @SendTo("/topic/sessions/{sessionId}")
   public Command shuffle(@DestinationVariable long sessionId, String message) throws Exception {
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
-    sessionController.shuffleQueue(session);
-    return new UpdateQueueCommand(getMediaFromQueue(session));
+    synchronized (session.getLock()) {
+      sessionController.shuffleQueue(session);
+      return new UpdateQueueCommand(QueueSnapshot.of(session.getQueue()));
+    }
   }
 
   /**
@@ -212,39 +214,14 @@ public class PlayerControlsController {
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
     synchronized (session.getLock()) {
       Queue queue = session.getQueue();
-      int previousIndex = findInHistoryAndQueue(queue, requestedPreviousIndex, mediaId);
+      int previousIndex = queue.findInHistoryAndQueue(requestedPreviousIndex, mediaId);
+      // the current media can not be moved, a move of it changes nothing
       if (previousIndex < 0) {
         throw new Exception(QUEUE_CHANGED);
       }
-
-      if (queue.getHistoryMedia().size() > previousIndex) {
-        // Dragged Element is from history
-        if (queue.getHistoryMedia().size() > currentIndex) {
-          // Dragged into history
-          QueueEntry media = queue.getHistoryMedia().remove(previousIndex);
-          queue.getHistoryMedia().add(currentIndex, media);
-        } else {
-          // dragged into queue
-          QueueEntry media = queue.getHistoryMedia().remove(previousIndex);
-          int queuePos = Math.max(currentIndex - (queue.getHistoryMedia().size() + 1), 0);
-          queue.getQueuedMedia().add(queuePos, media);
-        }
-      } else if (queue.getHistoryMedia().size() < previousIndex) {
-        // Dragged element is from queue
-        if (queue.getHistoryMedia().size() >= currentIndex) {
-          // Dragged into history
-          int queuePos = Math.max(previousIndex - (queue.getHistoryMedia().size() + 1), 0);
-          QueueEntry media = queue.getQueuedMedia().get(queuePos);
-          queue.getHistoryMedia().add(currentIndex, media);
-          queue.getQueuedMedia().remove(queuePos);
-        } else {
-          // Dragged into queue
-          QueueEntry media = queue.getQueuedMedia().remove(previousIndex - (queue.getHistoryMedia().size() + 1));
-          queue.getQueuedMedia().add(currentIndex - (queue.getHistoryMedia().size() + 1), media);
-        }
-      }
+      queue.move(previousIndex, currentIndex);
+      return new UpdateQueueAndHistoryCommand(QueueSnapshot.of(queue));
     }
-    return new UpdateQueueAndHistoryCommand(getMediaFromQueue(session), getMediaFromHistory(session));
   }
 
   /**
@@ -258,7 +235,7 @@ public class PlayerControlsController {
 
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
     synchronized (session.getLock()) {
-      int index = findInHistoryAndQueue(session.getQueue(), requestedIndex, mediaId);
+      int index = session.getQueue().findInHistoryAndQueue(requestedIndex, mediaId);
       if (index < 0) {
         throw new Exception(QUEUE_CHANGED);
       }
@@ -294,12 +271,8 @@ public class PlayerControlsController {
   public Command end(@DestinationVariable long sessionId, @DestinationVariable long mediaId, String message) throws Exception {
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
     synchronized (session.getLock()) {
-      Media currentMedia = session.getQueue().getCurrentMedia();
-      // every client reports the end: only the first report for a playback that actually ran is accepted, so a slow
-      // client can not skip the next media, even if it is the same media again (e.g. loop mode with one media)
-      boolean playedLongEnough = session.getSessionState().equals(Session.SessionState.PLAY) &&
-          sessionController.getMediaStartOffset(session).toMillis() >= END_GRACE_PERIOD;
-      if (currentMedia != null && currentMedia.getId() == mediaId && playedLongEnough) {
+      // only the first report for a playback that actually ran is accepted, see Session.hasPlayed
+      if (session.hasPlayed(mediaId, END_GRACE_PERIOD, Instant.now())) {
         sessionController.nextMedia(session);
         return setMedia(session);
       }
@@ -319,53 +292,24 @@ public class PlayerControlsController {
     synchronized (session.getLock()) {
       switch (type) {
         case "queue" -> {
-          int index = findNearest(session.getQueue().getQueuedMedia(), queueIndex, mediaId);
+          int index = session.getQueue().findQueued(queueIndex, mediaId);
           if (index < 0) {
             throw new Exception(QUEUE_CHANGED);
           }
           sessionController.deleteMediaFromQueue(session, index);
-          return new UpdateQueueCommand(getMediaFromQueue(session));
+          return new UpdateQueueCommand(QueueSnapshot.of(session.getQueue()));
         }
         case "history" -> {
-          int index = findNearest(session.getQueue().getHistoryMedia(), queueIndex, mediaId);
+          int index = session.getQueue().findHistory(queueIndex, mediaId);
           if (index < 0) {
             throw new Exception(QUEUE_CHANGED);
           }
           sessionController.deleteMediaFromHistory(session, index);
-          return new UpdateHistoryCommand(getMediaFromHistory(session));
+          return new UpdateHistoryCommand(QueueSnapshot.of(session.getQueue()));
         }
         default -> throw new Exception("Unknown list: " + type);
       }
     }
-  }
-
-  /**
-   * Finds the media with the given id closest to the expected index (the same media can be queued multiple times).
-   *
-   * @return the index or -1 if the media is not in the list.
-   */
-  private static int findNearest(List<QueueEntry> list, int expectedIndex, long mediaId) {
-    int found = -1;
-    for (int i = 0; i < list.size(); i++) {
-      if (list.get(i).media().getId() == mediaId && (found < 0 || Math.abs(i - expectedIndex) < Math.abs(found - expectedIndex))) {
-        found = i;
-      }
-    }
-    return found;
-  }
-
-  /**
-   * Like {@link #findNearest} for the combined list of history, current media (not movable) and queue.
-   */
-  private static int findInHistoryAndQueue(Queue queue, int expectedIndex, long mediaId) {
-    int historySize = queue.getHistoryMedia().size();
-    int inHistory = findNearest(queue.getHistoryMedia(), expectedIndex, mediaId);
-    int inQueue = findNearest(queue.getQueuedMedia(), expectedIndex - historySize - 1, mediaId);
-    int queueIndex = inQueue < 0 ? -1 : inQueue + historySize + 1;
-    if (inHistory < 0 || queueIndex < 0) {
-      return Math.max(inHistory, queueIndex);
-    }
-    return Math.abs(inHistory - expectedIndex) <= Math.abs(queueIndex - expectedIndex) ? inHistory : queueIndex;
   }
 
   @MessageMapping("/sessions/{sessionId}/commands/ready/{userId}/{mediaId}/{duration}")
@@ -408,8 +352,11 @@ public class PlayerControlsController {
   public Command addMediaToPlaylist(@DestinationVariable long sessionId, Principal principal, String message) throws Exception {
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
     Media media = findMedia(objectMapper.readTree(message)).orElseThrow(() -> new Exception("Media not found"));
-    sessionController.addMedia(session, List.of(media), getUserId(principal));
-    return new UpdateQueueCommand(getMediaFromQueue(session));
+    Long userId = getUserId(principal);
+    synchronized (session.getLock()) {
+      sessionController.addMedia(session, List.of(media), userId);
+      return new UpdateQueueCommand(QueueSnapshot.of(session.getQueue()));
+    }
   }
 
   @MessageMapping("/sessions/{sessionId}/commands/addMediaListToQueue")
@@ -423,8 +370,11 @@ public class PlayerControlsController {
     if (media.isEmpty()) {
       throw new Exception("Media not found");
     }
-    sessionController.addMedia(session, media, getUserId(principal));
-    return new UpdateQueueCommand(getMediaFromQueue(session));
+    Long userId = getUserId(principal);
+    synchronized (session.getLock()) {
+      sessionController.addMedia(session, media, userId);
+      return new UpdateQueueCommand(QueueSnapshot.of(session.getQueue()));
+    }
   }
 
   @MessageMapping("/sessions/{sessionId}/commands/playMediaNext")
@@ -434,9 +384,9 @@ public class PlayerControlsController {
     Media media = findMedia(objectMapper.readTree(message)).orElseThrow(() -> new Exception("Media not found"));
     Long userId = getUserId(principal);
     synchronized (session.getLock()) {
-      session.getQueue().getQueuedMedia().add(0, new QueueEntry(media, userId));
+      session.getQueue().addNext(new QueueEntry(media, userId));
+      return new UpdateQueueCommand(QueueSnapshot.of(session.getQueue()));
     }
-    return new UpdateQueueCommand(getMediaFromQueue(session));
   }
 
   /**
@@ -477,7 +427,7 @@ public class PlayerControlsController {
     Media media = findMedia(objectMapper.readTree(message)).orElseThrow(() -> new Exception("Media not found"));
     Long userId = getUserId(principal);
     synchronized (session.getLock()) {
-      session.getQueue().getQueuedMedia().add(0, new QueueEntry(media, userId));
+      session.getQueue().addNext(new QueueEntry(media, userId));
       sessionController.nextMedia(session);
       return setMedia(session);
     }
@@ -510,29 +460,11 @@ public class PlayerControlsController {
       if (currentMedia.isPresent()) {
         MinimalMedia minimalMedia = new MinimalMedia(currentMedia.get().getId(), currentMedia.get().getTitle(), currentMedia.get().getType());
         sessionController.enterSyncState(session);
-        return new SetMediaCommand(minimalMedia, getMediaFromQueue(session), getMediaFromHistory(session));
+        return new SetMediaCommand(minimalMedia, QueueSnapshot.of(session.getQueue()));
       }
       // the queue ended: nothing is playing any more, a running sync round must not start playback
       sessionController.stop(session);
-      return new StopCommand(getMediaFromQueue(session), getMediaFromHistory(session));
-    }
-  }
-
-  private List<MinimalMedia> getMediaFromQueue(Session session) {
-    synchronized (session.getLock()) {
-      return session.getQueue().getQueuedMedia().stream()
-          .map(QueueEntry::media)
-          .map(media -> new MinimalMedia(media.getId(), media.getTitle(), media.getType()))
-          .collect(Collectors.toList());
-    }
-  }
-
-  private List<MinimalMedia> getMediaFromHistory(Session session) {
-    synchronized (session.getLock()) {
-      return session.getQueue().getHistoryMedia().stream()
-          .map(QueueEntry::media)
-          .map(media -> new MinimalMedia(media.getId(), media.getTitle(), media.getType()))
-          .collect(Collectors.toList());
+      return new StopCommand(QueueSnapshot.of(session.getQueue()));
     }
   }
 }
