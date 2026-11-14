@@ -19,10 +19,11 @@ test.describe('rooms', () => {
     await expect(userPage.locator('#header .session-name')).toHaveText(name);
   });
 
-  test('empty name is rejected', async ({ userPage }) => {
+  test('a lobby without a name is named after the user', async ({ userPage, user }) => {
     await userPage.goto('/');
     await userPage.locator('#submit-button').click();
-    await expect(userPage).toHaveURL(/\/$/);
+    await expect(userPage).toHaveURL(/\/sessions\/\d+\/lobby$/);
+    await expect(userPage.locator('#header .session-name')).toHaveText(user.username);
   });
 
   test('the lobby starts without a playlist unless one is chosen', async ({ userPage }) => {
