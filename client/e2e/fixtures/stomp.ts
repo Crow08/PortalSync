@@ -1,6 +1,6 @@
 import { Client } from '@stomp/stompjs';
 import { BASE_URL } from '../env';
-import { Account } from './api';
+import { Account, basic } from './api';
 
 export interface RawStomp {
   client: Client;
@@ -13,9 +13,15 @@ export interface RawStomp {
 export async function connectStomp(user: Account): Promise<RawStomp> {
   const client = new Client({
     brokerURL: BASE_URL.replace(/^http/, 'ws') + '/ws',
-    connectHeaders: { login: user.username, usercode: user.password, session: '0' },
+    connectHeaders: { session: '0' },
     reconnectDelay: 0,
-    webSocketFactory: () => new WebSocket(BASE_URL.replace(/^http/, 'ws') + '/ws', ['v12.stomp', 'v11.stomp', 'v10.stomp']),
+    // The user is logged in by the handshake, an HTTP request: the browser sends its login cookie, this script HTTP
+    // Basic. The WebSocket of Node (undici) takes headers in an options object, which the DOM types do not know.
+    webSocketFactory: () =>
+      new WebSocket(BASE_URL.replace(/^http/, 'ws') + '/ws', {
+        protocols: ['v12.stomp', 'v11.stomp', 'v10.stomp'],
+        headers: { Authorization: basic(user.username, user.password) },
+      } as never),
   });
   const errors: RawStomp['errors'] = [];
   await new Promise<void>((resolve, reject) => {

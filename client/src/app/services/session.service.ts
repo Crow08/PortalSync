@@ -5,7 +5,7 @@ import { RxStompService } from './rx-stomp.service';
 import { RxStompState } from '@stomp/rx-stomp';
 import { AuthenticationService } from './authentication.service';
 import { WsService } from './ws.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
 /** A join is repeated until the server confirms it, e.g. if it was processed before the topic subscription. */
 const JOIN_ATTEMPTS = 3;
@@ -25,8 +25,26 @@ export class SessionService {
     private wsService: WsService
   ) {
     this.rxStompService.configure(this.wsConfigService.myRxStompConfig());
-    // RxStomp does not connect by itself (ng2-stompjs did this in its factory); the headers are read at every (re)connect
-    this.rxStompService.activate();
+    // The WebSocket is logged in by the login cookie of its handshake, so it is only open while a user is logged in:
+    // without a login the server refuses it, and a new login needs a new handshake. RxStomp does not connect by itself;
+    // the headers are read at every (re)connect.
+    this.authenticationService.currentUserChanges
+      .pipe(
+        map((user) => user?.id ?? null),
+        distinctUntilChanged()
+      )
+      .subscribe((userId) => {
+        if (userId !== null) {
+          this.rxStompService.activate();
+        } else {
+          // also after a login that ended without a logout: the session of the previous user is not left open
+          this.cancelJoin();
+          this.joinAcknowledged = false;
+          this.joinedSessionId = null;
+          this.sessionId.next(null);
+          this.rxStompService.deactivate().catch(console.error);
+        }
+      });
 
     // after a lost connection the client missed commands: join again to get the current state of the session
     let connectedBefore = false;

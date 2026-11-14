@@ -13,7 +13,6 @@ import {
 import { AuthenticationService } from '../../services/authentication.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { HttpHelperService } from '../../services/http-helper.service';
-import { User } from '../../models/user';
 
 @Component({
     selector: 'app-register',
@@ -83,7 +82,7 @@ export class RegisterComponent {
 
     this.loading = true;
     this.httpHelperService
-      .put(psu, new User(-1, this.getField['username'].value, this.getField['password'].value, ''))
+      .put(psu, { username: this.getField['username'].value, password: this.getField['password'].value })
       .then(() => {
         this.registrationSuccessful = true;
         this.loading = false;

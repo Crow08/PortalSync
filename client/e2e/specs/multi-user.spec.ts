@@ -1,5 +1,5 @@
 import { chromium, Page } from '@playwright/test';
-import { expect, loginContext, test as base } from '../fixtures/auth';
+import { expect, loginContext, loginState, test as base } from '../fixtures/auth';
 import { Account, createUser, unique } from '../fixtures/api';
 import { api, uploadSong } from '../fixtures/media';
 import { openMedia } from '../fixtures/library';
@@ -184,23 +184,7 @@ test.describe('autoplay and layout', () => {
     // a browser with the default autoplay policy (the fixture browser allows autoplay)
     const strict = await chromium.launch({ args: ['--mute-audio'] });
     try {
-      const ctx = await strict.newContext({
-        baseURL: BASE_URL,
-        storageState: {
-          cookies: [],
-          origins: [
-            {
-              origin: BASE_URL,
-              localStorage: [
-                {
-                  name: 'currentUser',
-                  value: JSON.stringify({ ...guest, authdata: Buffer.from(`${guest.username}:${guest.password}`).toString('base64') }),
-                },
-              ],
-            },
-          ],
-        },
-      });
+      const ctx = await strict.newContext({ baseURL: BASE_URL, storageState: await loginState(guest) });
       const page = await ctx.newPage();
       await page.goto(`/sessions/${roomId(userPage)}/lobby`);
       await expect(nowTitle(page)).toHaveText(A);

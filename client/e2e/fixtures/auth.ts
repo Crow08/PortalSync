@@ -1,23 +1,40 @@
 import { readFileSync } from 'node:fs';
-import { test as base, Browser, BrowserContext, Page } from '@playwright/test';
+import { test as base, Browser, BrowserContext, BrowserContextOptions, Page } from '@playwright/test';
 import { ADMIN, BASE_URL, STATE_FILE } from '../env';
-import { Account, createUser, unique } from './api';
+import { Account, createUser, login, unique } from './api';
 
 export function adminAccount(): Account {
   const { admin } = JSON.parse(readFileSync(STATE_FILE, 'utf8'));
   return { id: admin.id, username: ADMIN.username, password: ADMIN.password, admin: true };
 }
 
-/** A browser context with the user already logged in (the client keeps the login in localStorage['currentUser']). */
+/**
+ * The state of a browser in which the user is logged in: the login cookie of a fresh login (HttpOnly, the client can
+ * not read it) and the user the client remembers in localStorage['currentUser'] (id, name, admin; no password).
+ */
+export async function loginState(user: Account): Promise<NonNullable<BrowserContextOptions['storageState']>> {
+  const cookie = await login(user);
+  const currentUser = { id: user.id, username: user.username, admin: user.admin };
+  return {
+    cookies: [
+      {
+        name: cookie.name,
+        value: cookie.value,
+        domain: new URL(BASE_URL).hostname,
+        path: '/',
+        expires: -1,
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Strict',
+      },
+    ],
+    origins: [{ origin: BASE_URL, localStorage: [{ name: 'currentUser', value: JSON.stringify(currentUser) }] }],
+  };
+}
+
+/** A browser context with the user already logged in. */
 export async function loginContext(browser: Browser, user: Account): Promise<BrowserContext> {
-  const currentUser = { ...user, authdata: Buffer.from(`${user.username}:${user.password}`).toString('base64') };
-  return browser.newContext({
-    baseURL: BASE_URL,
-    storageState: {
-      cookies: [],
-      origins: [{ origin: BASE_URL, localStorage: [{ name: 'currentUser', value: JSON.stringify(currentUser) }] }],
-    },
-  });
+  return browser.newContext({ baseURL: BASE_URL, storageState: await loginState(user) });
 }
 
 interface Fixtures {

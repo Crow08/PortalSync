@@ -1,5 +1,10 @@
 package de.crow08.portalsync.config;
 
+import de.crow08.portalsync.authentication.LoginCookie;
+import de.crow08.portalsync.authentication.LoginTokenFilter;
+import de.crow08.portalsync.authentication.LoginTokenService;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import de.crow08.portalsync.model.media.Media;
 import de.crow08.portalsync.model.media.MediaRepository;
 import de.crow08.portalsync.model.media.MediaType;
@@ -47,9 +52,14 @@ public class SecurityConfig implements WebMvcConfigurer {
   private final UserDetailsService userDetailsService;
   private final String clientStoragePath;
   private final ClientProperties clientProperties;
+  private final LoginTokenService loginTokenService;
+  private final LoginCookie loginCookie;
 
   @Autowired
-  public SecurityConfig(MediaRepository mediaRepository, @Qualifier("authenticatedUserService") UserDetailsService userDetailsService, @Value("${client.storage-path}") String clientStoragePath, ClientProperties clientProperties) {
+  public SecurityConfig(MediaRepository mediaRepository, @Qualifier("authenticatedUserService") UserDetailsService userDetailsService, @Value("${client.storage-path}") String clientStoragePath, ClientProperties clientProperties,
+                        LoginTokenService loginTokenService, LoginCookie loginCookie) {
+    this.loginTokenService = loginTokenService;
+    this.loginCookie = loginCookie;
     this.mediaRepository = mediaRepository;
     this.userDetailsService = userDetailsService;
     this.clientStoragePath = clientStoragePath;
@@ -58,7 +68,7 @@ public class SecurityConfig implements WebMvcConfigurer {
 
   @Bean
   WebSecurityCustomizer webSecurityCustomizer() {
-    return (web) -> web.ignoring().requestMatchers(HttpMethod.OPTIONS).requestMatchers("/ws/**");
+    return (web) -> web.ignoring().requestMatchers(HttpMethod.OPTIONS);
   }
 
   @Autowired
@@ -69,9 +79,22 @@ public class SecurityConfig implements WebMvcConfigurer {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.cors(Customizer.withDefaults())
-        .authorizeHttpRequests(a -> a.requestMatchers("/api/**").fullyAuthenticated().anyRequest().permitAll())
+        .authorizeHttpRequests(a -> a
+            // the login has no login yet, the logout also removes the cookie of a login that has ended
+            .requestMatchers("/api/v1/auth/login", "/api/v1/auth/logout").permitAll()
+            // the WebSocket handshake is an HTTP request: it is logged in like every other one
+            .requestMatchers("/api/**", "/ws/**").fullyAuthenticated()
+            .anyRequest().permitAll())
+        // the browser logs in by its login cookie (see LoginCookie)
+        .addFilterBefore(new LoginTokenFilter(loginTokenService, loginCookie), BasicAuthenticationFilter.class)
+        // HTTP Basic stays for clients that are no browser (scripts, the e2e fixtures); the client does not use it.
         // 401 without WWW-Authenticate: otherwise the browser opens its native login dialog on a failed login
         .httpBasic(b -> b.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+        .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+        // every request brings its login along (cookie or Basic), the server keeps no HTTP session
+        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        // no CSRF token: the login cookie is SameSite=Strict, so the browser does not send it with requests of other
+        // sites, and the CORS configuration rejects requests with a foreign Origin header
         .csrf(AbstractHttpConfigurer::disable);
     return http.build();
   }
@@ -80,6 +103,8 @@ public class SecurityConfig implements WebMvcConfigurer {
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
         .allowedOrigins(clientProperties.getAllowedOrigin())
+        // the dev client runs on another port than the server: its requests are cross-origin and need the login cookie
+        .allowCredentials(true)
         .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD");
   }
 

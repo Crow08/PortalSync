@@ -1,6 +1,9 @@
 package de.crow08.portalsync.model.users;
 
 import com.neverpile.urlcrypto.PreSignedUrlEnabled;
+import de.crow08.portalsync.authentication.LoginCookie;
+import de.crow08.portalsync.authentication.LoginTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -25,9 +28,13 @@ public class UserResource {
   private static final PasswordEncoder PASSWORD_ENCODER = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
   private final UserRepository userRepository;
+  private final LoginTokenService loginTokenService;
+  private final LoginCookie loginCookie;
 
-  public UserResource(UserRepository userRepository) {
+  public UserResource(UserRepository userRepository, LoginTokenService loginTokenService, LoginCookie loginCookie) {
     this.userRepository = userRepository;
+    this.loginTokenService = loginTokenService;
+    this.loginCookie = loginCookie;
   }
 
   @GetMapping("/login")
@@ -68,10 +75,13 @@ public class UserResource {
   public record ChangePasswordRequest(String currentPassword, String newPassword) {
   }
 
-  /** Lets the logged in user change the own password; the current password has to be confirmed. */
+  /**
+   * Lets the logged in user change the own password; the current password has to be confirmed. The logins of the user
+   * in other browsers end: whoever knew the old password is logged out.
+   */
   @PutMapping("/password")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void changePassword(@RequestBody ChangePasswordRequest request) {
+  public void changePassword(@RequestBody ChangePasswordRequest request, HttpServletRequest httpRequest) {
     if (request.currentPassword() == null || request.newPassword() == null || request.newPassword().isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The provided password is not valid.");
     }
@@ -87,6 +97,7 @@ public class UserResource {
     }
     user.setPassword(PASSWORD_ENCODER.encode(request.newPassword()));
     userRepository.save(user);
+    loginTokenService.revokeOthers(userId, loginCookie.read(httpRequest));
   }
 
   private User getDTO(User user) {

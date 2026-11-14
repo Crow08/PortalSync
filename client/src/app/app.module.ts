@@ -4,7 +4,8 @@ import { LayeredTranslocoLoader } from './i18n/transloco-loader';
 import { ACTIVE_LANGUAGE_IDS, DEFAULT_LANGUAGE, LanguageService } from './services/language.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withInterceptorsFromDi, withXhr } from '@angular/common/http';
+import { authInterceptor } from './services/auth.interceptor';
 import { RouterModule } from '@angular/router';
 import { AuthGuard } from './auth.guard';
 import { AppComponent } from './app.component';
@@ -127,7 +128,8 @@ import { InviteComponent } from './components/invite/invite.component';
             provide: OverlayContainer,
             useClass: ThemeAwareOverlayContainer,
         },
-        provideHttpClient(withXhr(), withInterceptorsFromDi()),
+        // authInterceptor: the login cookie goes with every request to the server, a 401 ends the login in the client
+        provideHttpClient(withXhr(), withInterceptors([authInterceptor]), withInterceptorsFromDi()),
         provideTransloco({
             config: {
                 // the languages with the overlays of themes, e.g. 'en+anime'

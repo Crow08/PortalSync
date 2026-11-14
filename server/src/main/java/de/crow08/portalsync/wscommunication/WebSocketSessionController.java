@@ -1,18 +1,10 @@
 package de.crow08.portalsync.wscommunication;
 
-import de.crow08.portalsync.model.users.User;
 import de.crow08.portalsync.model.users.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,35 +23,21 @@ public class WebSocketSessionController {
     this.userRepository = userRepository;
   }
 
-  // This method MUST return a UsernamePasswordAuthenticationToken instance, the spring security chain is testing it with 'instanceof' later on. So don't use a subclass of it or any other class
-  public UsernamePasswordAuthenticationToken authenticateNewConnection(final String username, final String password, final String wsSessionId, final String musicSessionId) throws AuthenticationException {
-    if (username == null || username.trim().isEmpty()) {
-      throw new AuthenticationCredentialsNotFoundException("Username was null or empty.");
-    }
-    if (password == null || password.trim().isEmpty()) {
-      throw new AuthenticationCredentialsNotFoundException("Password was null or empty.");
-    }
-
-    User user = userRepository.findByUsername(username);
-    if (user == null || !PasswordEncoderFactories.createDelegatingPasswordEncoder().matches(password, user.getPassword())) {
-      throw new BadCredentialsException("Bad credentials for user " + username);
-    }
-
-    Connection connection = new Connection(user.getId());
-    long musicSession = Long.parseLong(musicSessionId);
-    if (musicSession != 0) {
-      connection.musicSessions.add(musicSession);
+  /**
+   * Records a new WebSocket connection of a user. The user was logged in by the handshake (login cookie), so there is
+   * nothing to check here.
+   *
+   * @param musicSessionId the music session the connection starts in, 0 for none
+   */
+  public void registerConnection(final long userId, final String wsSessionId, final long musicSessionId) {
+    Connection connection = new Connection(userId);
+    if (musicSessionId != 0) {
+      connection.musicSessions.add(musicSessionId);
     }
     this.connections.put(wsSessionId, connection);
     for (final ConnectObserver listener : this.cListeners) {
-      listener.observeConnect(user.getId(), musicSession);
+      listener.observeConnect(userId, musicSessionId);
     }
-    // null credentials, we do not pass the password along
-    return new UsernamePasswordAuthenticationToken(
-        username,
-        null,
-        Collections.singleton((GrantedAuthority) () -> "USER") // MUST provide at least one role
-    );
   }
 
   /**

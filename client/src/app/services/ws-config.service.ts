@@ -6,23 +6,16 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class WsConfigService {
+  /** Headers of the STOMP CONNECT. The user is not among them: the WebSocket handshake carries the login cookie. */
   configParameter = {
-    login: '',
-    usercode: '',
     session: '0',
   };
 
   constructor() {}
 
-  updateWsConfig(config: { login?: string; auth?: string; session?: number }): void {
+  updateWsConfig(config: { session?: number }): void {
     if (config.session) {
       this.configParameter.session = String(config.session);
-    }
-    if (config.login) {
-      this.configParameter.login = config.login;
-    }
-    if (config.auth) {
-      this.configParameter.usercode = config.auth;
     }
   }
 
@@ -48,8 +41,7 @@ export class WsConfigService {
       // Will log diagnostics on console
       // It can be quite verbose, not recommended in production
       // Skip this key to stop logging to console
-      debug: (msg: string): void => {
-      },
+      debug: (msg: string): void => {},
     };
   }
 }

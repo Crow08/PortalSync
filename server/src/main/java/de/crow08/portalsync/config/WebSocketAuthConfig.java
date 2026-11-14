@@ -1,5 +1,6 @@
 package de.crow08.portalsync.config;
 
+import de.crow08.portalsync.model.users.AuthenticatedUser;
 import de.crow08.portalsync.sessions.SessionRepository;
 import de.crow08.portalsync.wscommunication.WebSocketSessionController;
 import org.springframework.beans.factory.ObjectProvider;
@@ -15,7 +16,8 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
@@ -44,9 +46,11 @@ public class WebSocketAuthConfig implements WebSocketMessageBrokerConfigurer {
         new SessionMembershipInterceptor(this.sessionRepository, this.messagingTemplate));
   }
 
+  /**
+   * Registers a new connection with its user. The user comes from the WebSocket handshake, an HTTP request that is
+   * logged in like every other one (login cookie, see SecurityConfig): the STOMP frames carry no credentials.
+   */
   static class WebSocketAuthInterceptor implements ChannelInterceptor {
-    private static final String USERNAME_HEADER = "login";
-    private static final String PASSWORD_HEADER = "usercode";
     private static final String SESSION_HEADER = "session";
     private final WebSocketSessionController webSocketSessionController;
 
@@ -57,17 +61,25 @@ public class WebSocketAuthConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) throws AuthenticationException {
       final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
       if (accessor != null && StompCommand.CONNECT == accessor.getCommand()) {
-        final String username = accessor.getFirstNativeHeader(USERNAME_HEADER);
-        final String password = accessor.getFirstNativeHeader(PASSWORD_HEADER);
-        final String musicSessionId = accessor.getFirstNativeHeader(SESSION_HEADER);
+        if (!(accessor.getUser() instanceof Authentication authentication) || !authentication.isAuthenticated()
+            || !(authentication.getPrincipal() instanceof AuthenticatedUser user)) {
+          throw new AuthenticationCredentialsNotFoundException("The WebSocket connection is not logged in");
+        }
         String wsSessionId = (String) accessor.getHeader("simpSessionId");
-        final UsernamePasswordAuthenticationToken user = webSocketSessionController.authenticateNewConnection(username, password, wsSessionId, musicSessionId);
-
-        accessor.setUser(user);
+        webSocketSessionController.registerConnection(user.getId(), wsSessionId,
+            parseSession(accessor.getFirstNativeHeader(SESSION_HEADER)));
       }
       return message;
+    }
+
+    /** The music session of the CONNECT header, 0 (none) if it is missing or no number. */
+    private static long parseSession(String musicSessionId) {
+      try {
+        return musicSessionId != null ? Long.parseLong(musicSessionId) : 0;
+      } catch (NumberFormatException e) {
+        return 0;
+      }
     }
   }
 }
