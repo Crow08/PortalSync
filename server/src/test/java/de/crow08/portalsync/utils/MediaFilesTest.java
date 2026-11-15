@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,9 +36,17 @@ class MediaFilesTest {
   }
 
   @Test
-  void anAbsolutePathOutsideTheStorageIsRefused() {
+  void anAbsolutePathNeverLeadsOutOfTheStorage() {
+    Path media = storage.resolve("media");
     Path outside = storage.getParent().resolve("outside.txt").toAbsolutePath();
-    assertThat(MediaFiles.resolve(storage.resolve("media"), outside.toString())).isEmpty();
+
+    Optional<Path> resolved = MediaFiles.resolve(media, outside.toString());
+
+    // Windows refuses the path (it names a drive). Elsewhere it starts with a slash like every uri, which is relative
+    // to the storage: the same names, but inside of it.
+    assertThat(resolved).isNotEqualTo(Optional.of(outside));
+    // compared as names: the file does not exist
+    resolved.ifPresent(path -> assertThat(path).startsWithRaw(media.toAbsolutePath()));
   }
 
   @ParameterizedTest

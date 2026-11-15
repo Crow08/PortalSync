@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import { ADMIN, BASE_URL, COMPOSE_FILE, MEDIA_DIR, PORT, STATE_FILE } from './env';
 import { generateMediaFiles, SHARED_SONGS, toneBuffer, VIDEO_TITLE, VIDEO_URI } from './media-setup';
@@ -18,6 +18,10 @@ export default async function globalSetup(): Promise<void> {
   if (process.env['E2E_SKIP_STACK'] !== '1') {
     rmSync(MEDIA_DIR, { recursive: true, force: true });
     mkdirSync(MEDIA_DIR, { recursive: true });
+    // The app in the container runs as its own user (uid 10001) and writes the uploads into this directory. On Linux
+    // (CI) a bind mount keeps the owner and mode of the host, so everybody has to be allowed to write; on Windows and
+    // macOS Docker Desktop does not care and this changes nothing.
+    chmodSync(MEDIA_DIR, 0o777);
     compose(['down', '-v', '--remove-orphans']);
     compose(['up', '-d', '--build', '--wait', '--wait-timeout', '600']);
   }
