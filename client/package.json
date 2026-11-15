@@ -8,6 +8,8 @@
     "build": "ng build --configuration production --base-href /portalsync-server/",
     "buildServer": "ng build --configuration production --base-href / && node scripts/copy-to-server.mjs",
     "lint": "ng lint",
+    "test": "ng test --no-watch",
+    "test:watch": "ng test",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:typecheck": "tsc -p e2e/tsconfig.json"
@@ -42,9 +44,11 @@
     "angular-eslint": "^22.6.0",
     "bcryptjs": "^3.0.3",
     "eslint": "^10.14.0",
+    "jsdom": "^30.1.3",
     "ts-node": "^10.9.2",
     "typescript": "~6.0",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "vite": "8.3.5"

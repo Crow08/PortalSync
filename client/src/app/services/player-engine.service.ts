@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { MatDialog } from '@angular/material/dialog';
 import { distinctUntilChanged } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
 import { Media } from '../models/media';
@@ -18,7 +17,7 @@ import { ClockSyncService } from './clock-sync.service';
 import { SessionService } from './session.service';
 import { SpotifyPlayerService } from './spotify-player.service';
 import { SpotifyService } from './spotify.service';
-import { SpotifyLoginDialogComponent } from '../components/dialog/spotify-login-dialog/spotify-login-dialog.component';
+import { SpotifyLoginPrompt } from './spotify-login-prompt';
 import { PlayerState } from '../models/playerState';
 import { JoinCommand, QueueCopy, SessionCommand, UpdateCommand, parseSessionCommand } from '../models/session-command';
 import { MediaInfoService } from './media-info.service';
@@ -77,7 +76,7 @@ export class PlayerEngineService {
     private clockSyncService: ClockSyncService,
     private spotifyPlayer: SpotifyPlayerService,
     private spotifyService: SpotifyService,
-    private dialog: MatDialog,
+    private spotifyLoginPrompt: SpotifyLoginPrompt,
     private mediaInfo: MediaInfoService,
     private sync: PlaybackSyncService
   ) {
@@ -242,7 +241,7 @@ export class PlayerEngineService {
       return;
     }
     this.spotifyLoginPrompted = true;
-    this.dialog.open(SpotifyLoginDialogComponent);
+    this.spotifyLoginPrompt.open();
   }
 
   /** The others must not wait for a client that can not play the media: it reports ready right away. */
