@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/auth';
 import { unique } from '../fixtures/api';
 import { libraryRow } from '../fixtures/library';
-import { createPlaylist, playlistMedia, toneFile } from '../fixtures/media';
+import { api, createPlaylist, playlistMedia, toneFile, uploadSong } from '../fixtures/media';
 
 test.describe('upload', () => {
   test('lists chosen files, removes one and keeps Upload disabled without files', async ({ userPage }) => {
@@ -60,5 +60,17 @@ test.describe('upload', () => {
         await expect(userPage.getByRole('button', { name: 'Upload', exact: true })).toBeEnabled();
       }
     }
+  });
+
+  test('deleting a song removes its file: the name is free for a new upload', async ({ user }) => {
+    const name = `${unique('again')}.mp3`;
+    const song = await uploadSong(user, name);
+    // while the song exists its file name is taken
+    await expect(uploadSong(user, name)).rejects.toThrow('HTTP 409');
+
+    expect((await api(user, `/media/deleteSongById/${song.id}`, { method: 'PUT' })).status).toBe(200);
+
+    const again = await uploadSong(user, name);
+    expect(again.id).not.toBe(song.id);
   });
 });

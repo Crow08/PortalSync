@@ -86,6 +86,28 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<!-- Mockito as a Java agent for the unit tests: without it Mockito attaches itself to the running JVM, which
+			     newer JDKs warn about and will forbid. The dependency plugin puts the path of every dependency into a
+			     property (groupId:artifactId:jar), surefire passes the one of mockito-core to the test JVM. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- -Xshare:off: with an agent the JVM can not use its class data archive and would say so in every run -->
+					<argLine>-javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>

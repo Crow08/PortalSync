@@ -76,6 +76,8 @@ public class MediaResource {
 
   private final MediaAccess mediaAccess;
 
+  private final MediaFileRemover mediaFileRemover;
+
   private final GenreRepository genreRepository;
   private final AlbumRepository albumRepository;
   private final TagRepository tagRepository;
@@ -90,6 +92,7 @@ public class MediaResource {
                        PlaylistRepository playlistRepository,
                        PlaylistAccess playlistAccess,
                        MediaAccess mediaAccess,
+                       MediaFileRemover mediaFileRemover,
                        GenreRepository genreRepository,
                        AlbumRepository albumRepository,
                        TagRepository tagRepository,
@@ -101,6 +104,7 @@ public class MediaResource {
     this.playlistRepository = playlistRepository;
     this.playlistAccess = playlistAccess;
     this.mediaAccess = mediaAccess;
+    this.mediaFileRemover = mediaFileRemover;
     this.genreRepository = genreRepository;
     this.albumRepository = albumRepository;
     this.tagRepository = tagRepository;
@@ -436,6 +440,8 @@ public class MediaResource {
             .collect(Collectors.toList()))
     );
     mediaRepository.delete(media);
+    // after the media is gone from the library: the file of an uploaded song goes with it
+    mediaFileRemover.removeFileOf(media);
   }
 
   @PutMapping(path = "/deleteSongs")
@@ -456,6 +462,7 @@ public class MediaResource {
               .collect(Collectors.toList()))
       );
       mediaRepository.delete(media);
+      mediaFileRemover.removeFileOf(media);
     }
   }
 

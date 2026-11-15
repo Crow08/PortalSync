@@ -13,6 +13,8 @@ public interface MediaRepository extends CrudRepository<Media, Long>, PagingAndS
 
   Optional<Media> findFirstByUri(String uri);
 
+  long countByUri(String uri);
+
   // JPQL instead of native SQL: Song inherits from Media (JOINED), so "song.*" would miss the media columns
   @Query("SELECT s FROM Song s WHERE s.artist.id IN :ids")
   List<Media> findByArtist(@Param("ids") List<Long> ids);

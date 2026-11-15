@@ -30,6 +30,9 @@ test.describe('library', () => {
     await userPage.getByRole('option', { name: 'Title A to Z' }).click();
     const titles = await userPage.locator('.list .row .title').allTextContents();
     expect(titles).toEqual([...titles].sort((a, b) => a.localeCompare(b)));
+    // the list of options closes with an animation: a click on the dropdown while it is still closing does not open
+    // it again (seen once on the slower CI runner)
+    await expect(userPage.getByRole('listbox')).toBeHidden();
     await userPage.getByRole('combobox', { name: 'Sort by' }).click();
     await userPage.getByRole('option', { name: 'Recently added' }).click();
     await expect(userPage.locator('.list .row')).toHaveCount(titles.length);
