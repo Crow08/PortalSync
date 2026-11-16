@@ -171,6 +171,47 @@ test.describe('library', () => {
     expect(await playlistMedia(user, id)).toEqual([]);
   });
 
+  test('every listed media of a playlist can be taken out of it in its row', async ({ userPage, user, admin }) => {
+    const prefix = unique('row');
+    const keep = await uploadSong(user, `${prefix}-keep.mp3`);
+    const drop = await uploadSong(user, `${prefix}-drop.mp3`);
+    const name = unique('list');
+    const id = await createPlaylist(user, name);
+    await addSongToPlaylist(user, id, keep.id);
+    await addSongToPlaylist(user, id, drop.id);
+    const foreign = unique('foreign');
+    await addSongToPlaylist(admin, await createPlaylist(admin, foreign), keep.id);
+    const collections = userPage.getByRole('navigation', { name: 'Collections' });
+    const removeButtons = userPage.locator('.list .row .row-remove');
+    await userPage.goto('/library');
+
+    // the whole library is no playlist: nothing to remove from
+    await searchLibrary(userPage, prefix);
+    await expect(userPage.locator('.list .row')).toHaveCount(2);
+    await expect(removeButtons).toHaveCount(0);
+
+    // a playlist of someone else is read only
+    await collections.getByRole('button', { name: foreign }).click();
+    await expect(libraryRow(userPage, keep.title)).toBeVisible();
+    await expect(removeButtons).toHaveCount(0);
+
+    // the own playlist, filtered: the listed media has the option
+    await collections.getByRole('button', { name }).click();
+    await expect(removeButtons).toHaveCount(2);
+    await searchLibrary(userPage, 'drop');
+    await expect(removeButtons).toHaveCount(1);
+    await userPage.getByRole('button', { name: `Remove ${drop.title} from this playlist` }).click();
+
+    await searchLibrary(userPage, '');
+    await expect(libraryRow(userPage, keep.title)).toBeVisible();
+    await expect(libraryRow(userPage, drop.title)).toHaveCount(0);
+    expect((await playlistMedia(user, id)).map((media) => media.id)).toEqual([keep.id]);
+    // the media itself stays in the library
+    await collections.getByRole('button', { name: 'All media' }).click();
+    await searchLibrary(userPage, prefix);
+    await expect(userPage.locator('.list .row')).toHaveCount(2);
+  });
+
   test('delete asks for confirmation; "no" keeps the song, "yes" removes it', async ({ userPage, user }) => {
     const song = await uploadSong(user, `${unique('del')}.mp3`);
     await userPage.goto('/library');

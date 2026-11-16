@@ -173,6 +173,13 @@
           }
           <span class="kind" [class.video]="isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
         </button>
+        <!-- a playlist is shown: every listed media can be taken out of it right here -->
+        @if (canEditPlaylist) {
+          <button (click)="removeFromPlaylist([media])" [attr.aria-label]="'library.removeTitleFromPlaylist' | transloco: { title: media.title }"
+            [attr.title]="'library.removeFromThisPlaylist' | transloco" class="row-remove" mat-icon-button type="button">
+            <mat-icon>playlist_remove</mat-icon>
+          </button>
+        }
       </div>
     </cdk-virtual-scroll-viewport>
   } @else {

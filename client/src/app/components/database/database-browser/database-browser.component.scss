@@ -303,6 +303,20 @@
   flex: none;
 }
 
+// takes the media out of the shown playlist; quiet until the row or the button itself has the attention
+.row-remove {
+  flex: none;
+  color: var(--ps-muted);
+  opacity: 0.55;
+
+  .row:hover &,
+  &:hover,
+  &:focus-visible {
+    color: var(--ps-text);
+    opacity: 1;
+  }
+}
+
 .open {
   display: flex;
   align-items: center;

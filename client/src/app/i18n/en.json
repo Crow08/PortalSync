@@ -150,6 +150,7 @@
     "addToPlaylist": "Add to playlist",
     "removeFromPlaylist": "Remove from playlist",
     "removeFromThisPlaylist": "Remove from this playlist",
+    "removeTitleFromPlaylist": "Remove {{ title }} from this playlist",
     "clear": "Clear",
     "select": "Select {{ title }}",
     "loading": "Loading the library…",
