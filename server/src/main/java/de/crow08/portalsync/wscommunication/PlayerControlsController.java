@@ -91,8 +91,8 @@ public class PlayerControlsController {
     Session session = sessionRepository.findById(sessionId).orElseThrow(() -> new Exception("Session not found"));
     synchronized (session.getLock()) {
       Duration startOffsetDuration = sessionController.moveMediaStartOffset(session, offset);
-      sessionController.enterSyncState(session);
-      return new JumpCommand(startOffsetDuration.toMillis());
+      long round = sessionController.enterSyncState(session);
+      return new JumpCommand(startOffsetDuration.toMillis(), round);
     }
   }
 
@@ -164,7 +164,7 @@ public class PlayerControlsController {
       if (connectedUser.isPresent()) {
         webSocketSessionController.joinMusicSession(wsSessionId, sessionId);
         sessionController.addUserToSession(connectedUser.get(), session);
-        return new JoinCommand(userId, minMedia, QueueSnapshot.of(session.getQueue()),
+        return new JoinCommand(userId, minMedia, QueueSnapshot.of(session.getQueue()), session.syncRound(),
             session.getSessionState(), session.isLoopMode(), session.isFairQueue(), startTime, startOffset, session.getUsers(),
             new ArrayList<>(session.getUserStatuses()));
       }
@@ -312,14 +312,20 @@ public class PlayerControlsController {
     }
   }
 
-  @MessageMapping("/sessions/{sessionId}/commands/ready/{userId}/{mediaId}/{duration}")
+  /**
+   * A client has loaded the media of a sync round. The round is the one the command that started it named (SetMedia,
+   * Jump, or the Join of a client that joined while it was running).
+   */
+  @MessageMapping("/sessions/{sessionId}/commands/ready/{userId}/{mediaId}/{duration}/{round}")
   @SendTo("/topic/sessions/{sessionId}")
-  public Command ready(@DestinationVariable long sessionId, @DestinationVariable long userId, @DestinationVariable long mediaId, @DestinationVariable long duration, Principal principal, String message) throws Exception {
+  public Command ready(@DestinationVariable long sessionId, @DestinationVariable long userId, @DestinationVariable long mediaId,
+                       @DestinationVariable long duration, @DestinationVariable long round, Principal principal, String message)
+      throws Exception {
     Optional<User> connectedUser = getConnectedUser(principal, userId);
     Optional<Session> session = sessionRepository.findById(sessionId);
     if (connectedUser.isPresent() && session.isPresent()) {
       // duration is not compared: browsers snap the media position differently, the server offset is authoritative
-      return sessionController.userIsReady(connectedUser.get(), session.get(), mediaId).orElseGet(NopCommand::new);
+      return sessionController.userIsReady(connectedUser.get(), session.get(), mediaId, round).orElseGet(NopCommand::new);
     }
     return new NopCommand();
   }
@@ -459,8 +465,8 @@ public class PlayerControlsController {
       Optional<Media> currentMedia = sessionController.getCurrentMedia(session);
       if (currentMedia.isPresent()) {
         MinimalMedia minimalMedia = new MinimalMedia(currentMedia.get().getId(), currentMedia.get().getTitle(), currentMedia.get().getType());
-        sessionController.enterSyncState(session);
-        return new SetMediaCommand(minimalMedia, QueueSnapshot.of(session.getQueue()));
+        long round = sessionController.enterSyncState(session);
+        return new SetMediaCommand(minimalMedia, QueueSnapshot.of(session.getQueue()), round);
       }
       // the queue ended: nothing is playing any more, a running sync round must not start playback
       sessionController.stop(session);

@@ -8,11 +8,18 @@ public class SetMediaCommand extends Command {
 
   private final MinimalMedia currentMedia;
   private final QueueSnapshot snapshot;
+  private final long syncRound;
 
-  public SetMediaCommand(MinimalMedia currentMedia, QueueSnapshot snapshot) {
+  public SetMediaCommand(MinimalMedia currentMedia, QueueSnapshot snapshot, long syncRound) {
     super("SetMedia");
     this.currentMedia = currentMedia;
     this.snapshot = snapshot;
+    this.syncRound = syncRound;
+  }
+
+  /** The sync round this command started: clients name it when they report ready. */
+  public long getSyncRound() {
+    return syncRound;
   }
 
   public MinimalMedia getCurrentMedia() {

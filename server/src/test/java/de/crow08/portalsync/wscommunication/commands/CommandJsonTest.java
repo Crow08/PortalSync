@@ -48,8 +48,10 @@ class CommandJsonTest {
 
   @Test
   void setMedia() {
-    JsonNode setMedia = json(new SetMediaCommand(SONG, SNAPSHOT));
-    assertThat(fields(setMedia)).containsExactlyInAnyOrder("type", "currentMedia", "queue", "history", "queueVersion");
+    JsonNode setMedia = json(new SetMediaCommand(SONG, SNAPSHOT, 3));
+    assertThat(fields(setMedia)).containsExactlyInAnyOrder("type", "currentMedia", "queue", "history", "queueVersion",
+        "syncRound");
+    assertThat(setMedia.get("syncRound").asLong()).isEqualTo(3);
     assertThat(setMedia.get("type").asString()).isEqualTo("SetMedia");
     assertThat(setMedia.get("queueVersion").asLong()).isEqualTo(42);
     assertThat(setMedia.get("queue")).hasSize(1);
@@ -66,8 +68,9 @@ class CommandJsonTest {
     assertThat(fields(pause)).containsExactlyInAnyOrder("type", "mediaStopTime");
     assertThat(pause.get("type").asString()).isEqualTo("Pause");
 
-    JsonNode jump = json(new JumpCommand(30_000));
-    assertThat(fields(jump)).containsExactlyInAnyOrder("type", "startMediaTime");
+    JsonNode jump = json(new JumpCommand(30_000, 4));
+    assertThat(fields(jump)).containsExactlyInAnyOrder("type", "startMediaTime", "syncRound");
+    assertThat(jump.get("syncRound").asLong()).isEqualTo(4);
     assertThat(jump.get("type").asString()).isEqualTo("Jump");
 
     JsonNode leave = json(new LeaveCommand(3));
@@ -98,11 +101,12 @@ class CommandJsonTest {
   @Test
   void join() {
     UserStatus status = new UserStatus(3, UserStatus.State.READY, 12, -4);
-    JsonNode join = json(new JoinCommand(3, SONG, SNAPSHOT, Session.SessionState.SYNC_PLAY, true, false, 5000, 1200,
+    JsonNode join = json(new JoinCommand(3, SONG, SNAPSHOT, 6, Session.SessionState.SYNC_PLAY, true, false, 5000, 1200,
         List.of(new User(3, "anna", false)), List.of(status)));
     assertThat(fields(join)).containsExactlyInAnyOrder("type", "userId", "currentMedia", "queue", "history", "queueVersion",
-        "sessionUsers", "userStatuses", "sessionState", "loopMode", "fairQueue", "startServerTime", "startMediaTime",
-        "isVideo");
+        "syncRound", "sessionUsers", "userStatuses", "sessionState", "loopMode", "fairQueue", "startServerTime",
+        "startMediaTime", "isVideo");
+    assertThat(join.get("syncRound").asLong()).isEqualTo(6);
     assertThat(join.get("type").asString()).isEqualTo("Join");
     assertThat(join.get("sessionState").asString()).isEqualTo("SYNC_PLAY");
     assertThat(join.get("queueVersion").asLong()).isEqualTo(42);

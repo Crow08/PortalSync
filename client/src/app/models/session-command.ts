@@ -9,6 +9,14 @@ import { UserStatus } from './userStatus';
  * `PlayerEngineService.processCommand` (the compiler reports a missing case).
  */
 
+/**
+ * Sync rounds: SetMedia and Jump make every client load something, and the server waits for all of them before it
+ * starts the playback (sessionState SYNC_*). Each of these commands starts a round and names it (syncRound); a client
+ * answers `ready/{user}/{media}/{position}/{round}` with that id once it has loaded. A report for an earlier round does
+ * not count, so the server never starts a round for a client that has not seen the command for it yet, and a Start
+ * can not arrive before the SetMedia it belongs to.
+ */
+
 /** The state of the playback of a session on the server; SYNC_*: it waits for the users to load the media. */
 export type SessionState = 'PLAY' | 'STOP' | 'PAUSE' | 'SYNC_PLAY' | 'SYNC_STOP' | 'SYNC_PAUSE';
 
@@ -35,6 +43,8 @@ export interface SetMediaCommand extends QueueCopy {
   queue: MinimalMedia[];
   history: MinimalMedia[];
   queueVersion: number;
+  /** The sync round this command started; the client names it when it reports ready (see SyncRound below). */
+  syncRound: number;
 }
 
 export interface PauseCommand {
@@ -53,6 +63,8 @@ export interface JumpCommand {
   type: 'Jump';
   /** New position in ms. */
   startMediaTime: number;
+  /** The sync round this command started; the client names it when it reports ready. */
+  syncRound: number;
 }
 
 export interface LeaveCommand {
@@ -77,6 +89,8 @@ export interface JoinCommand extends QueueCopy {
   queue: MinimalMedia[];
   history: MinimalMedia[];
   queueVersion: number;
+  /** The sync round that is running (sessionState SYNC_*), 0 if none; the joining client reports ready for it. */
+  syncRound: number;
   sessionUsers: User[];
   userStatuses: UserStatus[];
   sessionState: SessionState;

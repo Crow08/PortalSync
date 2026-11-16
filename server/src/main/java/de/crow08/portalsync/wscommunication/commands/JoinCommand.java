@@ -15,6 +15,8 @@ public class JoinCommand extends Command {
   List<MinimalMedia> history;
   /** Version of the queue and history, see {@link QueueSnapshot}. */
   long queueVersion;
+  /** The sync round that is running, 0 if none: the joining client names it when it reports ready. */
+  long syncRound;
   List<User> sessionUsers;
   List<UserStatus> userStatuses;
   Session.SessionState sessionState;
@@ -29,7 +31,7 @@ public class JoinCommand extends Command {
     super("Join");
   }
 
-  public JoinCommand(long userId, MinimalMedia currentMedia, QueueSnapshot snapshot,
+  public JoinCommand(long userId, MinimalMedia currentMedia, QueueSnapshot snapshot, long syncRound,
                      Session.SessionState sessionState, boolean loopMode, boolean fairQueue, long startServerTime,
                      long startMediaTime, List<User> sessionUsers, List<UserStatus> userStatuses) {
     super("Join");
@@ -38,6 +40,7 @@ public class JoinCommand extends Command {
     this.queue = snapshot.queue();
     this.history = snapshot.history();
     this.queueVersion = snapshot.version();
+    this.syncRound = syncRound;
     this.sessionState = sessionState;
     this.loopMode = loopMode;
     this.fairQueue = fairQueue;
@@ -49,6 +52,10 @@ public class JoinCommand extends Command {
 
   public long getQueueVersion() {
     return queueVersion;
+  }
+
+  public long getSyncRound() {
+    return syncRound;
   }
 
   public long getUserId() {

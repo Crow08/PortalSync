@@ -61,6 +61,8 @@ export class PlayerEngineService {
    */
   private queueVersion = -1;
   private historyVersion = -1;
+  /** The sync round of the server this client loads the media for; named in the ready report (see session-command.ts). */
+  private syncRound = 0;
   private inSession = false;
   /** The Spotify login dialog was shown in this session: it is not shown again for every Spotify song. */
   private spotifyLoginPrompted = false;
@@ -165,6 +167,7 @@ export class PlayerEngineService {
     this.mediaInfo.reset();
     this.preparedMediaId = -1;
     this.lastReadyEvent = null;
+    this.syncRound = 0;
     this.playbackHint = '';
   }
 
@@ -282,6 +285,7 @@ export class PlayerEngineService {
       case 'SetMedia':
         // every SetMedia starts a new sync round on the server, even for the same media at the same position
         this.lastReadyEvent = null;
+        this.syncRound = command.syncRound ?? 0;
         this.sync.clear();
         this.mediaService.stop();
         this.loadNewMedia(command.currentMedia, 0);
@@ -322,6 +326,7 @@ export class PlayerEngineService {
         break;
       case 'Jump':
         this.lastReadyEvent = null;
+        this.syncRound = command.syncRound ?? 0;
         this.sync.clear();
         this.userStatusService.setState('LOADING');
         this.prepareMediaStart(null, command.startMediaTime);
@@ -350,6 +355,7 @@ export class PlayerEngineService {
     this.userStatusService.setJoined(true);
     // also the versions: they may be those of a server that was restarted in the meantime
     this.applyQueue(command, true);
+    this.syncRound = command.syncRound ?? 0;
     this.loopMode = command.loopMode;
     this.fairQueue = command.fairQueue;
     const media = command.currentMedia;
@@ -458,7 +464,7 @@ export class PlayerEngineService {
     } else {
       this.lastReadyEvent = { mediaId, time };
       const id = this.authenticationService.currentUserValue?.id;
-      this.publishCommand(`ready/${id}/${mediaId}/${time}`);
+      this.publishCommand(`ready/${id}/${mediaId}/${time}/${this.syncRound}`);
       return true;
     }
   }

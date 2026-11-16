@@ -41,12 +41,13 @@ public class SessionUserSynchronization {
   }
 
   /**
-   * Marks a user as ready. Ready messages for other media (e.g. late messages of an outdated round) are ignored.
+   * Marks a user as ready. The client names the round it is ready for: a late message of an outdated round is
+   * ignored, also when the new round is for the same media (e.g. the media was set again before everyone had loaded it).
    *
    * @return true if the user was accepted for the current round.
    */
-  public synchronized boolean addReadyUser(long userId, long mediaId) {
-    if (!active || mediaId != targetMediaId) {
+  public synchronized boolean addReadyUser(long userId, long mediaId, long round) {
+    if (!active || round != this.round || mediaId != targetMediaId) {
       return false;
     }
     readyUsers.add(userId);
@@ -55,6 +56,11 @@ public class SessionUserSynchronization {
 
   public synchronized boolean allReady(Collection<Long> userIds) {
     return active && readyUsers.containsAll(userIds);
+  }
+
+  /** The id of the running round, 0 if none is running. Clients send it back with their ready message. */
+  public synchronized long currentRound() {
+    return active ? round : 0;
   }
 
   public synchronized boolean isActive() {

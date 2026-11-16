@@ -302,12 +302,13 @@ public class SessionController {
    * @param user    User who indicates its ready state
    * @param session session the user is in.
    * @param mediaId Id of the media the user marks its readiness for.
+   * @param round   Id of the sync round the user is ready for, as the command that started the round named it.
    * @return the command to broadcast if the round is finished ({@link StartCommand} for a pending playback),
    * empty otherwise.
    */
-  public Optional<Command> userIsReady(User user, Session session, long mediaId) {
+  public Optional<Command> userIsReady(User user, Session session, long mediaId, long round) {
     synchronized (session.getLock()) {
-      if (!session.userReady(user.getId(), mediaId)) {
+      if (!session.userReady(user.getId(), mediaId, round)) {
         return Optional.empty();
       }
       return Optional.ofNullable(finishSync(session));
@@ -318,15 +319,19 @@ public class SessionController {
    * Moves the session into its sync state and starts a new sync round for the current media (see
    * {@link Session#enterSync()}). If not all users are ready within {@value #SYNC_TIMEOUT}ms the round is finished
    * anyway.
+   *
+   * @return the id of the round, which the command that tells the clients about it has to carry; 0 if there is no
+   * current media and so no round
    */
-  public void enterSyncState(Session session) {
+  public long enterSyncState(Session session) {
     synchronized (session.getLock()) {
       long round = session.enterSync();
       if (round < 0) {
-        return;
+        return 0;
       }
       session.getSessionUserSynchronization().setTimeout(round,
           syncTimeoutScheduler.schedule(() -> onSyncTimeout(session, round), SYNC_TIMEOUT, TimeUnit.MILLISECONDS));
+      return round;
     }
   }
 

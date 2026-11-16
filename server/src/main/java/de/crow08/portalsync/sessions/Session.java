@@ -256,12 +256,18 @@ public class Session {
   }
 
   /**
-   * Marks a user as ready for the current sync round.
+   * Marks a user as ready for the sync round it names. A report for an earlier round does not count: the client has
+   * not seen the command that started the current one yet, so a start now would reach it before that command.
    *
    * @return true if this completed the round: all users of the session are ready (see {@link #finishSync})
    */
-  public boolean userReady(long userId, long mediaId) {
-    return inSyncState() && sessionUserSynchronization.addReadyUser(userId, mediaId) && allUsersReady();
+  public boolean userReady(long userId, long mediaId, long round) {
+    return inSyncState() && sessionUserSynchronization.addReadyUser(userId, mediaId, round) && allUsersReady();
+  }
+
+  /** The id of the running sync round, 0 if none is running (see {@link #enterSync()}). */
+  public long syncRound() {
+    return sessionUserSynchronization.currentRound();
   }
 
   /** All users of the session are ready for the running sync round, e.g. after the one it waited for left. */

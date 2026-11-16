@@ -148,6 +148,7 @@ describe('PlayerEngineService', () => {
       sessionState: 'STOP' as SessionState,
       loopMode: false,
       fairQueue: false,
+      syncRound: 0,
       startServerTime: 50_000,
       startMediaTime: 0,
       ...overrides,
@@ -291,7 +292,16 @@ describe('PlayerEngineService', () => {
 
       media.mediaCanPlayThrough.next();
 
-      expect(commands).toEqual(['ready/3/7/0']);
+      expect(commands).toEqual(['ready/3/7/0/0']);
+    });
+
+    it('reports ready for the round the join names', async () => {
+      receive(join({ sessionState: 'SYNC_PLAY', syncRound: 9 }));
+      await settle();
+
+      media.mediaCanPlayThrough.next();
+
+      expect(commands).toEqual(['ready/3/7/0/9']);
     });
 
     it('keeps a session that waits paused or stopped in that state', () => {
@@ -342,7 +352,24 @@ describe('PlayerEngineService', () => {
 
       media.currentTime = 90;
       media.mediaCanPlayThrough.next();
-      expect(commands).toEqual(['ready/3/7/90000']);
+      expect(commands).toEqual(['ready/3/7/90000/0']);
+    });
+
+    it('names the round of the command it loaded the media for', async () => {
+      receive({ type: 'SetMedia', currentMedia: songB, queue: [], history: [], queueVersion: 6, syncRound: 11 });
+      await settle();
+      media.mediaCanPlayThrough.next();
+
+      // the same media set again is a new round: the report for it must not be taken for the one before
+      receive({ type: 'SetMedia', currentMedia: songB, queue: [], history: [], queueVersion: 7, syncRound: 12 });
+      await settle();
+      media.mediaCanPlayThrough.next();
+
+      receive({ type: 'Jump', startMediaTime: 30_000, syncRound: 13 });
+      media.currentTime = 30;
+      media.mediaCanPlayThrough.next();
+
+      expect(commands).toEqual(['ready/3/8/0/11', 'ready/3/8/0/12', 'ready/3/8/30000/13']);
     });
 
     it('reports ready once for a position, however often the browser says it could play', () => {
@@ -378,7 +405,7 @@ describe('PlayerEngineService', () => {
       await settle();
       media.mediaCanPlayThrough.next();
 
-      expect(commands).toEqual(['ready/3/8/0', 'ready/3/8/0']);
+      expect(commands).toEqual(['ready/3/8/0/0', 'ready/3/8/0/0']);
     });
 
     it('loads a video into the video element with what its seek bar needs', async () => {
@@ -596,6 +623,20 @@ describe('PlayerEngineService', () => {
       expect(engine.preparedMediaId).toBe(-1);
     });
 
+    it('starts the next session without the round of the previous one', async () => {
+      receive({ type: 'SetMedia', currentMedia: songB, queue: [], history: [], queueVersion: 6, syncRound: 11 });
+      await settle();
+      sessionId.next(null);
+      sessionId.next(13);
+      commands = [];
+
+      receive(join({ sessionState: 'SYNC_PLAY', syncRound: 2 }));
+      await settle();
+      media.mediaCanPlayThrough.next();
+
+      expect(commands).toEqual(['ready/3/7/0/2']);
+    });
+
     it('starts the next session without the versions of the previous one', () => {
       receive({ type: 'Update', updateType: 'Queue', queue: [video], queueVersion: 40 });
       sessionId.next(null);
@@ -615,10 +656,10 @@ describe('PlayerEngineService', () => {
       commands = [];
 
       receive({ type: 'SetMedia', currentMedia: songB, queue: [], history: [], queueVersion: 6 });
-      expect(commands).toEqual(['ready/3/8/0']);
+      expect(commands).toEqual(['ready/3/8/0/0']);
 
       receive({ type: 'Jump', startMediaTime: 30_000 });
-      expect(commands).toEqual(['ready/3/8/0', 'ready/3/8/30000']);
+      expect(commands).toEqual(['ready/3/8/0/0', 'ready/3/8/30000/0']);
     });
 
     it('waits for the media in a visible tab', () => {
@@ -641,7 +682,7 @@ describe('PlayerEngineService', () => {
 
       expect(media.activateSpotifyMode).toHaveBeenCalled();
       expect(media.setSrc).not.toHaveBeenCalled();
-      expect(commands).toEqual(['ready/3/8/0']);
+      expect(commands).toEqual(['ready/3/8/0/0']);
       expect(userStatus.setState).toHaveBeenLastCalledWith('UNAVAILABLE');
       expect(engine.playbackHint).toBe('player.spotify.unplayable');
       expect(dialog.open).toHaveBeenCalledTimes(1);

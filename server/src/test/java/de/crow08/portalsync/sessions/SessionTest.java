@@ -182,14 +182,15 @@ class SessionTest {
     Session session = sessionWithMedia();
     session.getUsers().add(new User(2, "ben", false));
     session.startPlayback();
-    session.enterSync();
+    long round = session.enterSync();
+    assertThat(session.syncRound()).isEqualTo(round);
 
-    assertThat(session.userReady(1, MEDIA)).isFalse();
+    assertThat(session.userReady(1, MEDIA, round)).isFalse();
     // a late report for another media does not count
-    assertThat(session.userReady(2, NEXT_MEDIA)).isFalse();
+    assertThat(session.userReady(2, NEXT_MEDIA, round)).isFalse();
     assertThat(session.allUsersReady()).isFalse();
 
-    assertThat(session.userReady(2, MEDIA)).isTrue();
+    assertThat(session.userReady(2, MEDIA, round)).isTrue();
   }
 
   @Test
@@ -198,8 +199,7 @@ class SessionTest {
     User ben = new User(2, "ben", false);
     session.getUsers().add(ben);
     session.startPlayback();
-    session.enterSync();
-    session.userReady(1, MEDIA);
+    session.userReady(1, MEDIA, session.enterSync());
     assertThat(session.allUsersReady()).isFalse();
 
     session.getUsers().remove(ben);
@@ -211,7 +211,10 @@ class SessionTest {
   void readyReportsOutsideARoundAreIgnored() {
     Session session = playing(0);
 
-    assertThat(session.userReady(1, MEDIA)).isFalse();
+    // no round is running: also the round of the last one does not count any more
+    assertThat(session.syncRound()).isZero();
+    assertThat(session.userReady(1, MEDIA, 1)).isFalse();
+    assertThat(session.userReady(1, MEDIA, 0)).isFalse();
     assertThat(session.allUsersReady()).isFalse();
     assertThat(session.getSessionState()).isEqualTo(SessionState.PLAY);
   }
@@ -222,14 +225,31 @@ class SessionTest {
     session.getUsers().add(new User(2, "ben", false));
     session.startPlayback();
     long first = session.enterSync();
-    session.userReady(1, MEDIA);
+    session.userReady(1, MEDIA, first);
 
     long second = session.enterSync();
 
     assertThat(second).isGreaterThan(first);
     assertThat(session.getSessionState()).isEqualTo(SessionState.SYNC_PLAY);
-    assertThat(session.userReady(2, MEDIA)).isFalse();
-    assertThat(session.userReady(1, MEDIA)).isTrue();
+    assertThat(session.userReady(2, MEDIA, second)).isFalse();
+    assertThat(session.userReady(1, MEDIA, second)).isTrue();
+  }
+
+  @Test
+  void aReadyReportForAnEarlierRoundOfTheSameMediaDoesNotCount() {
+    // "Play now" starts a round, pressing play right away a second one for the same media. The report of the first
+    // round arrives late: the client has not seen the second command yet, so the playback must not start for it.
+    Session session = sessionWithMedia();
+    long first = session.enterSync();
+    session.startPlayback();
+    long second = session.enterSync();
+
+    assertThat(session.userReady(1, MEDIA, first)).isFalse();
+    assertThat(session.getSessionState()).isEqualTo(SessionState.SYNC_PLAY);
+
+    // once the client has loaded the media of the second command it reports for that round
+    assertThat(session.userReady(1, MEDIA, second)).isTrue();
+    assertThat(session.finishSync(at(1_000), LEAD)).isEqualTo(at(1_500));
   }
 
   @Test
