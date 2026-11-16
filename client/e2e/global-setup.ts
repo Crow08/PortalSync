@@ -46,8 +46,6 @@ export default async function globalSetup(): Promise<void> {
   let media: { id: number; title: string }[] = (await (await api('/media/all')).json()).content;
   if (!media.some((m) => m.title === VIDEO_TITLE)) {
     generateMediaFiles();
-    // Playlist id 1 stands for "no playlist" (the upload skips it), so burn it with a placeholder.
-    await api('/playlists/', { method: 'POST', body: 'e2e-placeholder', headers: { 'Content-Type': 'text/plain' } });
     const tone = toneBuffer();
     for (const name of SHARED_SONGS) {
       const form = new FormData();

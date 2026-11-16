@@ -38,7 +38,7 @@ export class SessionCreatorComponent {
 
     this.httpHelperService
       .getArray('/api/v1/playlists/all', Playlist)
-      .then((value) => (this.playlists = value.filter((playlist) => playlist.id > 1)))
+      .then((value) => (this.playlists = value))
       .catch(console.error);
   }
 

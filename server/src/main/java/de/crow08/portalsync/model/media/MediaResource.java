@@ -138,7 +138,7 @@ public class MediaResource {
       }
     }
     // songs are only added to playlists the user may change; one that is not allowed fails the whole request
-    playlistIds.stream().filter(id -> id > 1).forEach(playlistAccess::requireEditable);
+    playlistIds.forEach(playlistAccess::requireEditable);
 
     List<Long> genreIds = new ArrayList<>();
     if (dataNode.get("genres").isArray()) {
@@ -195,16 +195,14 @@ public class MediaResource {
 
       // Add to playlist
       for (long playlistId : playlistIds) {
-        if (playlistId > 1) { // Don't add to playlist with ID: 1
-          Optional<Playlist> playlist = playlistRepository.findById(playlistId);
-          playlist.ifPresent(pl -> {
-            if (pl.getSongs() == null) {
-              pl.setSongs(new ArrayList<>());
-            }
-            pl.getSongs().add(song);
-            playlistRepository.save(pl);
-          });
-        }
+        Optional<Playlist> playlist = playlistRepository.findById(playlistId);
+        playlist.ifPresent(pl -> {
+          if (pl.getSongs() == null) {
+            pl.setSongs(new ArrayList<>());
+          }
+          pl.getSongs().add(song);
+          playlistRepository.save(pl);
+        });
       }
     }
     return new ResponseEntity<>(HttpStatus.OK);
@@ -327,20 +325,18 @@ public class MediaResource {
       }
     }
     // songs are only added to playlists the user may change; one that is not allowed fails the whole request
-    playlistIds.stream().filter(id -> id > 1).forEach(playlistAccess::requireEditable);
+    playlistIds.forEach(playlistAccess::requireEditable);
 
     // Add to playlist
     for (long playlistId : playlistIds) {
-      if (playlistId > 1) { // Don't add to playlist with ID: 1
-        Optional<Playlist> playlist = playlistRepository.findById(playlistId);
-        playlist.ifPresent(pl -> {
-          if (pl.getSongs() == null) {
-            pl.setSongs(new ArrayList<>());
-          }
-          pl.getSongs().addAll(newSongs);
-          playlistRepository.save(pl);
-        });
-      }
+      Optional<Playlist> playlist = playlistRepository.findById(playlistId);
+      playlist.ifPresent(pl -> {
+        if (pl.getSongs() == null) {
+          pl.setSongs(new ArrayList<>());
+        }
+        pl.getSongs().addAll(newSongs);
+        playlistRepository.save(pl);
+      });
     }
 
     return new ResponseEntity<>(HttpStatus.OK);

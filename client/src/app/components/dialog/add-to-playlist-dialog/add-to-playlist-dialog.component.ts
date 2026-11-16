@@ -43,9 +43,8 @@ export class AddToPlaylistDialogComponent implements OnInit {
       .getArray('/api/v1/playlists/all', Playlist)
       .then((playlists) => {
         const user = this.authenticationService.currentUserValue;
-        // playlist 1 stands for no playlist
         this.playlists = playlists
-          .filter((playlist) => playlist.id > 1 && playlist.canEdit(user))
+          .filter((playlist) => playlist.canEdit(user))
           .sort((a, b) => a.name.localeCompare(b.name));
       })
       .catch((error) => {

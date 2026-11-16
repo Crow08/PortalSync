@@ -371,9 +371,9 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Whether the shown playlist can be deleted: by its owners and admins; id 1 stands for no playlist and stays. */
+  /** Whether the shown playlist can be deleted: by its owners and admins. */
   get canDeletePlaylist(): boolean {
-    return this.canManagePlaylist && (this.activePlaylist?.id ?? 0) > 1;
+    return this.canManagePlaylist;
   }
 
   /** Deletes the shown playlist after a confirmation. The media stay in the library. */

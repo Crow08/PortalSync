@@ -168,15 +168,12 @@ public class PlaylistResource {
 
   /**
    * Deletes a playlist. Only the owners and admins may do that, a public playlist does not change that. The media in
-   * the playlist stay in the library. The playlist with the id 1 ("no playlist") stands for no playlist and stays.
+   * the playlist stay in the library.
    */
   @DeleteMapping("/{playlistId}")
   @Transactional
   public ResponseEntity<Void> deletePlaylist(@PathVariable long playlistId) {
     Playlist playlist = playlistAccess.requireManageable(playlistId);
-    if (playlist.getId() <= 1) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "This playlist can not be deleted");
-    }
     playlistRepository.delete(playlist);
     return new ResponseEntity<>(HttpStatus.OK);
   }
