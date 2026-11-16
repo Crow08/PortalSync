@@ -32,6 +32,26 @@
   .hint {
     padding: 0 10px;
   }
+
+  // the heading of the playlists with the switch to the own ones
+  .group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 16px 0 6px;
+
+    h2 {
+      margin: 0;
+    }
+
+    .mine {
+      // smaller than the switch of the tool bar: it sits in a heading
+      --mat-button-toggle-height: 26px;
+      margin-right: 6px;
+      font-size: 12px;
+    }
+  }
 }
 
 .collection {

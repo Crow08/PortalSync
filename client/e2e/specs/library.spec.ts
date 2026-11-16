@@ -200,6 +200,46 @@ test.describe('library', () => {
     await expect(userPage.locator('.list .row')).toHaveCount(0);
   });
 
+  test('the own filters show only the media and the playlists of the user', async ({ userPage, user, admin }) => {
+    const other = await createUser(admin, unique('flt'), 'pw-other');
+    const prefix = unique('own');
+    const mine = await uploadSong(user, `${prefix}-mine.mp3`);
+    const theirs = await uploadSong(other, `${prefix}-theirs.mp3`);
+    const myList = unique('mylist');
+    const theirList = unique('theirlist');
+    await createPlaylist(user, myList);
+    await createPlaylist(other, theirList);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, prefix);
+    await expect(userPage.locator('.list .row')).toHaveCount(2);
+
+    const onlyMyMedia = userPage.getByRole('button', { name: 'Only my media' });
+    await onlyMyMedia.click();
+    await expect(onlyMyMedia).toHaveAttribute('aria-pressed', 'true');
+    await expect(libraryRow(userPage, mine.title)).toBeVisible();
+    await expect(libraryRow(userPage, theirs.title)).toHaveCount(0);
+    await onlyMyMedia.click();
+    await expect(userPage.locator('.list .row')).toHaveCount(2);
+
+    const collections = userPage.getByRole('navigation', { name: 'Collections' });
+    await expect(collections.getByRole('button', { name: theirList })).toBeVisible();
+    await collections.getByRole('button', { name: 'Only my playlists' }).click();
+    await expect(collections.getByRole('button', { name: myList })).toBeVisible();
+    await expect(collections.getByRole('button', { name: theirList })).toHaveCount(0);
+    // the library itself is no playlist and stays
+    await expect(collections.getByRole('button', { name: 'All media' })).toBeVisible();
+  });
+
+  test("the own filter of the playlists says so when none of them is the user's", async ({ userPage, admin }) => {
+    await createPlaylist(admin, unique('notmine'));
+    await userPage.goto('/library');
+    const collections = userPage.getByRole('navigation', { name: 'Collections' });
+
+    await collections.getByRole('button', { name: 'Only my playlists' }).click();
+
+    await expect(collections.getByText('None of the playlists is yours.')).toBeVisible();
+  });
+
   test('shows who owns a media', async ({ userPage, user, admin }) => {
     const other = await createUser(admin, unique('own'), 'pw-owner');
     const prefix = unique('whose');

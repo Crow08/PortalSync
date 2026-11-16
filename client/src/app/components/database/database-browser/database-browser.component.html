@@ -4,14 +4,20 @@
     <mat-icon>all_inclusive</mat-icon>
     <span class="name">{{ 'library.allMedia' | transloco }}</span>
   </button>
-  <h2 class="group">{{ 'common.playlists' | transloco }}</h2>
-  @for (playlist of playlists; track playlist.id) {
+  <div class="group-head">
+    <h2>{{ 'common.playlists' | transloco }}</h2>
+    <mat-button-toggle (change)="onlyOwnPlaylists = $event.source.checked" [aria-label]="'library.onlyOwnPlaylists' | transloco"
+      [checked]="onlyOwnPlaylists" class="mine">
+      {{ 'library.mine' | transloco }}
+    </mat-button-toggle>
+  </div>
+  @for (playlist of shownPlaylists; track playlist.id) {
     <button (click)="selectCollection(playlist)" [class.on]="activePlaylist?.id === playlist.id" class="collection" type="button">
       <mat-icon>playlist_play</mat-icon>
       <span class="name">{{ playlist.name }}</span>
     </button>
   } @empty {
-    <p class="hint">{{ 'library.noPlaylists' | transloco }}</p>
+    <p class="hint">{{ (onlyOwnPlaylists && playlists.length > 0 ? 'library.noOwnPlaylists' : 'library.noPlaylists') | transloco }}</p>
   }
 </nav>
 
@@ -23,6 +29,10 @@
       <mat-button-toggle value="VIDEO">{{ 'common.videos' | transloco }}</mat-button-toggle>
       <mat-button-toggle value="SONG">{{ 'common.songs' | transloco }}</mat-button-toggle>
     </mat-button-toggle-group>
+    <mat-button-toggle (change)="onlyOwnMedia = $event.source.checked; resetScroll()" [aria-label]="'library.onlyOwnMedia' | transloco"
+      [checked]="onlyOwnMedia" class="mine">
+      {{ 'library.mine' | transloco }}
+    </mat-button-toggle>
     <mat-form-field appearance="outline" class="sort" subscriptSizing="dynamic">
       <mat-select (selectionChange)="resetScroll()" [(value)]="sortMode" [aria-label]="'library.sortBy' | transloco">
         <mat-option value="title">{{ 'library.sort.title' | transloco }}</mat-option>

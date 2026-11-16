@@ -58,6 +58,10 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   users: User[] = [];
   private userNames = new Map<number, string>();
   typeFilter: TypeFilter = 'all';
+  /** Only the media the logged in user owns are listed. */
+  onlyOwnMedia = false;
+  /** Only the playlists the logged in user owns are listed. */
+  onlyOwnPlaylists = false;
   sortMode: SortMode = 'title';
   query = '';
   /** The item shown in the detail panel. */
@@ -99,6 +103,12 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
         }
       })
       .catch(console.error);
+  }
+
+  /** The playlists listed in the side bar: all of them, or only those the logged in user is an owner of. */
+  get shownPlaylists(): Playlist[] {
+    const user = this.authenticationService.currentUserValue;
+    return this.onlyOwnPlaylists ? this.playlists.filter((playlist) => !!user && playlist.isOwnedBy(user)) : this.playlists;
   }
 
   /** Shows all media (null) or the media of a playlist. */
@@ -147,12 +157,14 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
    */
   get filtered(): Media[] {
     const query = this.query.trim().toLowerCase();
-    const key = [this.items, this.typeFilter, this.sortMode, query];
+    const key = [this.items, this.typeFilter, this.sortMode, query, this.onlyOwnMedia];
     if (key.some((value, i) => value !== this.filteredKey[i])) {
       this.filteredKey = key;
       const matching = this.items.filter(
         (item) =>
-          (this.typeFilter === 'all' || item.type === this.typeFilter) && (!query || this.searchText(item).includes(query))
+          (this.typeFilter === 'all' || item.type === this.typeFilter) &&
+          (!this.onlyOwnMedia || this.isOwn(item)) &&
+          (!query || this.searchText(item).includes(query))
       );
       switch (this.sortMode) {
         case 'title':

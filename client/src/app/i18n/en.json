@@ -124,6 +124,10 @@
       "playlist": "Playlist order"
     },
     "searchPlaceholder": "Title, artist, series, genre",
+    "mine": "Mine",
+    "onlyOwnMedia": "Only my media",
+    "onlyOwnPlaylists": "Only my playlists",
+    "noOwnPlaylists": "None of the playlists is yours.",
     "owners": "Owners",
     "ownedBy": "Owned by {{ name }}",
     "removeOwner": "Remove {{ name }} as an owner",
