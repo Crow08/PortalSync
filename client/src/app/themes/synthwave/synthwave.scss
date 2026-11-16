@@ -288,22 +288,22 @@ $hexagon: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
 
 // -----------------------------------------------------------------------------------------------------------------------------
 // sharp corners everywhere, like the editor: buttons, icon buttons, cards, fields, toggles, menus, dialogs, toasts, focus
-// rings. Covers, avatars, chips (with their status dots) and the knobs of sliders and slide toggles keep the radius of their
-// components; the tracks of both are sharp. The knob of a slide toggle is its handle, whose color and outline are drawn by its
-// ::before/::after and whose shadow layer inherits the radius as well, so those pseudo-elements are left alone too. The id of the
-// app container (or the overlay container, which carries the theme class too) outranks every class-only component rule, however
-// deeply nested. Shapes made by clip-path, like the hexagonal play buttons, stay.
+// rings. Covers, avatars, chips (with their status dots), the knobs of sliders and the whole slide toggles keep the radius of
+// their components; the track of a slider is sharp. A slide toggle draws its track and its knob (the handle, with a shadow layer)
+// with ::before/::after, which inherit the radius, so those pseudo-elements are left alone too. The id of the app container (or
+// the overlay container, which carries the theme class too) outranks every class-only component rule, however deeply nested.
+// Shapes made by clip-path, like the hexagonal play buttons, stay.
 // -----------------------------------------------------------------------------------------------------------------------------
-$knobs: ".mdc-slider__thumb-knob, .mdc-switch__handle, .mdc-switch__shadow";
-$rounded: ".cover, .now-cover, .preview, .avatar, .chip, .access-chip, .live-chip, .dot, .live-dot, #{$knobs}";
+$controls: ".mdc-slider__thumb-knob, .mdc-switch__track, .mdc-switch__handle, .mdc-switch__shadow";
+$rounded: ".cover, .now-cover, .preview, .avatar, .chip, .access-chip, .live-chip, .dot, .live-dot, #{$controls}";
 
 #{$s}:is(#app-theme-container, .cdk-overlay-container) {
   --mat-focus-indicator-border-radius: 0;
 
   &,
   *:not(#{$rounded}),
-  *:not(#{$knobs})::before,
-  *:not(#{$knobs})::after {
+  *:not(#{$controls})::before,
+  *:not(#{$controls})::after {
     border-radius: 0;
   }
 }
