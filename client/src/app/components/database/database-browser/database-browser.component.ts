@@ -54,8 +54,9 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   playlists: Playlist[] = [];
   /** The playlist whose media are shown, null for all media. */
   activePlaylist: Playlist | null = null;
-  /** All users, to choose the owners of a playlist from; loaded when needed. */
+  /** All users: to show who owns a media and to choose the owners of a playlist from. */
   users: User[] = [];
+  private userNames = new Map<number, string>();
   typeFilter: TypeFilter = 'all';
   sortMode: SortMode = 'title';
   query = '';
@@ -77,6 +78,7 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sessionSubscription = this.sessionService.sessionId.subscribe((id) => (this.inSession = !!id));
     this.loadPlaylists();
+    this.loadUsers();
     this.load();
   }
 
@@ -193,6 +195,19 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     return (this.isVideo(media) ? (media as Video).series?.name : (media as Song).artist?.name) ?? '';
   }
 
+  /**
+   * The name of the owner of the media (who uploaded or imported it). Empty for a media without an owner, and as long
+   * as the users are not loaded.
+   */
+  ownerName(media: Media): string {
+    return media.ownerId != null ? (this.userNames.get(media.ownerId) ?? '') : '';
+  }
+
+  /** Whether the media belongs to the logged in user. */
+  isOwn(media: Media): boolean {
+    return media.ownerId != null && media.ownerId === this.authenticationService.currentUserValue?.id;
+  }
+
   /** Artist of a song, series of a video. */
   subtitle(media: Media): string {
     return this.isVideo(media) ? ((media as Video).series?.name ?? this.tl.translate('common.video'))
@@ -230,7 +245,17 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       );
     }
     rows.push({ label: 'common.tags', value: (media.tags ?? []).map((tag) => tag.name).join(', ') });
+    rows.push({ label: 'library.details.owner', value: this.ownerDetail(media) });
     return rows.filter((row) => row.value !== '');
+  }
+
+  /** Who owns the media, as the detail panel says it; a media without an owner can only be changed by admins. */
+  private ownerDetail(media: Media): string {
+    if (media.ownerId == null) {
+      return this.tl.translate('library.details.noOwner');
+    }
+    const name = this.ownerName(media);
+    return name && this.isOwn(media) ? this.tl.translate('library.details.ownerYou', { name }) : name;
   }
 
   showDetail(media: Media): void {
@@ -302,7 +327,10 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   loadUsers(): void {
     this.httpHelperService
       .getArray('/api/v1/users/all', User)
-      .then((users) => (this.users = users.sort((a, b) => a.username.localeCompare(b.username))))
+      .then((users) => {
+        this.users = users.sort((a, b) => a.username.localeCompare(b.username));
+        this.userNames = new Map(users.map((user) => [user.id, user.username]));
+      })
       .catch(console.error);
   }
 

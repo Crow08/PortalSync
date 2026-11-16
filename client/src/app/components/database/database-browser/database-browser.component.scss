@@ -338,6 +338,33 @@
   font-size: 12px;
 }
 
+// who owns the media; the own media stand out
+.row-owner {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  max-width: 140px;
+  color: var(--ps-muted);
+  font-size: 12px;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+
+  .name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &.mine {
+    color: var(--ps-accent);
+  }
+}
+
 .kind {
   flex: none;
   color: var(--ps-song);
@@ -510,5 +537,12 @@
     h2 {
       display: none;
     }
+  }
+}
+
+// narrow list: the title needs the space, the owner is still in the detail panel
+@media (max-width: 720px) {
+  .row-owner {
+    display: none;
   }
 }

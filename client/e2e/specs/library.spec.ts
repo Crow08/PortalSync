@@ -200,6 +200,35 @@ test.describe('library', () => {
     await expect(userPage.locator('.list .row')).toHaveCount(0);
   });
 
+  test('shows who owns a media', async ({ userPage, user, admin }) => {
+    const other = await createUser(admin, unique('own'), 'pw-owner');
+    const prefix = unique('whose');
+    const mine = await uploadSong(user, `${prefix}-mine.mp3`);
+    const theirs = await uploadSong(other, `${prefix}-theirs.mp3`);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, prefix);
+    const meta = userPage.locator('aside.detail dl.meta');
+    const ownerOf = (title: string) => libraryRow(userPage, title).locator('.row-owner');
+
+    // in the list: the name of the owner, the own media stand out
+    await expect(ownerOf(theirs.title)).toHaveText(new RegExp(other.username));
+    await expect(ownerOf(theirs.title)).not.toHaveClass(/mine/);
+    await expect(ownerOf(mine.title)).toHaveText(new RegExp(user.username));
+    await expect(ownerOf(mine.title)).toHaveClass(/mine/);
+
+    await openMedia(userPage, theirs.title);
+    await expect(meta.locator('div', { hasText: 'Owner' }).locator('dd')).toHaveText(other.username);
+    await openMedia(userPage, mine.title);
+    await expect(meta.locator('div', { hasText: 'Owner' }).locator('dd')).toHaveText(`${user.username} (you)`);
+
+    // the shared video was put into the database by SQL: nobody owns it
+    const { video } = sharedMedia();
+    await searchLibrary(userPage, video.title);
+    await expect(ownerOf(video.title)).toHaveCount(0);
+    await openMedia(userPage, video.title);
+    await expect(meta.locator('div', { hasText: 'Owner' }).locator('dd')).toHaveText('Nobody (admins only)');
+  });
+
   test('only the owner and admins can edit and delete a song', async ({ userPage, user, admin }) => {
     const owner = await createUser(admin, unique('own'), 'pw-owner');
     const song = await uploadSong(owner, `${unique('owned')}.mp3`);

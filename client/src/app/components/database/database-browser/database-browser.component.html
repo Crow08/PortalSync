@@ -155,6 +155,12 @@
               <span class="sub">{{ creator(media) }}</span>
             }
           </span>
+          @if (ownerName(media); as owner) {
+            <span [attr.title]="'library.ownedBy' | transloco: { name: owner }" [class.mine]="isOwn(media)" class="row-owner">
+              <mat-icon aria-hidden="true">person</mat-icon>
+              <span class="name">{{ owner }}</span>
+            </span>
+          }
           <span class="kind" [class.video]="isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
         </button>
       </div>

@@ -125,6 +125,7 @@
     },
     "searchPlaceholder": "Title, artist, series, genre",
     "owners": "Owners",
+    "ownedBy": "Owned by {{ name }}",
     "removeOwner": "Remove {{ name }} as an owner",
     "nobody": "nobody",
     "addOwner": "Add an owner",
@@ -167,7 +168,10 @@
       "format": "Format",
       "series": "Series",
       "season": "Season",
-      "spotify": "Spotify"
+      "spotify": "Spotify",
+      "owner": "Owner",
+      "ownerYou": "{{ name }} (you)",
+      "noOwner": "Nobody (admins only)"
     },
     "ownerAdded": "Owner added",
     "ownerRemoved": "Owner removed",
@@ -245,12 +249,8 @@
   "messages": {
     "serverError": "Something went wrong",
     "serverSuccess": "Success",
-    "saved": [
-      "Saved"
-    ],
-    "deleted": [
-      "Deleted"
-    ],
+    "saved": ["Saved"],
+    "deleted": ["Deleted"],
     "http": {
       "conflict": "Data conflict",
       "notFound": "Not found",
