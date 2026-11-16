@@ -15,12 +15,30 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddToPlaylistDialogComponent } from '../../dialog/add-to-playlist-dialog/add-to-playlist-dialog.component';
 import { YesNoDialogComponent } from '../../dialog/yes-no-dialog/yes-no-dialog.component';
 import { CustomSnackBarComponent } from '../../messages/custom-snack-bar.component';
-import { EditSongDialogComponent } from '../../dialog/edit-song-dialog/edit-song-dialog.component';
+import { GenericDataObject } from 'src/app/models/genericDataObject';
 import { WsService } from 'src/app/services/ws.service';
 import { SessionService } from 'src/app/services/session.service';
 import { AuthenticationService } from 'src/app/services/authentication.service';
 
 export type TypeFilter = 'all' | 'VIDEO' | 'SONG';
+
+/**
+ * What the detail panel shows in its edit mode: the fields of the media being edited. The pickers work with lists, a
+ * single choice (artist, album, series, season) is a list of at most one entry.
+ */
+export interface MediaEdit {
+  media: Media;
+  title: string;
+  artist: GenericDataObject[];
+  album: GenericDataObject[];
+  genres: GenericDataObject[];
+  series: GenericDataObject[];
+  season: GenericDataObject[];
+  tags: GenericDataObject[];
+}
+
+const toOptions = (entities: { id: number; name: string }[] | null | undefined): GenericDataObject[] =>
+  (entities ?? []).filter((entity) => !!entity).map((entity) => new GenericDataObject(entity.id, entity.name));
 export type SortMode = 'title' | 'recent' | 'playlist';
 
 /** Height (px) of a row of the list, all rows must have this height (virtual scrolling). */
@@ -66,6 +84,10 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   query = '';
   /** The item shown in the detail panel. */
   detail: Media | null = null;
+  /** The detail panel is in its edit mode for this media, null while it only shows the media. */
+  edit: MediaEdit | null = null;
+  /** The changes are being saved. */
+  saving = false;
   selection = new SelectionModel<Media>(true, []);
   inSession = false;
   private sessionSubscription: Subscription | null = null;
@@ -271,7 +293,73 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
   }
 
   showDetail(media: Media): void {
+    if (this.detail?.id !== media.id) {
+      // another media: the changes of the one being edited are dropped
+      this.edit = null;
+    }
     this.detail = media;
+  }
+
+  /** Switches the detail panel into its edit mode for the media. */
+  startEdit(media: Media): void {
+    const song = media as Song;
+    const video = media as Video;
+    this.edit = {
+      media,
+      title: media.title,
+      artist: toOptions([song.artist]),
+      album: toOptions([song.album]),
+      genres: toOptions(song.genres),
+      series: toOptions([video.series]),
+      season: toOptions([video.season]),
+      tags: toOptions(media.tags),
+    };
+  }
+
+  cancelEdit(): void {
+    this.edit = null;
+  }
+
+  /** A media needs a title. */
+  get canSaveEdit(): boolean {
+    return !!this.edit && this.edit.title.trim() !== '' && !this.saving;
+  }
+
+  /** Saves the changes of the edit mode and shows the media as it is now. */
+  saveEdit(): void {
+    const edit = this.edit;
+    if (!edit || !this.canSaveEdit) {
+      return;
+    }
+    const title = edit.title.trim();
+    const request = this.isVideo(edit.media)
+      ? this.httpHelperService.put('/api/v1/media/editVideo', {
+          id: edit.media.id,
+          title,
+          seriesId: edit.series[0]?.id ?? null,
+          seasonId: edit.season[0]?.id ?? null,
+          tagIds: edit.tags.map((tag) => tag.id),
+        })
+      : this.httpHelperService.put('/api/v1/media/editSong', {
+          id: edit.media.id,
+          type: 'SONG',
+          title,
+          artist: edit.artist[0] ?? null,
+          album: edit.album[0] ?? null,
+          genres: edit.genres,
+          tags: edit.tags,
+        });
+    this.saving = true;
+    request
+      .then(() => {
+        this.edit = null;
+        this.load();
+        this.showMessage('library.edit.saved');
+      })
+      .catch((error) => {
+        this.showMessage(error?.status === 403 ? 'library.changeForbidden' : 'library.edit.failed');
+      })
+      .finally(() => (this.saving = false));
   }
 
   toggleSelected(media: Media): void {
@@ -297,15 +385,6 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       this.loadPlaylists();
       // the playlist that was added to may be the one shown
       this.activePlaylist && this.load();
-    });
-  }
-
-  openEditSongDialog(song: Media): void {
-    const dialogRef = this.dialog.open(EditSongDialogComponent, { width: '520px', maxWidth: '92vw', data: { song } });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.load();
-      }
     });
   }
 

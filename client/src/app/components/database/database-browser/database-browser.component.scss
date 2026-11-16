@@ -496,6 +496,32 @@
   }
 }
 
+// the edit mode of the detail panel: one field below the other, the pickers as wide as the panel
+.edit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+
+  .chip {
+    align-self: flex-start;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .pair {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
 .actions {
   display: flex;
   flex-direction: column;

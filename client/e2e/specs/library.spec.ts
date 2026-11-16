@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/auth';
+import { expect, loginContext, test } from '../fixtures/auth';
 import { createUser, unique } from '../fixtures/api';
 import { libraryRow, openMedia, pickMedia, searchLibrary } from '../fixtures/library';
 import { addSongToPlaylist, api, createPlaylist, playlistMedia, sharedMedia, uploadSong } from '../fixtures/media';
@@ -367,20 +367,99 @@ test.describe('library', () => {
     expect(await titles()).not.toContain(song.title);
   });
 
-  test('edit dialog renames a song', async ({ userPage, user }) => {
+  test('the detail panel edits a song in place; cancel keeps it as it was', async ({ userPage, user }) => {
     const song = await uploadSong(user, `${unique('edit')}.mp3`);
     await userPage.goto('/library');
     await searchLibrary(userPage, song.title);
     await openMedia(userPage, song.title);
-    await userPage.locator('aside.detail').getByRole('button', { name: 'Edit' }).click();
+    const detail = userPage.locator('aside.detail');
+    const form = detail.getByRole('form', { name: 'Edit the media' });
+
+    await detail.getByRole('button', { name: 'Edit' }).click();
+    await expect(form).toBeVisible();
+    await expect(form.locator('app-input-artist')).toBeVisible();
+    await expect(form.locator('app-input-series')).toHaveCount(0);
+    await form.getByLabel('Title').fill('something else');
+    await form.getByRole('button', { name: 'Cancel' }).click();
+    await expect(form).toHaveCount(0);
+    await expect(detail.getByRole('heading', { name: song.title })).toBeVisible();
+
+    await detail.getByRole('button', { name: 'Edit' }).click();
+    // without a title there is nothing to save
+    await form.getByLabel('Title').fill('  ');
+    await expect(form.getByRole('button', { name: 'Save' })).toBeDisabled();
     const title = `${unique('renamed')}`;
-    await userPage.getByLabel('Song title').fill(title);
-    await userPage.getByRole('button', { name: 'Save' }).click();
+    await form.getByLabel('Title').fill(title);
+    await form.getByRole('button', { name: 'Save' }).click();
+
+    await expect(form).toHaveCount(0);
+    await expect(detail.getByRole('heading', { name: title })).toBeVisible();
     await searchLibrary(userPage, title);
     await expect(libraryRow(userPage, title)).toBeVisible();
   });
 
-  test('a new artist can be created from the edit dialog', async ({ userPage, user }) => {
+  test('a video is edited with its series and season; the API checks owner and title', async ({ browser, user, admin }) => {
+    const { video } = sharedMedia();
+    const json = { 'Content-Type': 'application/json' };
+    const editVideo = (as: typeof user, title: string) =>
+      api(as, '/media/editVideo', {
+        method: 'PUT',
+        headers: json,
+        body: JSON.stringify({ id: video.id, title, seriesId: null, seasonId: null, tagIds: [] }),
+      });
+    // the shared video belongs to nobody: only admins change it, and nobody without a title
+    expect((await editVideo(user, 'taken over')).status).toBe(403);
+    expect((await editVideo(admin, '   ')).status).toBe(400);
+
+    const ctx = await loginContext(browser, admin);
+    const page = await ctx.newPage();
+    try {
+      await page.goto('/library');
+      await searchLibrary(page, video.title);
+      await openMedia(page, video.title);
+      const form = page.locator('aside.detail').getByRole('form', { name: 'Edit the media' });
+      await page.locator('aside.detail').getByRole('button', { name: 'Edit' }).click();
+      await expect(form.getByLabel('Title')).toHaveValue(video.title);
+      await expect(form.locator('app-input-series')).toBeVisible();
+      await expect(form.locator('app-input-season')).toBeVisible();
+      await expect(form.locator('app-input-artist')).toHaveCount(0);
+
+      // a new series can be created right there; the shared video itself is not changed (other tests read it)
+      const series = unique('series');
+      await form.locator('app-input-series').getByRole('button', { name: 'Add new' }).click();
+      const create = page.getByRole('dialog').filter({ hasText: 'New Series' });
+      await create.getByRole('textbox').fill(series);
+      await create.getByRole('button', { name: 'Create' }).click();
+      await expect(create).toBeHidden();
+      await form.locator('app-input-series').getByRole('combobox').fill(series);
+      await expect(page.getByRole('option', { name: new RegExp(series) })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await form.getByRole('button', { name: 'Cancel' }).click();
+      await expect(form).toHaveCount(0);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('another item leaves the edit mode without saving', async ({ userPage, user }) => {
+    const prefix = unique('switch');
+    const first = await uploadSong(user, `${prefix}-first.mp3`);
+    const second = await uploadSong(user, `${prefix}-second.mp3`);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, prefix);
+    await openMedia(userPage, first.title);
+    const detail = userPage.locator('aside.detail');
+    await detail.getByRole('button', { name: 'Edit' }).click();
+    await detail.getByLabel('Title').fill('not saved');
+
+    await openMedia(userPage, second.title);
+
+    await expect(detail.getByRole('form', { name: 'Edit the media' })).toHaveCount(0);
+    await expect(detail.getByRole('heading', { name: second.title })).toBeVisible();
+    await expect(libraryRow(userPage, first.title)).toBeVisible();
+  });
+
+  test('a new artist can be created in the edit mode', async ({ userPage, user }) => {
     const song = await uploadSong(user, `${unique('art')}.mp3`);
     const artist = unique('artist');
     await userPage.goto('/library');

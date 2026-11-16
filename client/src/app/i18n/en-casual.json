@@ -16,9 +16,6 @@
       "duplicate": "Duplicate Song! Try for more variety!",
       "allDuplicates": "All selected songs are already in the playlist!",
       "notFound": "Playlist not found!"
-    },
-    "editSong": {
-      "notFound": "Song not found! How did you do that?"
     }
   },
   "messages": {

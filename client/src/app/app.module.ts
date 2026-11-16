@@ -29,6 +29,8 @@ import { ObjectMultiSelectComponent } from './components/util/object-multi-selec
 import { ObjectSelectComponent } from './components/util/object-select/object-select.component';
 import { DatabaseBrowserComponent } from './components/database/database-browser/database-browser.component';
 import { ArtistComponent } from './components/input/artist/artist.component';
+import { SeriesComponent } from './components/input/series/series.component';
+import { SeasonComponent } from './components/input/season/season.component';
 import { AlbumComponent } from './components/input/album/album.component';
 import { TagComponent } from './components/input/tag/tag.component';
 import { GenreComponent } from './components/input/genre/genre.component';
@@ -37,7 +39,6 @@ import { AddObjectButtonComponent } from './components/util/add-object-button/ad
 import { AddToPlaylistDialogComponent } from './components/dialog/add-to-playlist-dialog/add-to-playlist-dialog.component';
 import { SpotifyLoginDialogComponent } from './components/dialog/spotify-login-dialog/spotify-login-dialog.component';
 import { YesNoDialogComponent } from './components/dialog/yes-no-dialog/yes-no-dialog.component';
-import { EditSongDialogComponent } from './components/dialog/edit-song-dialog/edit-song-dialog.component';
 import { MiniPlayerComponent } from './components/player/mini-player/mini-player.component';
 import { RoomComponent } from './components/player/room/room.component';
 import { SettingsComponent } from './components/settings/settings.component';
@@ -63,6 +64,8 @@ import { InviteComponent } from './components/invite/invite.component';
         ObjectSelectComponent,
         DatabaseBrowserComponent,
         ArtistComponent,
+        SeriesComponent,
+        SeasonComponent,
         AlbumComponent,
         TagComponent,
         GenreComponent,
@@ -71,7 +74,6 @@ import { InviteComponent } from './components/invite/invite.component';
         AddToPlaylistDialogComponent,
         YesNoDialogComponent,
         SpotifyLoginDialogComponent,
-        EditSongDialogComponent,
         MiniPlayerComponent,
         RoomComponent,
         SettingsComponent,

@@ -150,6 +150,12 @@
     "addToPlaylist": "Add to playlist",
     "removeFromPlaylist": "Remove from playlist",
     "removeFromThisPlaylist": "Remove from this playlist",
+    "edit": {
+      "form": "Edit the media",
+      "title": "Title",
+      "saved": "Saved",
+      "failed": "Saving the changes failed"
+    },
     "removeTitleFromPlaylist": "Remove {{ title }} from this playlist",
     "clear": "Clear",
     "select": "Select {{ title }}",
@@ -226,11 +232,6 @@
       "allDuplicates": "All selected songs are already in the playlist",
       "notFound": "Playlist not found"
     },
-    "editSong": {
-      "title": "Edit Song",
-      "songTitle": "Song title",
-      "notFound": "Song not found"
-    },
     "newObject": {
       "title": "New {{ name }}"
     },
@@ -245,6 +246,8 @@
     "album": "Album",
     "artist": "Artist",
     "genre": "Genre",
+    "series": "Series",
+    "season": "Season",
     "playlist": "Playlist",
     "tag": "Tag",
     "tags": "Tags",

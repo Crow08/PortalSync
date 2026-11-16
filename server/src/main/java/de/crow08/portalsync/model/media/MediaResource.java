@@ -16,6 +16,10 @@ import de.crow08.portalsync.model.playlists.Playlist;
 import de.crow08.portalsync.model.playlists.PlaylistAccess;
 import de.crow08.portalsync.model.playlists.PlaylistRepository;
 import de.crow08.portalsync.model.tag.Tag;
+import de.crow08.portalsync.model.season.Season;
+import de.crow08.portalsync.model.season.SeasonRepository;
+import de.crow08.portalsync.model.series.Series;
+import de.crow08.portalsync.model.series.SeriesRepository;
 import de.crow08.portalsync.model.tag.TagRepository;
 import de.crow08.portalsync.utils.MediaFiles;
 import de.crow08.portalsync.utils.Mp4ChapterReader;
@@ -82,6 +86,8 @@ public class MediaResource {
   private final GenreRepository genreRepository;
   private final AlbumRepository albumRepository;
   private final TagRepository tagRepository;
+  private final SeriesRepository seriesRepository;
+  private final SeasonRepository seasonRepository;
 
   private final Path storagePath;
 
@@ -98,6 +104,8 @@ public class MediaResource {
                        GenreRepository genreRepository,
                        AlbumRepository albumRepository,
                        TagRepository tagRepository,
+                       SeriesRepository seriesRepository,
+                       SeasonRepository seasonRepository,
                        @Value("${client.storage-path}") String clientStoragePath) {
     this.mediaRepository = mediaRepository;
     this.songRepository = songRepository;
@@ -111,6 +119,8 @@ public class MediaResource {
     this.genreRepository = genreRepository;
     this.albumRepository = albumRepository;
     this.tagRepository = tagRepository;
+    this.seriesRepository = seriesRepository;
+    this.seasonRepository = seasonRepository;
     storagePath = Paths.get(clientStoragePath);
   }
 
@@ -457,7 +467,7 @@ public class MediaResource {
     if (song.isPresent()) {
       Song originalSong = song.get();
       mediaAccess.requireChangeable(originalSong);
-      originalSong.setTitle(alteredSong.getTitle());
+      originalSong.setTitle(requireTitle(alteredSong.getTitle()));
       originalSong.setArtist(alteredSong.getArtist());
       originalSong.setAlbum(alteredSong.getAlbum());
       originalSong.setGenres(alteredSong.getGenres());
@@ -467,5 +477,39 @@ public class MediaResource {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  /**
+   * The changes of a video: its title, its series and season (null for none) and its tags. Series, season and tags are
+   * given by id and looked up here, nothing else of them is taken from the request.
+   */
+  public record EditVideoRequest(long id, String title, Long seriesId, Long seasonId, List<Long> tagIds) {
+  }
+
+  /** Changes the title, series, season and tags of a video. Only its owner and admins may do that. */
+  @PutMapping(path = "/editVideo")
+  @Transactional
+  public ResponseEntity<Void> editVideo(@RequestBody EditVideoRequest request) {
+    Video video = videoRepository.findById(request.id())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Video not found"));
+    mediaAccess.requireChangeable(video);
+    video.setTitle(requireTitle(request.title()));
+    video.setSeries(request.seriesId() == null ? null : seriesRepository.findById(request.seriesId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Series not found")));
+    video.setSeason(request.seasonId() == null ? null : seasonRepository.findById(request.seasonId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Season not found")));
+    Set<Tag> tags = new HashSet<>();
+    tagRepository.findAllById(request.tagIds() == null ? List.of() : request.tagIds()).forEach(tags::add);
+    video.setTags(tags);
+    videoRepository.save(video);
+    return ResponseEntity.ok().build();
+  }
+
+  /** A media needs a title: the library lists and finds it by it. */
+  private static String requireTitle(String title) {
+    if (title == null || title.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A title is required");
+    }
+    return title.trim();
   }
 }

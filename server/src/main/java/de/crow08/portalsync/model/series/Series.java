@@ -26,6 +26,10 @@ public class Series {
   public Series() {
   }
 
+  public Series(String name) {
+    this.name = name;
+  }
+
   public long getId() {
     return id;
   }

@@ -213,6 +213,29 @@
     <div class="preview" [style.background]="gradient(media)">
       <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
     </div>
+    @if (edit?.media?.id === media.id && edit; as edit) {
+      <!-- edit mode: the fields of the media, saved together -->
+      <form (ngSubmit)="saveEdit()" [attr.aria-label]="'library.edit.form' | transloco" class="edit">
+        <span class="chip" [class.video]="isVideo(media)" [class.song]="!isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'library.edit.title' | transloco }}</mat-label>
+          <input [(ngModel)]="edit.title" autocomplete="off" matInput name="title" required/>
+        </mat-form-field>
+        @if (isVideo(media)) {
+          <app-input-series [(selectedOptions)]="edit.series"></app-input-series>
+          <app-input-season [(selectedOptions)]="edit.season"></app-input-season>
+        } @else {
+          <app-input-artist [(selectedOptions)]="edit.artist"></app-input-artist>
+          <app-input-album [(selectedOptions)]="edit.album"></app-input-album>
+          <app-input-genre [(selectedOptions)]="edit.genres"></app-input-genre>
+        }
+        <app-input-tag [(selectedOptions)]="edit.tags"></app-input-tag>
+        <div class="pair">
+          <button (click)="cancelEdit()" mat-stroked-button type="button">{{ 'common.cancel' | transloco }}</button>
+          <button [disabled]="!canSaveEdit" color="primary" mat-flat-button type="submit">{{ 'common.save' | transloco }}</button>
+        </div>
+      </form>
+    } @else {
     <div class="head">
       <span class="chip" [class.video]="isVideo(media)" [class.song]="!isVideo(media)">{{ (isVideo(media) ? 'common.video' : 'common.song') | transloco }}</span>
       <h2>{{ media.title }}</h2>
@@ -237,9 +260,7 @@
       }
       @if (canChangeMedia(media)) {
         <div class="pair">
-          @if (!isVideo(media)) {
-            <button (click)="openEditSongDialog(media)" mat-stroked-button type="button">{{ 'common.edit' | transloco }}</button>
-          }
+          <button (click)="startEdit(media)" mat-stroked-button type="button">{{ 'common.edit' | transloco }}</button>
           <button (click)="deleteSong(media)" mat-stroked-button type="button">{{ 'common.delete' | transloco }}</button>
         </div>
       }
@@ -252,6 +273,7 @@
         </div>
       }
     </dl>
+    }
   } @else {
     <p class="hint">{{ 'library.pickItem' | transloco }}</p>
   }

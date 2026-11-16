@@ -26,6 +26,10 @@ public class Season {
   public Season() {
   }
 
+  public Season(String name) {
+    this.name = name;
+  }
+
   public long getId() {
     return id;
   }
