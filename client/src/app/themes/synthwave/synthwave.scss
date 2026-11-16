@@ -288,13 +288,13 @@ $hexagon: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
 
 // -----------------------------------------------------------------------------------------------------------------------------
 // sharp corners everywhere, like the editor: buttons, icon buttons, cards, fields, toggles, menus, dialogs, toasts, focus
-// rings. Covers, avatars, chips (with their status dots), the knobs of sliders and the whole slide toggles keep the radius of
-// their components; the track of a slider is sharp. A slide toggle draws its track and its knob (the handle, with a shadow layer)
-// with ::before/::after, which inherit the radius, so those pseudo-elements are left alone too. The id of the app container (or
-// the overlay container, which carries the theme class too) outranks every class-only component rule, however deeply nested.
-// Shapes made by clip-path, like the hexagonal play buttons, stay.
+// rings. Covers, avatars, chips (with their status dots), the knobs of sliders and the slide toggles keep the radius of their
+// components; the track of a slider is sharp. A slide toggle is left alone as a whole, with every element and pseudo-element in
+// it: its track, its knob, the round highlight on hover and the focus ring are drawn by several of them. The id of the app
+// container (or the overlay container, which carries the theme class too) outranks every class-only component rule, however
+// deeply nested. Shapes made by clip-path, like the hexagonal play buttons, stay.
 // -----------------------------------------------------------------------------------------------------------------------------
-$controls: ".mdc-slider__thumb-knob, .mdc-switch__track, .mdc-switch__handle, .mdc-switch__shadow";
+$controls: ".mdc-slider__thumb-knob, .mat-mdc-slide-toggle, .mat-mdc-slide-toggle *";
 $rounded: ".cover, .now-cover, .preview, .avatar, .chip, .access-chip, .live-chip, .dot, .live-dot, #{$controls}";
 
 #{$s}:is(#app-theme-container, .cdk-overlay-container) {
