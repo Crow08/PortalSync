@@ -56,7 +56,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/media")
@@ -78,6 +77,8 @@ public class MediaResource {
 
   private final MediaFileRemover mediaFileRemover;
 
+  private final MediaDeletion mediaDeletion;
+
   private final GenreRepository genreRepository;
   private final AlbumRepository albumRepository;
   private final TagRepository tagRepository;
@@ -93,6 +94,7 @@ public class MediaResource {
                        PlaylistAccess playlistAccess,
                        MediaAccess mediaAccess,
                        MediaFileRemover mediaFileRemover,
+                       MediaDeletion mediaDeletion,
                        GenreRepository genreRepository,
                        AlbumRepository albumRepository,
                        TagRepository tagRepository,
@@ -105,6 +107,7 @@ public class MediaResource {
     this.playlistAccess = playlistAccess;
     this.mediaAccess = mediaAccess;
     this.mediaFileRemover = mediaFileRemover;
+    this.mediaDeletion = mediaDeletion;
     this.genreRepository = genreRepository;
     this.albumRepository = albumRepository;
     this.tagRepository = tagRepository;
@@ -433,13 +436,7 @@ public class MediaResource {
     Media media = mediaRepository.findById(songId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
     mediaAccess.requireChangeable(media);
-    media.getPlaylists().forEach(playlist ->
-        playlist.setSongs(playlist.getSongs()
-            .stream()
-            .filter(song1 -> song1.getId() != media.getId())
-            .collect(Collectors.toList()))
-    );
-    mediaRepository.delete(media);
+    mediaDeletion.delete(List.of(media));
     // after the media is gone from the library: the file of an uploaded song goes with it
     mediaFileRemover.removeFileOf(media);
   }
@@ -454,16 +451,8 @@ public class MediaResource {
       mediaAccess.requireChangeable(media);
       mediaList.add(media);
     }
-    for (Media media : mediaList) {
-      media.getPlaylists().forEach(playlist ->
-          playlist.setSongs(playlist.getSongs()
-              .stream()
-              .filter(song1 -> song1.getId() != media.getId())
-              .collect(Collectors.toList()))
-      );
-      mediaRepository.delete(media);
-      mediaFileRemover.removeFileOf(media);
-    }
+    mediaDeletion.delete(mediaList);
+    mediaList.forEach(mediaFileRemover::removeFileOf);
   }
 
   @PutMapping(path = "/editSong")

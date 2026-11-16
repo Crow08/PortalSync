@@ -212,6 +212,32 @@ test.describe('library', () => {
     await expect(userPage.locator('.list .row')).toHaveCount(2);
   });
 
+  test('songs in a playlist and with ratings can be deleted; they leave the playlist', async ({ userPage, user }) => {
+    const prefix = unique('inlist');
+    const a = await uploadSong(user, `${prefix}-a.mp3`);
+    const b = await uploadSong(user, `${prefix}-b.mp3`);
+    const keep = await uploadSong(user, `${prefix}-keep.mp3`);
+    const id = await createPlaylist(user, unique('list'));
+    for (const song of [a, b, keep]) {
+      await addSongToPlaylist(user, id, song.id);
+    }
+    expect((await api(user, `/ratings/${a.id}/addUserRating/4`, { method: 'PUT' })).status).toBe(200);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, prefix);
+    await pickMedia(userPage, a.title).click();
+    await pickMedia(userPage, b.title).click();
+
+    await userPage.getByRole('toolbar', { name: 'Selection' }).getByRole('button', { name: 'Delete' }).click();
+    await userPage.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+
+    await expect(libraryRow(userPage, a.title)).toHaveCount(0);
+    await expect(libraryRow(userPage, b.title)).toHaveCount(0);
+    expect((await playlistMedia(user, id)).map((media) => media.id)).toEqual([keep.id]);
+    // one at a time as well
+    expect((await api(user, `/media/deleteSongById/${keep.id}`, { method: 'PUT' })).status).toBe(200);
+    expect(await playlistMedia(user, id)).toEqual([]);
+  });
+
   test('delete asks for confirmation; "no" keeps the song, "yes" removes it', async ({ userPage, user }) => {
     const song = await uploadSong(user, `${unique('del')}.mp3`);
     await userPage.goto('/library');

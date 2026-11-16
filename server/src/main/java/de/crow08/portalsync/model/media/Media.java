@@ -2,7 +2,6 @@ package de.crow08.portalsync.model.media;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.crow08.portalsync.model.playlists.Playlist;
 import de.crow08.portalsync.model.tag.Tag;
 
 import jakarta.persistence.Column;
@@ -49,10 +48,6 @@ public class Media {
       joinColumns = @JoinColumn(name = "media_id", referencedColumnName = "id"),
       inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id"))
   private Set<Tag> tags;
-
-  @ManyToMany(fetch = FetchType.LAZY)
-  @JsonIgnore
-  private Set<Playlist> playlists;
 
   @Deprecated
   public Media() {
@@ -113,13 +108,5 @@ public class Media {
 
   public void setTags(Set<Tag> tags) {
     this.tags = tags;
-  }
-
-  public Set<Playlist> getPlaylists() {
-    return playlists;
-  }
-
-  public void setPlaylists(Set<Playlist> playlists) {
-    this.playlists = playlists;
   }
 }
