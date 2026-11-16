@@ -6,6 +6,10 @@
   box-sizing: border-box;
   height: 100%;
   padding: 20px;
+  // the page fills the content area exactly: nothing may reach out of it, or the content area gets a scroll bar. The touch
+  // targets of Material buttons (48 px, invisible) do at the bottom edge when a theme takes the padding away (synthwave).
+  // clip, not hidden: no scroll container of its own
+  overflow: clip;
 }
 
 .collections {
