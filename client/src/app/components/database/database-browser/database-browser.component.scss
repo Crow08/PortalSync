@@ -13,7 +13,8 @@
   flex-direction: column;
   gap: 2px;
   min-height: 0;
-  overflow-y: auto;
+  // the scaled switch of the playlists keeps its full width in the layout: no horizontal scroll bar for that
+  overflow: hidden auto;
 
   h2 {
     margin: 0 0 6px;
@@ -47,9 +48,9 @@
 
     .mine {
       // smaller than the switch of the tool bar: it sits in a heading
-      --mat-button-toggle-height: 26px;
       margin-right: 6px;
-      font-size: 12px;
+      transform: scale(0.8);
+      transform-origin: right center;
     }
   }
 }
@@ -120,12 +121,18 @@
     flex: none;
   }
 
-  .sort {
-    width: 180px;
+  // the switch to the own media, with its label
+  .mine {
+    flex: none;
   }
 
+  .sort {
+    width: 160px;
+  }
+
+  // gives way first, so the tool bar stays in one row next to the detail panel
   .search {
-    flex: 1 1 200px;
+    flex: 1 1 150px;
     max-width: 300px;
   }
 }

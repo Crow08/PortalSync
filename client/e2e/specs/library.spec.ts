@@ -213,9 +213,9 @@ test.describe('library', () => {
     await searchLibrary(userPage, prefix);
     await expect(userPage.locator('.list .row')).toHaveCount(2);
 
-    const onlyMyMedia = userPage.getByRole('button', { name: 'Only my media' });
+    const onlyMyMedia = userPage.getByRole('switch', { name: 'Only my media' });
     await onlyMyMedia.click();
-    await expect(onlyMyMedia).toHaveAttribute('aria-pressed', 'true');
+    await expect(onlyMyMedia).toBeChecked();
     await expect(libraryRow(userPage, mine.title)).toBeVisible();
     await expect(libraryRow(userPage, theirs.title)).toHaveCount(0);
     await onlyMyMedia.click();
@@ -223,7 +223,7 @@ test.describe('library', () => {
 
     const collections = userPage.getByRole('navigation', { name: 'Collections' });
     await expect(collections.getByRole('button', { name: theirList })).toBeVisible();
-    await collections.getByRole('button', { name: 'Only my playlists' }).click();
+    await collections.getByRole('switch', { name: 'Only my playlists' }).click();
     await expect(collections.getByRole('button', { name: myList })).toBeVisible();
     await expect(collections.getByRole('button', { name: theirList })).toHaveCount(0);
     // the library itself is no playlist and stays
@@ -235,7 +235,7 @@ test.describe('library', () => {
     await userPage.goto('/library');
     const collections = userPage.getByRole('navigation', { name: 'Collections' });
 
-    await collections.getByRole('button', { name: 'Only my playlists' }).click();
+    await collections.getByRole('switch', { name: 'Only my playlists' }).click();
 
     await expect(collections.getByText('None of the playlists is yours.')).toBeVisible();
   });

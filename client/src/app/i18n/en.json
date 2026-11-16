@@ -125,6 +125,7 @@
     },
     "searchPlaceholder": "Title, artist, series, genre",
     "mine": "Mine",
+    "onlyMine": "Only mine",
     "onlyOwnMedia": "Only my media",
     "onlyOwnPlaylists": "Only my playlists",
     "noOwnPlaylists": "None of the playlists is yours.",
