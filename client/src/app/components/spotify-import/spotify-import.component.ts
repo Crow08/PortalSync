@@ -1,3 +1,4 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,7 +25,9 @@ const IMPORT_CHUNK = 100;
     templateUrl: './spotify-import.component.html',
     styleUrls: ['./spotify-import.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+    standalone: false,
+    // the page scrolls in this element: dropdowns that are open follow their field
+    hostDirectives: [CdkScrollable],
 })
 export class SpotifyImportComponent {
   protected readonly tl = inject(TranslocoService);

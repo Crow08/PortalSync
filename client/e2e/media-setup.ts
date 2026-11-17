@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MEDIA_DIR, SOURCE_DIR } from './env';
 
@@ -16,8 +16,43 @@ export const VIDEO_TITLE = 'e2e-shared-video';
 export const VIDEO_URI = '/videos/e2e-shared-video.mp4';
 export const SHARED_SONGS = ['e2e-shared-song-a.mp3', 'e2e-shared-song-b.mp3', 'e2e-shared-song-c.mp3'];
 
+/** A video no browser plays as it is (MKV, MPEG-4 Part 2, MP3) with a subtitle track: the source of a conversion. */
+export const VIDEO_SOURCE_FILE = join(SOURCE_DIR, 'source.mkv');
+
 export function toneBuffer(): Buffer {
   return readFileSync(TONE_FILE);
+}
+
+/** The shared video: a small MP4 the browsers play, for uploads that store a video as it is. */
+export function videoBuffer(): Buffer {
+  return readFileSync(join(MEDIA_DIR, VIDEO_URI));
+}
+
+export function videoSourceBuffer(): Buffer {
+  return readFileSync(VIDEO_SOURCE_FILE);
+}
+
+/**
+ * What the uploads of videos need, also with a stack that is reused: the 6 s source of the conversions, and a videos
+ * directory the app in the container may write to (it creates videos/uploaded there; on Linux a bind mount keeps the
+ * owner and mode of the host, see the global setup).
+ */
+export function prepareVideoUploads(): void {
+  mkdirSync(SOURCE_DIR, { recursive: true });
+  mkdirSync(join(MEDIA_DIR, 'videos'), { recursive: true });
+  chmodSync(join(MEDIA_DIR, 'videos'), 0o777);
+  if (existsSync(VIDEO_SOURCE_FILE)) {
+    return;
+  }
+  const subtitles = join(SOURCE_DIR, 'source.srt');
+  writeFileSync(subtitles, '1\n00:00:00,500 --> 00:00:05,000\nHello\n');
+  ffmpeg([
+    '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=10:duration=6',
+    '-f', 'lavfi', '-i', 'sine=frequency=330:duration=6',
+    '-i', subtitles,
+    '-map', '0:v', '-map', '1:a', '-map', '2:s', '-c:v', 'mpeg4', '-c:a', 'libmp3lame', '-c:s', 'srt',
+    VIDEO_SOURCE_FILE,
+  ]);
 }
 
 /** Generates a 60 s tone and a 30 s fast-start video with two chapters and a thumbnail sprite (160x90, one tile per 2 s). */

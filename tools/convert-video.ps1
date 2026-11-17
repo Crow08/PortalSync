@@ -169,7 +169,8 @@ function ConvertTo-FilterValue([string] $value) {
   return ($level1 -replace '([\\\[\],;''])', '\$1')
 }
 
-# Thumbnail sprite for the seek bar preview. The client (player-track.component.ts) uses the same constants:
+# Thumbnail sprite for the seek bar preview. The client (player-track.component.ts) and the video upload of the
+# server (FfmpegCommands.java) use the same constants:
 # tile n shows the time n * interval, at column n % columns and row floor(n / columns).
 $thumbnailInterval = 2
 $thumbnailWidth = 160

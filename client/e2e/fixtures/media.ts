@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { BASE_URL, STATE_FILE } from '../env';
-import { toneBuffer } from '../media-setup';
+import { toneBuffer, videoBuffer, videoSourceBuffer } from '../media-setup';
 import { Account, basic } from './api';
 
 export interface MediaRef {
@@ -56,4 +56,28 @@ export async function addSongToPlaylist(as: Account, playlistId: number, songId:
 
 export function toneFile(name: string): { name: string; mimeType: string; buffer: Buffer } {
   return { name, mimeType: 'audio/mpeg', buffer: toneBuffer() };
+}
+
+/** A small MP4 the browsers play; the title of an uploaded video is its file name without the extension. */
+export function videoFile(name: string): { name: string; mimeType: string; buffer: Buffer } {
+  return { name, mimeType: 'video/mp4', buffer: videoBuffer() };
+}
+
+/** A 6 s MKV with subtitles that has to be converted before a browser plays it. */
+export function videoSourceFile(name: string): { name: string; mimeType: string; buffer: Buffer } {
+  return { name, mimeType: 'video/x-matroska', buffer: videoSourceBuffer() };
+}
+
+/** Uploads the small MP4 as it is, without conversion and thumbnails. */
+export async function uploadVideo(as: Account, name: string, playlists: number[] = []): Promise<MediaRef> {
+  const form = new FormData();
+  form.append('files', new Blob([new Uint8Array(videoBuffer())], { type: 'video/mp4' }), name);
+  form.append('data', JSON.stringify({ playlists, tags: [], preprocess: false, thumbnails: false }));
+  const res = await api(as, '/media/videoUpload', { method: 'POST', body: form });
+  if (!res.ok) {
+    throw new Error(`uploadVideo ${name} failed: HTTP ${res.status}`);
+  }
+  const title = name.replace(/\.mp4$/, '');
+  const all: MediaRef[] = (await (await api(as, '/media/all')).json()).content;
+  return all.find((m) => m.title === title)!;
 }

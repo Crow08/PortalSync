@@ -17,7 +17,7 @@ import { MediaService } from '../../../services/media.service';
 import { debounce, interval, Subject, Subscription } from 'rxjs';
 import { Chapter } from '../../../models/chapter';
 
-// Layout of the thumbnail sprite, must match tools/convert-video.ps1:
+// Layout of the thumbnail sprite, must match tools/convert-video.ps1 and FfmpegCommands of the server (video upload):
 // tile n shows the time n * THUMBNAIL_INTERVAL, at column n % THUMBNAIL_COLUMNS and row floor(n / THUMBNAIL_COLUMNS).
 const THUMBNAIL_INTERVAL = 2;
 const THUMBNAIL_WIDTH = 160;

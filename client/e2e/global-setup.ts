@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { chmodSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import { ADMIN, BASE_URL, COMPOSE_FILE, MEDIA_DIR, PORT, STATE_FILE } from './env';
-import { generateMediaFiles, SHARED_SONGS, toneBuffer, VIDEO_TITLE, VIDEO_URI } from './media-setup';
+import { generateMediaFiles, prepareVideoUploads, SHARED_SONGS, toneBuffer, VIDEO_TITLE, VIDEO_URI } from './media-setup';
 
 function compose(args: string[], opts: { input?: string } = {}): string {
   return execFileSync('docker', ['compose', '-f', COMPOSE_FILE, ...args], {
@@ -43,6 +43,7 @@ export default async function globalSetup(): Promise<void> {
   const api = (path: string, init: RequestInit = {}) =>
     fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers: { Authorization: auth, ...init.headers } });
 
+  prepareVideoUploads();
   let media: { id: number; title: string }[] = (await (await api('/media/all')).json()).content;
   if (!media.some((m) => m.title === VIDEO_TITLE)) {
     generateMediaFiles();

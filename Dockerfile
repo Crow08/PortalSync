@@ -25,7 +25,11 @@ RUN --mount=type=cache,target=/root/.m2 mvn -B -q package -DskipTests
 
 # --- runtime ----------------------------------------------------------------------------------------------------------
 FROM eclipse-temurin:27-jre
-RUN useradd --uid 10001 --create-home app && mkdir -p /media && chown app /media
+# ffmpeg converts uploaded videos and writes their thumbnail sprites; the fonts are for subtitles without attached fonts
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --uid 10001 --create-home app && mkdir -p /media && chown app /media
 WORKDIR /app
 COPY --from=server /server/target/portalsync-server.war app.war
 USER app

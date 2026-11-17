@@ -1,19 +1,27 @@
 <h1 class="page-title">{{ 'upload.title' | transloco }}</h1>
 <div class="layout">
   <section class="panel files-panel">
-    <h2>{{ 'common.songs' | transloco }}</h2>
-    <p class="hint">{{ 'upload.songsOnly' | transloco }}</p>
+    <!-- the switch is the heading of the panel: songs and videos are separate uploads -->
+    <mat-button-toggle-group (valueChange)="setMode($event)" [value]="mode" [attr.aria-label]="'upload.kind' | transloco"
+      [disabled]="loading" class="kind" hideSingleSelectionIndicator>
+      <mat-button-toggle value="SONG">{{ 'common.songs' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="VIDEO">{{ 'common.videos' | transloco }}</mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (isVideo) {
+      <p class="hint">{{ (ffmpeg ? 'upload.video.hint' : 'upload.video.hintNoFfmpeg') | transloco }}</p>
+    }
     <label (dragleave)="dragOver = false" (dragover)="onDragOver($event)" (drop)="onDrop($event)" [class.over]="dragOver"
       class="dropzone">
       <mat-icon>upload_file</mat-icon>
-      <span class="dropzone-title">{{ 'upload.dropzone' | transloco }}</span>
-      <input #fileInput (change)="onFilesSelected(fileInput)" accept="audio/*" class="visually-hidden" multiple type="file"/>
+      <span class="dropzone-title">{{ texts + 'dropzone' | transloco }}</span>
+      <input #fileInput (change)="onFilesSelected(fileInput)" [accept]="isVideo ? 'video/*,.mkv' : 'audio/*'" class="visually-hidden"
+        multiple type="file"/>
     </label>
     @if (files.length > 0) {
       <div class="list" role="list">
         @for (file of files; track file) {
-          <div class="file" role="listitem">
-            <mat-icon class="lead">music_note</mat-icon>
+          <div [class.invalid]="isVideo && !preprocess && !isMp4(file)" class="file" role="listitem">
+            <mat-icon class="lead">{{ isVideo ? 'movie' : 'music_note' }}</mat-icon>
             <span class="file-name">{{ file.name }}</span>
             <span class="file-size">{{ formatSize(file.size) }}</span>
             <button (click)="removeFile(file)" [attr.aria-label]="'upload.remove' | transloco: { name: file.name }" mat-icon-button type="button">
@@ -22,30 +30,65 @@
           </div>
         }
       </div>
+      @if (needsMp4) {
+        <p class="warning" role="alert">{{ 'upload.video.needsMp4' | transloco }}</p>
+      }
     } @else {
-      <p class="empty">{{ 'upload.noFiles' | transloco }}</p>
+      <p class="empty">{{ texts + 'noFiles' | transloco }}</p>
     }
   </section>
 
   <section class="panel details-panel">
     <h2>{{ 'upload.details' | transloco }}</h2>
-    <p class="hint">{{ 'upload.detailsHint' | transloco }}</p>
+    <p class="hint">{{ texts + 'detailsHint' | transloco }}</p>
     <div class="fields">
-      <div class="field"><span class="label">{{ 'common.artist' | transloco }}</span><app-input-artist [(selectedOptions)]="selectedArtist"></app-input-artist></div>
-      <div class="field"><span class="label">{{ 'common.album' | transloco }}</span><app-input-album [(selectedOptions)]="selectedAlbum"></app-input-album></div>
-      <div class="field"><span class="label">{{ 'common.genres' | transloco }}</span><app-input-genre [(selectedOptions)]="selectedGenres"></app-input-genre></div>
+      @if (isVideo) {
+        <div class="field"><span class="label">{{ 'inputs.series' | transloco }}</span><app-input-series [(selectedOptions)]="selectedSeries"></app-input-series></div>
+        <div class="field"><span class="label">{{ 'inputs.season' | transloco }}</span><app-input-season [(selectedOptions)]="selectedSeason"></app-input-season></div>
+      } @else {
+        <div class="field"><span class="label">{{ 'common.artist' | transloco }}</span><app-input-artist [(selectedOptions)]="selectedArtist"></app-input-artist></div>
+        <div class="field"><span class="label">{{ 'common.album' | transloco }}</span><app-input-album [(selectedOptions)]="selectedAlbum"></app-input-album></div>
+        <div class="field"><span class="label">{{ 'common.genres' | transloco }}</span><app-input-genre [(selectedOptions)]="selectedGenres"></app-input-genre></div>
+      }
       <div class="field"><span class="label">{{ 'common.tags' | transloco }}</span><app-input-tag [(selectedOptions)]="selectedTags"></app-input-tag></div>
       <div class="field">
         <span class="label">{{ 'common.playlists' | transloco }}</span>
         <app-input-playlist [(selectedOptions)]="selectedPlaylists"></app-input-playlist>
       </div>
     </div>
+    @if (isVideo) {
+      <div class="options">
+        <div class="option">
+          <mat-slide-toggle (change)="preprocess = $event.checked" [aria-label]="'upload.video.preprocess' | transloco"
+            [checked]="ffmpeg && preprocess" [disabled]="!ffmpeg || loading">
+            {{ 'upload.video.preprocess' | transloco }}
+          </mat-slide-toggle>
+          <p class="hint">{{ 'upload.video.preprocessHint' | transloco }}</p>
+        </div>
+        @if (ffmpeg && preprocess) {
+          <div class="option nested">
+            <mat-slide-toggle (change)="burnSubtitles = $event.checked" [aria-label]="'upload.video.burnSubtitles' | transloco"
+              [checked]="burnSubtitles" [disabled]="loading">
+              {{ 'upload.video.burnSubtitles' | transloco }}
+            </mat-slide-toggle>
+            <p class="hint">{{ 'upload.video.burnSubtitlesHint' | transloco }}</p>
+          </div>
+        }
+        <div class="option">
+          <mat-slide-toggle (change)="thumbnails = $event.checked" [aria-label]="'upload.video.thumbnails' | transloco"
+            [checked]="ffmpeg && thumbnails" [disabled]="!ffmpeg || loading">
+            {{ 'upload.video.thumbnails' | transloco }}
+          </mat-slide-toggle>
+          <p class="hint">{{ 'upload.video.thumbnailsHint' | transloco }}</p>
+        </div>
+      </div>
+    }
     <div class="actions">
       @if (files.length > 0) {
-        <span class="summary">{{ (files.length === 1 ? 'upload.summary.one' : 'upload.summary.other') | transloco: { count: files.length, size: formatSize(totalSize) } }}</span>
+        <span class="summary">{{ texts + (files.length === 1 ? 'summary.one' : 'summary.other') | transloco: { count: files.length, size: formatSize(totalSize) } }}</span>
       }
       <span class="spacer"></span>
-      <button (click)="upload()" [disabled]="loading || files.length === 0" color="primary" mat-flat-button type="button">
+      <button (click)="upload()" [disabled]="!canUpload" color="primary" mat-flat-button type="button">
         @if (loading) {
           <mat-spinner diameter="20"></mat-spinner>
         } @else {
@@ -54,4 +97,27 @@
       </button>
     </div>
   </section>
+
+  @if (isVideo && jobs.length > 0) {
+    <section class="panel jobs-panel">
+      <h2>{{ 'upload.video.jobs' | transloco }}</h2>
+      <p class="hint">{{ 'upload.video.jobsHint' | transloco }}</p>
+      <div class="list" role="list">
+        @for (job of jobs; track job.id) {
+          <div [class.failed]="job.state === 'FAILED'" class="job" role="listitem">
+            <mat-icon class="lead">{{ job.kind === 'CONVERT' ? 'movie' : 'photo_library' }}</mat-icon>
+            <div class="job-main">
+              <span class="file-name">{{ job.title }}</span>
+              <span class="job-kind">{{ 'upload.video.job.' + job.kind | transloco }}</span>
+              @if (job.state === 'RUNNING') {
+                <mat-progress-bar [attr.aria-label]="'upload.video.progressOf' | transloco: { name: job.title }"
+                  [mode]="job.progress > 0 ? 'determinate' : 'indeterminate'" [value]="percent(job)"></mat-progress-bar>
+              }
+            </div>
+            <span class="job-state">{{ 'upload.video.state.' + job.state | transloco: { percent: percent(job) } }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
 </div>

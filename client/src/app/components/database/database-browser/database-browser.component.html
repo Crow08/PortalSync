@@ -208,7 +208,8 @@
   </div>
 </section>
 
-<aside class="detail">
+<!-- cdkScrollable: the dropdowns of the edit mode follow their field when the panel scrolls -->
+<aside cdkScrollable class="detail">
   @if (detail; as media) {
     <div class="preview" [style.background]="gradient(media)">
       <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>

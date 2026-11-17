@@ -406,7 +406,7 @@
   },
   "upload": {
     "title": "Upload",
-    "songsOnly": "Songs only. Videos are not uploaded here.",
+    "kind": "What to upload",
     "dropzone": "Drop songs here or choose files",
     "remove": "Remove {{ name }}",
     "noFiles": "No songs chosen yet.",
@@ -416,7 +416,38 @@
       "one": "{{ count }} song, {{ size }}",
       "other": "{{ count }} songs, {{ size }}"
     },
-    "submit": "Upload"
+    "submit": "Upload",
+    "video": {
+      "hint": "With preprocessing any video format. Without it only MP4 files the browsers play (H.264, AAC).",
+      "hintNoFfmpeg": "Only MP4 files the browsers play (H.264, AAC): this server has no ffmpeg, so it stores videos as they are.",
+      "dropzone": "Drop videos here or choose files",
+      "noFiles": "No videos chosen yet.",
+      "detailsHint": "Everything here is optional and applies to all videos of this upload.",
+      "summary": {
+        "one": "{{ count }} video, {{ size }}",
+        "other": "{{ count }} videos, {{ size }}"
+      },
+      "needsMp4": "Without preprocessing only MP4 files can be uploaded.",
+      "preprocess": "Preprocess",
+      "preprocessHint": "The server converts the video so every browser plays it (H.264, AAC, quick seeking). That takes a while; the video shows up in the library when it is done.",
+      "burnSubtitles": "Burn in subtitles",
+      "burnSubtitlesHint": "Renders the subtitles of the file into the picture (the default track).",
+      "thumbnails": "Thumbnails",
+      "thumbnailsHint": "The server creates the preview pictures of the seek bar.",
+      "jobs": "Processing",
+      "jobsHint": "Your videos the server is working on. You can leave this page.",
+      "progressOf": "Progress of {{ name }}",
+      "job": {
+        "CONVERT": "Converting",
+        "THUMBNAILS": "Thumbnails"
+      },
+      "state": {
+        "QUEUED": "Waiting",
+        "RUNNING": "{{ percent }} %",
+        "DONE": "Done",
+        "FAILED": "Failed"
+      }
+    }
   },
   "spotifyImport": {
     "title": "Import from Spotify",

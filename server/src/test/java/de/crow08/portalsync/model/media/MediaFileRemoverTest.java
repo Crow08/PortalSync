@@ -81,6 +81,28 @@ class MediaFileRemoverTest {
   }
 
   @Test
+  void anUploadedVideoGoesWithItsThumbnails() throws IOException {
+    Path video = file("videos/uploaded/film.mp4");
+    Path thumbnails = file("videos/uploaded/film.thumbs.jpg");
+    Path other = file("videos/uploaded/film2.mp4");
+
+    assertThat(remover.removeFileOf(new Video("film", "/videos/uploaded/film.mp4"))).isTrue();
+
+    assertThat(video).doesNotExist();
+    assertThat(thumbnails).doesNotExist();
+    assertThat(other).exists();
+  }
+
+  @Test
+  void aVideoThatOnlyNamesTheUploadDirectoryInBetweenStays() throws IOException {
+    Path video = file("videos/film.mp4");
+
+    assertThat(remover.removeFileOf(new Video("film", "/videos/uploaded/../film.mp4"))).isFalse();
+
+    assertThat(video).exists();
+  }
+
+  @Test
   void nothingOutsideTheStorageIsRemoved() throws IOException {
     Path outside = Files.writeString(dir.resolve("outside.mp3"), "content");
 

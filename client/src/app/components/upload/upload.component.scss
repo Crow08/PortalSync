@@ -1,4 +1,4 @@
-// Upload: the songs on the left, what they get on the right
+// Upload: the songs or videos on the left, what they get on the right, the video jobs of the server below
 :host {
   display: block;
   height: 100%;
@@ -11,6 +11,10 @@
   margin: 0 0 16px;
   font-size: 18px;
   font-weight: 600;
+}
+
+.kind {
+  align-self: flex-start;
 }
 
 .layout {
@@ -38,10 +42,15 @@
 }
 
 .hint,
-.empty {
+.empty,
+.warning {
   margin: 0;
   color: var(--ps-muted);
   font-size: 12px;
+}
+
+.warning {
+  color: var(--ps-danger);
 }
 
 .dropzone {
@@ -94,7 +103,8 @@
   overflow-y: auto;
 }
 
-.file {
+.file,
+.job {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -119,11 +129,58 @@
     white-space: nowrap;
   }
 
-  .file-size {
+  .file-size,
+  .job-state {
     flex: none;
     color: var(--ps-muted);
     font-family: var(--ps-mono);
     font-size: 12px;
+  }
+
+  &.invalid .file-name,
+  &.failed .job-state {
+    color: var(--ps-danger);
+  }
+}
+
+// A job: title and what is done with it, the progress bar below while it runs
+.job {
+  min-height: 52px;
+  padding: 6px 10px;
+
+  .job-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .job-kind {
+    color: var(--ps-muted);
+    font-size: 12px;
+  }
+}
+
+.jobs-panel {
+  grid-column: 1 / -1;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--ps-line);
+
+  .option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    &.nested {
+      padding-left: 20px;
+    }
   }
 }
 
