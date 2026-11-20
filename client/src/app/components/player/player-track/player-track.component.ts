@@ -1,3 +1,4 @@
+import { formatTrackTime } from '../../../utils/track-time';
 import {
   Component,
   ElementRef,
@@ -204,12 +205,7 @@ export class PlayerTrackComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   getDurationString(seconds: number): string {
-    if (isNaN(seconds)) {
-      return '';
-    }
-    const date = new Date(0);
-    date.setSeconds(seconds); // specify value for SECONDS here
-    return date.toISOString().substring(14, 19);
+    return formatTrackTime(seconds);
   }
 
   protected getJumpOffset(seekPercent: number): number {
