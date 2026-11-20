@@ -6,6 +6,7 @@ import { ServerResultErrorSnackBarComponent } from '../messages/server-result-er
 import { HttpHelperService } from '../../services/http-helper.service';
 import { GenericDataObject } from '../../models/genericDataObject';
 import { isActive, VideoJob, VideoUploadInfo } from '../../models/video-job';
+import { TransferProgress } from '../../models/transfer-progress';
 
 export type UploadMode = 'SONG' | 'VIDEO';
 
@@ -29,6 +30,8 @@ const JOB_POLL_INTERVAL = 2000;
 export class UploadComponent implements OnInit, OnDestroy {
   mode: UploadMode = 'SONG';
   loading = false;
+  /** How far the running upload is and how fast it goes; undefined while nothing is uploaded. */
+  progress?: TransferProgress;
   files: File[] = [];
   /** Whether files are dragged over the drop zone. */
   dragOver = false;
@@ -138,6 +141,17 @@ export class UploadComponent implements OnInit, OnDestroy {
     return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} kB`;
   }
 
+  /** The time an upload still takes, like "1:05" or "2:03:04"; empty while it can not be told. */
+  formatRemaining(seconds: number | undefined): string {
+    if (seconds === undefined) {
+      return '';
+    }
+    const two = (value: number) => String(value).padStart(2, '0');
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? `${hours}:${two(minutes)}:${two(seconds % 60)}` : `${minutes}:${two(seconds % 60)}`;
+  }
+
   percent(job: VideoJob): number {
     return Math.round(job.progress * 100);
   }
@@ -148,6 +162,8 @@ export class UploadComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
+    const progress = new TransferProgress();
+    this.progress = progress;
 
     const first = (values: GenericDataObject[]) => values.map((value) => value.id)[0];
     const ids = (values: GenericDataObject[]) => values.map((value) => value.id);
@@ -173,9 +189,12 @@ export class UploadComponent implements OnInit, OnDestroy {
     formData.append('data', JSON.stringify(data));
 
     this.httpHelperService
-      .post(this.isVideo ? '/api/v1/media/videoUpload' : '/api/v1/media/upload/', formData)
+      .postWithProgress(this.isVideo ? '/api/v1/media/videoUpload' : '/api/v1/media/upload/', formData, (loaded, total) =>
+        progress.update(loaded, total, Date.now())
+      )
       .then(() => {
         this.loading = false;
+        this.progress = undefined;
         this.files = [];
         this.snackBar.openFromComponent(ServerResultSuccessSnackBarComponent, {
           duration: 2000,
@@ -186,6 +205,7 @@ export class UploadComponent implements OnInit, OnDestroy {
       })
       .catch((error) => {
         this.loading = false;
+        this.progress = undefined;
         this.snackBar.openFromComponent(ServerResultErrorSnackBarComponent, {
           duration: 2000,
         });

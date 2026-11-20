@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { plainToInstance } from 'class-transformer';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { ClassConstructor } from 'class-transformer/types/interfaces';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, map, tap } from 'rxjs';
 
 /** The part of a page of the REST API the client uses. */
 interface RestPage {
@@ -58,6 +58,25 @@ export class HttpHelperService {
 
   public post<T>(path: string, body: unknown): Promise<T> {
     return firstValueFrom(this.http.post<T>(this.url(path), body));
+  }
+
+  /**
+   * A post that tells how much of the body is sent, for uploads.
+   *
+   * @param onProgress called with the bytes sent so far and the size of the body (0 if the browser does not know it)
+   */
+  public postWithProgress<T>(path: string, body: unknown, onProgress: (loaded: number, total: number) => void): Promise<T> {
+    return firstValueFrom(
+      this.http.post<T>(this.url(path), body, { observe: 'events', reportProgress: true }).pipe(
+        tap((event) => {
+          if (event.type === HttpEventType.UploadProgress) {
+            onProgress(event.loaded, event.total ?? 0);
+          }
+        }),
+        filter((event) => event.type === HttpEventType.Response),
+        map((event) => event.body as T)
+      )
+    );
   }
 
   public put<T>(path: string, body: unknown): Promise<T> {

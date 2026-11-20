@@ -35,6 +35,27 @@ test.describe('upload', () => {
     await expect(libraryRow(userPage, name)).toBeVisible();
   });
 
+  test('a running upload shows its progress', async ({ userPage }) => {
+    const name = `${unique('slow')}.mp3`;
+    await userPage.goto('/upload');
+    await userPage.locator('input[type=file]').setInputFiles(toneFile(name));
+    // a local upload is over at once: the answer is held back to see the bar (the numbers are unit tested)
+    await userPage.route('**/api/v1/media/upload/', async (route) => {
+      const response = await route.fetch();
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.fulfill({ response });
+    });
+    await userPage.getByRole('button', { name: 'Upload', exact: true }).click();
+
+    const bar = userPage.getByRole('progressbar', { name: 'Progress of the upload' });
+    await expect(bar).toBeVisible();
+    await expect(userPage.getByRole('button', { name: `Remove ${name}` })).toBeDisabled();
+
+    // the bar goes away with the upload
+    await expect(userPage.getByText('No songs chosen yet.')).toBeVisible();
+    await expect(bar).toHaveCount(0);
+  });
+
   test('a song can be added to a playlist during the upload', async ({ userPage, user }) => {
     const playlist = unique('upl');
     const id = await createPlaylist(user, playlist);

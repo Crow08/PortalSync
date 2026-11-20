@@ -184,6 +184,30 @@
   }
 }
 
+// The running upload: the bar, below it how much is sent and how fast
+.transfer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .transfer-text {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    color: var(--ps-muted);
+    font-family: var(--ps-mono);
+    font-size: 12px;
+  }
+
+  .transfer-percent {
+    color: var(--ps-text);
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
 .fields {
   display: flex;
   flex-direction: column;

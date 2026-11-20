@@ -24,7 +24,7 @@
             <mat-icon class="lead">{{ isVideo ? 'movie' : 'music_note' }}</mat-icon>
             <span class="file-name">{{ file.name }}</span>
             <span class="file-size">{{ formatSize(file.size) }}</span>
-            <button (click)="removeFile(file)" [attr.aria-label]="'upload.remove' | transloco: { name: file.name }" mat-icon-button type="button">
+            <button (click)="removeFile(file)" [disabled]="loading" [attr.aria-label]="'upload.remove' | transloco: { name: file.name }" mat-icon-button type="button">
               <mat-icon>close</mat-icon>
             </button>
           </div>
@@ -80,6 +80,28 @@
             {{ 'upload.video.thumbnails' | transloco }}
           </mat-slide-toggle>
           <p class="hint">{{ 'upload.video.thumbnailsHint' | transloco }}</p>
+        </div>
+      </div>
+    }
+    @if (progress; as p) {
+      <!-- the upload itself; once everything is sent the server still stores the files -->
+      <div class="transfer">
+        <mat-progress-bar [attr.aria-label]="'upload.progress.label' | transloco" [mode]="p.sent || p.total === 0 ? 'indeterminate' : 'determinate'"
+          [value]="p.percent"></mat-progress-bar>
+        <div class="transfer-text" aria-live="off">
+          @if (p.sent) {
+            <span>{{ 'upload.progress.storing' | transloco }}</span>
+          } @else if (p.total > 0) {
+            <span class="transfer-percent">{{ 'upload.progress.percent' | transloco: { percent: p.percent } }}</span>
+            <span>{{ 'upload.progress.sent' | transloco: { loaded: formatSize(p.loaded), total: formatSize(p.total) } }}</span>
+            <span class="spacer"></span>
+            @if (p.speed > 0) {
+              <span class="transfer-speed">{{ 'upload.progress.speed' | transloco: { speed: formatSize(p.speed) } }}</span>
+            }
+            @if (p.remainingSeconds !== undefined) {
+              <span class="transfer-left">{{ 'upload.progress.left' | transloco: { time: formatRemaining(p.remainingSeconds) } }}</span>
+            }
+          }
         </div>
       </div>
     }

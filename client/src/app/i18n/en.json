@@ -417,6 +417,14 @@
       "other": "{{ count }} songs, {{ size }}"
     },
     "submit": "Upload",
+    "progress": {
+      "label": "Progress of the upload",
+      "percent": "{{ percent }} %",
+      "sent": "{{ loaded }} of {{ total }}",
+      "speed": "{{ speed }}/s",
+      "left": "{{ time }} left",
+      "storing": "Sent. The server is storing the files…"
+    },
     "video": {
       "hint": "With preprocessing any video format. Without it only MP4 files the browsers play (H.264, AAC).",
       "hintNoFfmpeg": "Only MP4 files the browsers play (H.264, AAC): this server has no ffmpeg, so it stores videos as they are.",
