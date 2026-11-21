@@ -53,7 +53,10 @@
     </div>
 
     <div class="options">
-      <mat-icon class="volume-icon">volume_up</mat-icon>
+      <button (click)="toggleMute()" [attr.aria-label]="'player.mute' | transloco" [attr.aria-pressed]="isMuted()"
+        [title]="(isMuted() ? 'player.tip.unmute' : 'player.tip.mute') | transloco" class="volume-icon ps-mute-button" type="button">
+        <mat-icon>{{ isMuted() ? 'volume_off' : 'volume_up' }}</mat-icon>
+      </button>
       <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" [title]="'player.tip.volume' | transloco">
         <input (valueChange)="setVolume($event)" matSliderThumb value="{{ getVolume() }}"/>
       </mat-slider>
@@ -94,11 +97,21 @@
   </mat-menu>
 </ng-template>
 
+<!-- shown for a moment when the playback starts or pauses; a new element per change restarts the animation -->
+<ng-template #flash>
+  @for (change of playbackFlash; track change.id) {
+    <div aria-hidden="true" class="playback-flash" [class.paused]="!change.playing">
+      <mat-icon>{{ change.playing ? 'play_arrow' : 'pause' }}</mat-icon>
+    </div>
+  }
+</ng-template>
+
 <section class="main">
   <div class="stage">
     <!-- audio: the cover; video: the video element is owned by the MediaService and moved into the wrapper, see ngAfterViewInit -->
     @if (!showVideo) {
-      <div class="cover-stage">
+      <!-- a click plays or pauses, like on a video; the keyboard has the play button and the space key for it -->
+      <div (click)="onCoverClick()" class="cover-stage">
         <div class="cover" [style.background]="coverGradient"><mat-icon>music_note</mat-icon></div>
         <div class="cover-text">
           <div class="cover-title">{{ hasMedia ? currentMedia.title : ('player.nothingPlaying' | transloco) }}</div>
@@ -108,11 +121,16 @@
     }
     <div #videoWrapper [hidden]="!showVideo" class="video-wrapper">
       @if (isFullscreen) {
+        <!-- only the wrapper is shown in fullscreen, so the indicator has to be inside of it there -->
+        <ng-container [ngTemplateOutlet]="flash"></ng-container>
         <div class="fullscreen-controls">
           <ng-container [ngTemplateOutlet]="controls"></ng-container>
         </div>
       }
     </div>
+    @if (!isFullscreen) {
+      <ng-container [ngTemplateOutlet]="flash"></ng-container>
+    }
 
     <div class="overlay top-center">
       @if (playbackHint) {

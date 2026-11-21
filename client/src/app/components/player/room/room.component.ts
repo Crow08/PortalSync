@@ -5,6 +5,7 @@ import {
   DoCheck,
   ElementRef,
   HostBinding,
+  HostListener,
   OnDestroy,
   ViewChild,
 } from '@angular/core';
@@ -17,7 +18,9 @@ import { SessionService } from '../../../services/session.service';
 import { SettingsService } from '../../../services/settings.service';
 import { AutoplayService } from '../../../services/autoplay.service';
 import { PlayerEngineService } from '../../../services/player-engine.service';
+import { PlayerState } from '../../../models/playerState';
 import { avatarColor } from '../../../utils/avatar-color';
+import { playerHotkey } from '../../../utils/player-hotkey';
 
 /** Height (px) of a playlist row, all rows must have this height (virtual scrolling). */
 const PLAYLIST_ROW_HEIGHT = 48;
@@ -34,6 +37,9 @@ const SIDE_WIDTH_MAX = 720;
 const SIDE_WIDTH_MAX_SHARE = 0.6;
 /** Width change (px) of one arrow key press on the handle of the side panel. */
 const SIDE_WIDTH_KEY_STEP = 24;
+
+/** Time (ms) the indicator of a started or paused playback stays, the length of its animation in the styles. */
+const PLAYBACK_FLASH_DURATION = 600;
 
 const COVER_GRADIENTS = [
   'linear-gradient(150deg, #7a3a5e, #ffbe5c)',
@@ -82,6 +88,12 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
   private followedMedia: string | null = null;
   /** Row index of the followed media at the time it became current. */
   private followedRow = 0;
+  /** The indicator over the stage after the playback started or paused: empty or one entry, a new id for every change. */
+  playbackFlash: { id: number; playing: boolean }[] = [];
+  private playbackFlashId = 0;
+  /** The last state that was not WAITING, null before the first check. */
+  private settledState: PlayerState | null = null;
+  private hideFlashTimeout: number | null = null;
   private hideCursorTimeout: number | null = null;
   private singleVideoClickTimeout: number | null = null;
   private playlistResizeObserver: ResizeObserver | undefined;
@@ -154,6 +166,18 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
     return Math.min(Math.max(Math.round(width), SIDE_WIDTH_MIN), this.sideWidthMax);
   }
 
+  /** Hotkeys of the player page: space plays or pauses, M mutes. */
+  @HostListener('document:keydown', ['$event'])
+  onHotkey(event: KeyboardEvent): void {
+    const hotkey = playerHotkey(event);
+    if (!hotkey) {
+      return;
+    }
+    // space would scroll the page
+    event.preventDefault();
+    hotkey === 'playback' ? this.togglePlayback() : this.toggleMute();
+  }
+
   get hasMedia(): boolean {
     return this.currentMedia.id !== -1;
   }
@@ -219,7 +243,26 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
     return index;
   }
 
+  /** Shows the indicator when the playback started or paused since the last check. */
+  private checkPlaybackFlash(): void {
+    const state = this.playerState;
+    // waiting for a scheduled start (a jump, the next media) is no change: the playback goes on afterwards
+    if (state === PlayerState.WAITING || state === this.settledState) {
+      return;
+    }
+    const previous = this.settledState;
+    this.settledState = state;
+    // nothing when the page opens, and the end of the queue (stop) is no pause
+    if (previous === null || state === PlayerState.STOP) {
+      return;
+    }
+    this.playbackFlash = [{ id: ++this.playbackFlashId, playing: state === PlayerState.PLAY }];
+    this.hideFlashTimeout && clearTimeout(this.hideFlashTimeout);
+    this.hideFlashTimeout = setTimeout(() => (this.playbackFlash = []), PLAYBACK_FLASH_DURATION);
+  }
+
   ngDoCheck(): void {
+    this.checkPlaybackFlash();
     // follow the current media, unless the user scrolled away from it
     const media = `${this.currentMedia.id}|${this.currentMedia.title}`;
     if (this.currentMedia.id !== -1 && media !== this.followedMedia) {
@@ -273,6 +316,7 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
     this.mediaService.videoElement.removeEventListener('click', this.videoClickListener);
     this.mediaService.detachVideo();
     this.playlistResizeObserver?.disconnect();
+    this.hideFlashTimeout && clearTimeout(this.hideFlashTimeout);
     if (!!this.hideCursorTimeout) {
       clearTimeout(this.hideCursorTimeout);
     }
@@ -327,6 +371,13 @@ export class RoomComponent extends PlayerComponent implements AfterViewInit, DoC
       this.videoWrapper.nativeElement.style.cursor = 'default';
     }
     document.exitFullscreen().catch(console.error);
+  }
+
+  /** A song has no fullscreen and so no double click to wait for: the click toggles at once. Nothing in an empty room. */
+  onCoverClick(): void {
+    if (this.hasMedia) {
+      this.togglePlayback();
+    }
   }
 
   onVideoClick() {

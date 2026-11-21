@@ -193,6 +193,38 @@ body #app-theme-container.auth-page {
   --mat-slider-handle-height: 14px;
 }
 
+/*
+ * The area of a slider that takes clicks is the invisible input over it, and Material makes that 21px wider than the
+ * track on both sides and 48px high (the size of its ripple). The slider has a margin of 8px, so the input lay 13px over
+ * its neighbours, e.g. the mute button. Clipping it also clips where it takes clicks: it now ends with that margin,
+ * which still holds the knob at both ends of the track. The volume sliders stand between other controls and are less
+ * high as well.
+ */
+.ps-slider.mat-mdc-slider .mdc-slider__input {
+  clip-path: inset(0 13px);
+}
+
+.ps-slider.ps-slider-compact.mat-mdc-slider .mdc-slider__input {
+  clip-path: inset(10px 13px);
+}
+
+/* The volume icon next to them is the mute button: a plain button the size of its icon. */
+.ps-mute-button {
+  display: inline-flex;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ps-muted);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: 2px;
+  }
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 10px;

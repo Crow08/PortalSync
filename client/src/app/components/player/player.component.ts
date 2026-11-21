@@ -103,6 +103,15 @@ export abstract class PlayerComponent {
     return this.mediaService.getVolume();
   }
 
+  isMuted(): boolean {
+    return this.mediaService.isMuted();
+  }
+
+  /** Mutes or unmutes this client only, the volume stays as it is. */
+  toggleMute(): void {
+    this.mediaService.toggleMuted();
+  }
+
   isVideoMode(): boolean {
     return this.mediaService.isVideoMode();
   }

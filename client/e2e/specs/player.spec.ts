@@ -131,6 +131,48 @@ test.describe('player (single user)', () => {
     expect(Number(await volume.inputValue())).toBeGreaterThan(before);
   });
 
+  test('hotkeys: space pauses and plays, M mutes', async ({ userPage }) => {
+    await startRoom(userPage, unique('keys'), [A]);
+    await expect(play(userPage)).toHaveAccessibleName('Pause');
+    // the focus leaves the play button, where space would press the button itself
+    await userPage.locator('.queue-head .label').click();
+    await userPage.keyboard.press('Space');
+    await expect(play(userPage)).toHaveAccessibleName('Play');
+    await userPage.keyboard.press('Space');
+    await expect(play(userPage)).toHaveAccessibleName('Pause');
+
+    const volumeIcon = roomBar(userPage).locator('.volume-icon');
+    await expect(volumeIcon).toHaveText('volume_up');
+    await userPage.keyboard.press('m');
+    await expect(volumeIcon).toHaveText('volume_off');
+    await userPage.keyboard.press('m');
+    await expect(volumeIcon).toHaveText('volume_up');
+  });
+
+  test('the volume icon mutes and unmutes, the volume stays', async ({ userPage }) => {
+    await startRoom(userPage, unique('mute'), [A]);
+    const volume = roomBar(userPage).locator('.volume-slider input');
+    const before = await volume.inputValue();
+    const mute = roomBar(userPage).getByRole('button', { name: 'Mute' });
+    await expect(mute).toHaveAttribute('aria-pressed', 'false');
+    await mute.click();
+    await expect(mute).toHaveAttribute('aria-pressed', 'true');
+    await expect(mute).toHaveText('volume_off');
+    expect(await volume.inputValue()).toBe(before);
+    await mute.click();
+    await expect(mute).toHaveAttribute('aria-pressed', 'false');
+    await expect(mute).toHaveText('volume_up');
+  });
+
+  test('a click on the cover area of a song pauses and plays', async ({ userPage }) => {
+    await startRoom(userPage, unique('cover'), [A]);
+    await expect(play(userPage)).toHaveAccessibleName('Pause');
+    await userPage.locator('.cover-stage').click();
+    await expect(play(userPage)).toHaveAccessibleName('Play');
+    await userPage.locator('.cover-stage').click();
+    await expect(play(userPage)).toHaveAccessibleName('Pause');
+  });
+
   test('the rating stars can be used for a song', async ({ userPage }) => {
     await startRoom(userPage, unique('rate'), [A]);
     const rating = userPage.getByRole('group', { name: 'Rating' });

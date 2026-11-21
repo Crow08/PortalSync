@@ -28,7 +28,10 @@
   </div>
 
   <div class="side">
-    <mat-icon class="volume-icon">volume_up</mat-icon>
+    <button (click)="toggleMute()" [attr.aria-label]="'player.mute' | transloco" [attr.aria-pressed]="isMuted()"
+      [title]="(isMuted() ? 'player.tip.unmute' : 'player.tip.mute') | transloco" class="volume-icon ps-mute-button" type="button">
+      <mat-icon>{{ isMuted() ? 'volume_off' : 'volume_up' }}</mat-icon>
+    </button>
     <mat-slider [max]="0.4" [min]="0" [step]="0.004" class="volume-slider ps-slider ps-slider-compact" [title]="'player.tip.volume' | transloco">
       <input (valueChange)="setVolume($event)" matSliderThumb value="{{ getVolume() }}"/>
     </mat-slider>

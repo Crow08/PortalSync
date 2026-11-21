@@ -2,6 +2,9 @@ import { EventEmitter, Injectable } from '@angular/core';
 import { SettingsService } from './settings.service';
 import { SpotifyPlayerService } from './spotify-player.service';
 
+/** Time (ms) in which a toggle of the mute belongs to the interaction that already unmuted (pointer down, then the click). */
+const UNMUTE_INTERACTION_WINDOW = 1000;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -26,6 +29,8 @@ export class MediaService {
   /** The Spotify player is the active one, not an element. */
   private spotifyMode = false;
   private muted = false;
+  /** Time (epoch ms) of the last unmute that was no toggle of the user, 0 if there is none to consider. */
+  private unmutedAt = 0;
 
   private progressionListeners: ((p: number) => void)[] = [];
 
@@ -132,9 +137,27 @@ export class MediaService {
    * Mutes or unmutes the playback independently of the volume. Browsers allow muted playback without user interaction.
    */
   setMuted(muted: boolean): void {
+    this.unmutedAt = this.muted && !muted ? Date.now() : 0;
     this.muted = muted;
     this.media.muted = muted;
     this.spotifyPlayer.setMuted(muted);
+  }
+
+  isMuted(): boolean {
+    return this.muted;
+  }
+
+  /**
+   * Mutes or unmutes on a key or click of the user. The first interaction with a page that played muted because of the
+   * autoplay rules already unmutes (see PlaybackSyncService): if that interaction is the mute key or button itself, it
+   * must not mute again right away.
+   */
+  toggleMuted(): void {
+    const unmutedByThisInteraction = !this.muted && Date.now() - this.unmutedAt < UNMUTE_INTERACTION_WINDOW;
+    if (!unmutedByThisInteraction) {
+      this.setMuted(!this.muted);
+    }
+    this.unmutedAt = 0;
   }
 
   getVolume(): number {
