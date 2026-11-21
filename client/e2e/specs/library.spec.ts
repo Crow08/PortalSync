@@ -420,7 +420,9 @@ test.describe('library', () => {
     await openMedia(userPage, song.title);
     const detail = userPage.locator('aside.detail');
     const form = detail.getByRole('form', { name: 'Edit the media' });
-    await expect(detail.getByText('Released')).toHaveCount(0);
+    // the title of the song has the word in it: only the rows of the details are looked at
+    const released = detail.locator('dl.meta div').filter({ has: userPage.locator('dt', { hasText: /^Released$/ }) });
+    await expect(released).toHaveCount(0);
 
     await detail.getByRole('button', { name: 'Edit' }).click();
     // an uploaded song has no album of its own ("Unknown Album"), so there is no date of an album to set
@@ -434,7 +436,7 @@ test.describe('library', () => {
     await form.getByRole('button', { name: 'Save' }).click();
 
     await expect(form).toHaveCount(0);
-    await expect(detail.locator('dl.meta div').filter({ hasText: 'Released' }).locator('dd')).toHaveText('1998-10');
+    await expect(released.locator('dd')).toHaveText('1998-10');
     await userPage.getByRole('combobox', { name: 'Sort by' }).click();
     await expect(userPage.getByRole('option', { name: 'Newest release' })).toBeVisible();
   });
