@@ -23,6 +23,21 @@ test.describe('library', () => {
     await expect(userPage.locator('p.empty')).toContainText('Nothing matches.');
   });
 
+  test('shows the cover of a media that has one, the placeholder for the others', async ({ userPage }) => {
+    const { songs, video } = sharedMedia();
+    await userPage.goto('/library');
+    await searchLibrary(userPage, 'e2e-shared');
+    const cover = libraryRow(userPage, video.title).locator('img.cover-image');
+    await expect(cover).toBeVisible();
+    // the picture is loaded with the login cookie, not just requested
+    await expect.poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(200);
+    await expect(libraryRow(userPage, songs[0].title).locator('img')).toHaveCount(0);
+    await expect(libraryRow(userPage, songs[0].title).locator('.cover mat-icon')).toBeVisible();
+
+    await openMedia(userPage, video.title);
+    await expect(userPage.locator('.detail .preview img.cover-image')).toBeVisible();
+  });
+
   test('sorts by title', async ({ userPage }) => {
     await userPage.goto('/library');
     await searchLibrary(userPage, 'e2e-shared-song');
@@ -396,6 +411,48 @@ test.describe('library', () => {
     await expect(detail.getByRole('heading', { name: title })).toBeVisible();
     await searchLibrary(userPage, title);
     await expect(libraryRow(userPage, title)).toBeVisible();
+  });
+
+  test('a song gets a release date: a year, a month or a day', async ({ userPage, user }) => {
+    const song = await uploadSong(user, `${unique('released')}.mp3`);
+    await userPage.goto('/library');
+    await searchLibrary(userPage, song.title);
+    await openMedia(userPage, song.title);
+    const detail = userPage.locator('aside.detail');
+    const form = detail.getByRole('form', { name: 'Edit the media' });
+    await expect(detail.getByText('Released')).toHaveCount(0);
+
+    await detail.getByRole('button', { name: 'Edit' }).click();
+    // an uploaded song has no album of its own ("Unknown Album"), so there is no date of an album to set
+    await expect(form.getByLabel('Release date of the album')).toHaveCount(0);
+    const date = form.getByLabel('Release date', { exact: true });
+    await date.fill('soon');
+    await expect(form.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await date.fill('1998-02-30');
+    await expect(form.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await date.fill('1998-10');
+    await form.getByRole('button', { name: 'Save' }).click();
+
+    await expect(form).toHaveCount(0);
+    await expect(detail.locator('dl.meta div').filter({ hasText: 'Released' }).locator('dd')).toHaveText('1998-10');
+    await userPage.getByRole('combobox', { name: 'Sort by' }).click();
+    await expect(userPage.getByRole('option', { name: 'Newest release' })).toBeVisible();
+  });
+
+  test('the release date of an album is set by admins and the owners of its songs', async ({ user, admin }) => {
+    const json = { 'Content-Type': 'application/json' };
+    const created = await api(admin, '/albums/', { method: 'POST', body: unique('album'), headers: { 'Content-Type': 'text/plain' } });
+    const albumId = Number(await created.text());
+    const setDate = (as: typeof user, releaseDate: string | null) =>
+      api(as, `/albums/${albumId}/releaseDate`, { method: 'PUT', headers: json, body: JSON.stringify({ releaseDate }) });
+
+    // the user owns no song of the album
+    expect((await setDate(user, '1998')).status).toBe(403);
+    expect((await setDate(admin, 'last year')).status).toBe(400);
+    const set = await setDate(admin, '1998-10-12');
+    expect(set.status).toBe(200);
+    expect((await set.json()).releaseDate).toBe('1998-10-12');
+    expect((await (await setDate(admin, null)).json()).releaseDate).toBeNull();
   });
 
   test('a video is edited with its series and season; the API checks owner and title', async ({ browser, user, admin }) => {

@@ -37,6 +37,7 @@
       <mat-select (selectionChange)="resetScroll()" [(value)]="sortMode" [aria-label]="'library.sortBy' | transloco">
         <mat-option value="title">{{ 'library.sort.title' | transloco }}</mat-option>
         <mat-option value="recent">{{ 'library.sort.recent' | transloco }}</mat-option>
+        <mat-option value="released">{{ 'library.sort.released' | transloco }}</mat-option>
         @if (activePlaylist) {
           <mat-option value="playlist">{{ 'library.sort.playlist' | transloco }}</mat-option>
         }
@@ -157,7 +158,11 @@
           class="pick"></mat-checkbox>
         <button (click)="showDetail(media)" class="open" type="button">
           <span class="cover" [style.background]="gradient(media)">
-            <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+            @if (coverUrl(media); as url) {
+              <img (error)="hideCover($event)" (load)="showCover($event)" [src]="url" alt="" class="cover-image" referrerpolicy="no-referrer"/>
+            } @else {
+              <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+            }
           </span>
           <span class="titles">
             <span class="title">{{ media.title }}</span>
@@ -211,8 +216,12 @@
 <!-- cdkScrollable: the dropdowns of the edit mode follow their field when the panel scrolls -->
 <aside cdkScrollable class="detail">
   @if (detail; as media) {
-    <div class="preview" [style.background]="gradient(media)">
-      <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+    <div class="preview" [class.video]="isVideo(media)" [style.background]="gradient(media)">
+      @if (coverUrl(media); as url) {
+        <img (error)="hideCover($event)" (load)="showCover($event)" [src]="url" alt="" class="cover-image" referrerpolicy="no-referrer"/>
+      } @else {
+        <mat-icon>{{ isVideo(media) ? 'play_circle' : 'music_note' }}</mat-icon>
+      }
     </div>
     @if (edit?.media?.id === media.id && edit; as edit) {
       <!-- edit mode: the fields of the media, saved together -->
@@ -228,6 +237,18 @@
         } @else {
           <app-input-artist [(selectedOptions)]="edit.artist"></app-input-artist>
           <app-input-album [(selectedOptions)]="edit.album"></app-input-album>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'library.edit.releaseDate' | transloco }}</mat-label>
+            <input [(ngModel)]="edit.releaseDate" autocomplete="off" matInput maxlength="10" name="releaseDate" placeholder="1998-10-12"/>
+            <mat-hint [class.invalid]="!isReleaseDate(edit.releaseDate)">{{ 'library.edit.releaseDateHint' | transloco }}</mat-hint>
+          </mat-form-field>
+          @if (editsAlbumDate) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'library.edit.albumReleaseDate' | transloco }}</mat-label>
+              <input [(ngModel)]="edit.albumReleaseDate" autocomplete="off" matInput maxlength="10" name="albumReleaseDate" placeholder="1998"/>
+              <mat-hint [class.invalid]="!isReleaseDate(edit.albumReleaseDate)">{{ 'library.edit.releaseDateHint' | transloco }}</mat-hint>
+            </mat-form-field>
+          }
           <app-input-genre [(selectedOptions)]="edit.genres"></app-input-genre>
         }
         <app-input-tag [(selectedOptions)]="edit.tags"></app-input-tag>

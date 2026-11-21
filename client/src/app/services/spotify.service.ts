@@ -4,6 +4,8 @@ import { TranslocoService } from '@jsverse/transloco';
 import { HttpHelperService } from './http-helper.service';
 import { AuthenticationService } from './authentication.service';
 import { HttpParams } from '@angular/common/http';
+import { pickSpotifyCover } from '../utils/cover';
+import { isReleaseDate } from '../utils/release-date';
 
 const API_URL = 'https://api.spotify.com/v1';
 /** Development Mode apps get at most 10 search results per request. */
@@ -16,6 +18,10 @@ const REFRESH_AHEAD = 300;
 /** A token that expires within this time (s) is not used any more. */
 const EXPIRY_MARGIN = 60;
 
+/** The release date of an album as Spotify gives it ("1981", "1981-12" or "1981-12-15"), undefined if it is none. */
+const spotifyReleaseDate = (date: unknown): string | undefined =>
+  typeof date === 'string' && date !== '' && isReleaseDate(date) ? date : undefined;
+
 /** A song of Spotify, as far as the library needs it. */
 export interface SpotifyTrack {
   uri: string;
@@ -23,6 +29,10 @@ export interface SpotifyTrack {
   artist: string;
   album: string;
   durationMs: number;
+  /** URL of the picture of the album at Spotify, missing if it has none. */
+  cover?: string;
+  /** When the album of the song was released: a year, a month or a day; missing if Spotify does not say. */
+  releaseDate?: string;
 }
 
 export interface SpotifyArtist {
@@ -36,10 +46,14 @@ export interface SpotifyAlbum {
   artist: string;
   /** The year of the release, empty when it is not known. */
   year: string;
+  /** The release as exact as Spotify knows it: a year, a month or a day; missing when it is not known. */
+  releaseDate?: string;
   /** Number of songs, -1 when it is not known. */
   totalTracks: number;
   /** Spotify's group of the album for an artist: album, single, compilation or appears_on. */
   group: string;
+  /** URL of the picture of the album at Spotify, missing if it has none. */
+  cover?: string;
 }
 
 /** The groups of the albums of an artist that Spotify can list. */
@@ -378,7 +392,8 @@ export class SpotifyService {
       const items = onlyArtistId
         ? page.items.filter((item: any) => item?.artists?.some((artist: any) => artist.id === onlyArtistId))
         : page.items;
-      tracks.push(...this.toTracks(items).map((track) => ({ ...track, album: album.name })));
+      const ofAlbum = { album: album.name, cover: album.cover, releaseDate: album.releaseDate };
+      tracks.push(...this.toTracks(items).map((track) => ({ ...track, ...ofAlbum })));
       if (!page.next) {
         return tracks;
       }
@@ -479,6 +494,8 @@ export class SpotifyService {
         artist: track.artists?.[0]?.name ?? 'Unknown Artist',
         album: track.album?.name ?? 'Unknown Album',
         durationMs: track.duration_ms ?? 0,
+        cover: pickSpotifyCover(track.album?.images),
+        releaseDate: spotifyReleaseDate(track.album?.release_date),
       }));
   }
 
@@ -490,6 +507,8 @@ export class SpotifyService {
       year: typeof album.release_date === 'string' ? album.release_date.substring(0, 4) : '',
       totalTracks: album.total_tracks ?? -1,
       group: album.album_group ?? album.album_type ?? '',
+      cover: pickSpotifyCover(album.images),
+      releaseDate: spotifyReleaseDate(album.release_date),
     };
   }
 

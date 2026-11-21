@@ -7,6 +7,7 @@ import { Chapter } from '../../models/chapter';
 import { UserStatus } from '../../models/userStatus';
 import { PlayerEngineService } from '../../services/player-engine.service';
 import { SettingsService } from '../../services/settings.service';
+import { coverUrl, hideCover, showCover } from '../../utils/cover';
 
 /** Drift (ms) from which a listener is shown as out of sync, see PlayerEngineService.correctDrift. */
 const OUT_OF_SYNC_THRESHOLD = 200;
@@ -41,6 +42,14 @@ export abstract class PlayerComponent {
   get currentMedia() {
     return this.engine.currentMedia;
   }
+
+  /** The picture of the current media, null if it has none (or nothing is playing): the placeholder stays. */
+  get coverUrl(): string | null {
+    return coverUrl(this.currentMedia);
+  }
+
+  readonly hideCover = hideCover;
+  readonly showCover = showCover;
 
   get userSongRating() {
     return this.engine.userSongRating;

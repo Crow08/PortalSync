@@ -408,6 +408,10 @@ export class SpotifyImportComponent {
         spotify: true,
         artist: { name: track.artist },
         album: { name: track.album },
+        // the picture of the album stays at Spotify: the library keeps its URL
+        cover: track.cover,
+        // Spotify dates the album, not the song: the song gets that date, and so does an album without one
+        releaseDate: track.releaseDate,
         genres: [],
         tags: [],
       }));

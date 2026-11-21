@@ -3,7 +3,11 @@
     [thumbnailUrl]="thumbnailUrl"></app-player-track>
   <div class="transport">
     <div class="now">
-      <div class="now-cover" [style.background]="coverGradient"></div>
+      <div class="now-cover" [style.background]="coverGradient">
+        @if (coverUrl; as url) {
+          <img (error)="hideCover($event)" (load)="showCover($event)" [src]="url" alt="" class="cover-image" referrerpolicy="no-referrer"/>
+        }
+      </div>
       <div class="now-text">
         <div class="now-title">{{ hasMedia ? currentMedia.title : ('player.nothingPlaying' | transloco) }}</div>
         <div class="now-sub">{{ getSubTitle() || ((hasMedia ? 'player.unknownArtist' : 'player.addSomething') | transloco) }}</div>
@@ -112,7 +116,13 @@
     @if (!showVideo) {
       <!-- a click plays or pauses, like on a video; the keyboard has the play button and the space key for it -->
       <div (click)="onCoverClick()" class="cover-stage">
-        <div class="cover" [style.background]="coverGradient"><mat-icon>music_note</mat-icon></div>
+        <div class="cover" [style.background]="coverGradient">
+          @if (coverUrl; as url) {
+            <img (error)="hideCover($event)" (load)="showCover($event)" [src]="url" alt="" class="cover-image" referrerpolicy="no-referrer"/>
+          } @else {
+            <mat-icon>music_note</mat-icon>
+          }
+        </div>
         <div class="cover-text">
           <div class="cover-title">{{ hasMedia ? currentMedia.title : ('player.nothingPlaying' | transloco) }}</div>
           <div class="cover-sub">{{ getSubTitle() }}</div>

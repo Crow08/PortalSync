@@ -9,6 +9,8 @@ export class Song extends Media {
   album: Album;
   genres: Genre[];
   spotify: boolean;
+  /** When the song was released (a year, a month or a day), null if unknown: then the date of the album counts. */
+  releaseDate: string | null = null;
 
   constructor(
     id: number,

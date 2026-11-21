@@ -348,8 +348,9 @@
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 64px;
-  height: 36px;
+  // square, like the covers of albums
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
 
   .mat-icon {
@@ -358,6 +359,14 @@
     font-size: 20px;
     color: rgba(255, 255, 255, 0.85);
   }
+}
+
+// the cover of the album fills its square placeholder; one that is not quite square loses its edges
+.cover-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 .titles {
@@ -456,8 +465,16 @@
     align-items: center;
     justify-content: center;
     flex: none;
+    // square, like the covers of albums; a video keeps the wide banner
+    align-self: center;
+    width: 170px;
     height: 170px;
     border-radius: 12px;
+
+    &.video {
+      align-self: stretch;
+      width: auto;
+    }
 
     .mat-icon {
       width: 48px;
@@ -509,6 +526,11 @@
 
   .chip {
     align-self: flex-start;
+  }
+
+  // the hint of a release date that is none
+  .invalid {
+    color: var(--ps-danger, #ff8a80);
   }
 
   mat-form-field {

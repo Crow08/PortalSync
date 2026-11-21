@@ -14,6 +14,8 @@ function ffmpeg(args: string[]): void {
 export const TONE_FILE = join(SOURCE_DIR, 'tone.mp3');
 export const VIDEO_TITLE = 'e2e-shared-video';
 export const VIDEO_URI = '/videos/e2e-shared-video.mp4';
+/** The picture of the shared video (its cover); the shared songs have none. */
+export const VIDEO_COVER_URI = '/videos/e2e-shared-video.cover.jpg';
 export const SHARED_SONGS = ['e2e-shared-song-a.mp3', 'e2e-shared-song-b.mp3', 'e2e-shared-song-c.mp3'];
 
 /** A video no browser plays as it is (MKV, MPEG-4 Part 2, MP3) with a subtitle track: the source of a conversion. */
@@ -90,4 +92,5 @@ export function generateMediaFiles(): void {
     video,
   ]);
   ffmpeg(['-i', video, '-vf', 'fps=1/2,scale=160:90,tile=10x2', '-frames:v', '1', video.replace(/\.mp4$/, '.thumbs.jpg')]);
+  ffmpeg(['-f', 'lavfi', '-i', 'testsrc=size=200x200:rate=1', '-frames:v', '1', join(MEDIA_DIR, VIDEO_COVER_URI)]);
 }

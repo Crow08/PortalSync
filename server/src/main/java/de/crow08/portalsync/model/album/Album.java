@@ -23,6 +23,10 @@ public class Album {
   @OneToMany()
   private List<Media> songs;
 
+  // when it was released, as exact as it is known: "1998", "1998-10" or "1998-10-12" (see ReleaseDates); null if unknown
+  @Column(name = "release_date", length = 10)
+  private String releaseDate;
+
   @Deprecated
   public Album() {
   }
@@ -45,5 +49,13 @@ public class Album {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getReleaseDate() {
+    return releaseDate;
+  }
+
+  public void setReleaseDate(String releaseDate) {
+    this.releaseDate = releaseDate;
   }
 }

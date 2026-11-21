@@ -5,6 +5,7 @@ import de.crow08.portalsync.authentication.LoginTokenFilter;
 import de.crow08.portalsync.authentication.LoginTokenService;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import de.crow08.portalsync.model.media.CoverUrls;
 import de.crow08.portalsync.model.media.Media;
 import de.crow08.portalsync.model.media.MediaRepository;
 import de.crow08.portalsync.model.media.MediaType;
@@ -115,6 +116,10 @@ public class SecurityConfig implements WebMvcConfigurer {
     addMediaResourceHandler(registry, "/api/v1/media/thumbnails/**", media -> media.getType() == MediaType.VIDEO
         ? Optional.of(media.getUri().replaceFirst("\\.[^./\\\\]*$", "") + ".thumbs.jpg")
         : Optional.empty());
+    // The picture of a media (album cover). The browser loads it as an image, logged in by its cookie. A cover that
+    // is a URL (Spotify) is loaded from there by the browser, not from here
+    addMediaResourceHandler(registry, "/api/v1/media/cover/**", media -> Optional.ofNullable(media.getCover())
+        .filter(cover -> !CoverUrls.isExternal(cover)));
     // The client is served by this server as well (copy of its build in static/)
     registry
         .addResourceHandler("/**")

@@ -43,6 +43,15 @@ public class Media {
   @Column(name = "owner_id")
   private Long ownerId;
 
+  // the picture shown for the media, null for none: a file in the storage (e.g. "/songs/artist/album/cover.jpg",
+  // several media can share one: the songs of an album) or, for a Spotify song, the URL of the picture at Spotify (see
+  // CoverUrls). Of a file clients only learn that there is one (hasCover) and load it from /api/v1/media/cover/{id},
+  // a URL they get as coverUrl. Files are set by SQL only (the import of a music collection), URLs by the import of
+  // Spotify songs
+  @JsonIgnore
+  @Column(name = "cover")
+  private String cover;
+
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(name = "media_tag",
       joinColumns = @JoinColumn(name = "media_id", referencedColumnName = "id"),
@@ -100,6 +109,26 @@ public class Media {
 
   public void setOwnerId(Long ownerId) {
     this.ownerId = ownerId;
+  }
+
+  public String getCover() {
+    return cover;
+  }
+
+  public void setCover(String cover) {
+    this.cover = cover;
+  }
+
+  /** Whether the media has a picture, so clients do not ask for the covers of all the media without one. */
+  @JsonProperty(value = "hasCover", access = JsonProperty.Access.READ_ONLY)
+  public boolean hasCover() {
+    return cover != null && !cover.isBlank();
+  }
+
+  /** The cover if it is a picture on another server (Spotify), which clients load from there; null otherwise. */
+  @JsonProperty(value = "coverUrl", access = JsonProperty.Access.READ_ONLY)
+  public String coverUrl() {
+    return CoverUrls.isExternal(cover) ? cover : null;
   }
 
   public Set<Tag> getTags() {

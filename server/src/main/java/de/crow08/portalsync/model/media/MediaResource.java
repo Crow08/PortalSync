@@ -22,6 +22,7 @@ import de.crow08.portalsync.model.series.Series;
 import de.crow08.portalsync.model.series.SeriesRepository;
 import de.crow08.portalsync.model.tag.TagRepository;
 import de.crow08.portalsync.utils.MediaFiles;
+import de.crow08.portalsync.utils.ReleaseDates;
 import de.crow08.portalsync.utils.Mp4ChapterReader;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -238,6 +239,21 @@ public class MediaResource {
         Optional<Media> existing = mediaRepository.findFirstByUri(songNode.get("uri").asString())
             .filter(media -> media instanceof Song && ((Song) media).isSpotify());
         if (existing.isPresent()) {
+          // songs imported before there were covers get theirs when they are imported again
+          if (!existing.get().hasCover()) {
+            spotifyCover(songNode).ifPresent(cover -> {
+              existing.get().setCover(cover);
+              mediaRepository.save(existing.get());
+            });
+          }
+          // the same for the release date, also of the album
+          Song existingSong = (Song) existing.get();
+          Optional<String> date = releaseDate(songNode);
+          if (existingSong.getReleaseDate() == null && date.isPresent()) {
+            existingSong.setReleaseDate(date.get());
+            mediaRepository.save(existingSong);
+          }
+          dateAlbum(existingSong.getAlbum(), date);
           newSongs.add(existing.get());
           continue;
         }
@@ -310,6 +326,13 @@ public class MediaResource {
       Song song = new Song(songNode.get("title").asString(), songNode.get("uri").asString());
       // A Spotify song is played by the Spotify player of each client, its uri is a Spotify uri and no file
       song.setSpotify(songNode.path("spotify").asBoolean(false));
+      if (song.isSpotify()) {
+        spotifyCover(songNode).ifPresent(song::setCover);
+      }
+      Optional<String> releaseDate = releaseDate(songNode);
+      song.setReleaseDate(releaseDate.orElse(null));
+      // an album without a date gets the one of its first song that has one (Spotify: the date of the album)
+      dateAlbum(album.orElse(null), releaseDate);
       // the importer owns the song; a Spotify song that exists already keeps its owner
       song.setOwnerId(mediaAccess.currentUserId());
       // Add artist
@@ -350,6 +373,24 @@ public class MediaResource {
     }
 
     return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  /** The release date of a song of an import; one that is no date is left out. */
+  private static Optional<String> releaseDate(JsonNode songNode) {
+    return ReleaseDates.lenient(songNode.path("releaseDate").asString(null));
+  }
+
+  /** Gives an album without a release date the date; the fallback album ("Unknown Album", id 1) never gets one. */
+  private void dateAlbum(Album album, Optional<String> date) {
+    if (album != null && album.getId() != 1 && album.getReleaseDate() == null && date.isPresent()) {
+      album.setReleaseDate(date.get());
+      albumRepository.save(album);
+    }
+  }
+
+  /** The cover of a Spotify song of an import: the URL of its picture at Spotify, nothing else is taken. */
+  private static Optional<String> spotifyCover(JsonNode songNode) {
+    return CoverUrls.spotifyImage(songNode.path("cover").asString(null));
   }
 
   private boolean isValidImportSong(JsonNode songNode) {
@@ -468,6 +509,11 @@ public class MediaResource {
       Song originalSong = song.get();
       mediaAccess.requireChangeable(originalSong);
       originalSong.setTitle(requireTitle(alteredSong.getTitle()));
+      try {
+        originalSong.setReleaseDate(ReleaseDates.normalize(alteredSong.getReleaseDate()));
+      } catch (IllegalArgumentException e) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+      }
       originalSong.setArtist(alteredSong.getArtist());
       originalSong.setAlbum(alteredSong.getAlbum());
       originalSong.setGenres(alteredSong.getGenres());

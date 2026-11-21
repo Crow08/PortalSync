@@ -1,6 +1,10 @@
 <div class="mini-player">
   <div class="media-info" [title]="(currentMedia.title || ('player.nothingPlaying' | transloco)) + ' – ' + (getSubTitle() || '')">
-    <div class="cover"></div>
+    <div class="cover">
+      @if (coverUrl; as url) {
+        <img (error)="hideCover($event)" (load)="showCover($event)" [src]="url" alt="" class="cover-image" referrerpolicy="no-referrer"/>
+      }
+    </div>
     <div class="texts">
       <div class="song-title">{{ currentMedia.title || ('player.nothingPlaying' | transloco) }}</div>
       <div class="sub">{{ getSubTitle() || ((currentMedia.title ? 'player.unknownArtist' : 'player.sessionEmpty') | transloco) }}</div>

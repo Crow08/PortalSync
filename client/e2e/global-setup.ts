@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { chmodSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import { ADMIN, BASE_URL, COMPOSE_FILE, MEDIA_DIR, PORT, STATE_FILE } from './env';
-import { generateMediaFiles, prepareVideoUploads, SHARED_SONGS, toneBuffer, VIDEO_TITLE, VIDEO_URI } from './media-setup';
+import { generateMediaFiles, prepareVideoUploads, SHARED_SONGS, toneBuffer, VIDEO_COVER_URI, VIDEO_TITLE, VIDEO_URI } from './media-setup';
 
 function compose(args: string[], opts: { input?: string } = {}): string {
   return execFileSync('docker', ['compose', '-f', COMPOSE_FILE, ...args], {
@@ -57,9 +57,9 @@ export default async function globalSetup(): Promise<void> {
         throw new Error(`Seeding ${name} failed: HTTP ${up.status}`);
       }
     }
-    // Videos have no upload endpoint; the file is already in the media volume.
+    // Videos have no upload endpoint; the file is already in the media volume. Covers are set in the database only.
     compose(['exec', '-T', 'db', 'mysql', '-u', 'root', '-pe2e-root-password', 'portalsync_e2e'], {
-      input: `INSERT INTO media (title, uri, type) VALUES ('${VIDEO_TITLE}', '${VIDEO_URI}', 'VIDEO');
+      input: `INSERT INTO media (title, uri, type, cover) VALUES ('${VIDEO_TITLE}', '${VIDEO_URI}', 'VIDEO', '${VIDEO_COVER_URI}');
         INSERT INTO video (id) VALUES (LAST_INSERT_ID());`,
     });
     media = (await (await api('/media/all')).json()).content;

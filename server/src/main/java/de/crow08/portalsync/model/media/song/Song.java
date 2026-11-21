@@ -6,6 +6,7 @@ import de.crow08.portalsync.model.genre.Genre;
 import de.crow08.portalsync.model.media.Media;
 import de.crow08.portalsync.model.media.MediaType;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -30,6 +31,11 @@ public class Song extends Media {
   private Set<Genre> genres;
 
   private boolean spotify = false;
+
+  // when the song was released, as exact as it is known: "1998", "1998-10" or "1998-10-12" (see ReleaseDates); null if unknown.
+  // The album has a date of its own, which is shown for a song without one
+  @Column(name = "release_date", length = 10)
+  private String releaseDate;
 
   @Deprecated
   public Song() {
@@ -66,6 +72,14 @@ public class Song extends Media {
 
   public void setGenres(Set<Genre> genre) {
     this.genres = genre;
+  }
+
+  public String getReleaseDate() {
+    return releaseDate;
+  }
+
+  public void setReleaseDate(String releaseDate) {
+    this.releaseDate = releaseDate;
   }
 
   public boolean isSpotify() {

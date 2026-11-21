@@ -121,6 +121,7 @@
     "sort": {
       "title": "Title A to Z",
       "recent": "Recently added",
+      "released": "Newest release",
       "playlist": "Playlist order"
     },
     "searchPlaceholder": "Title, artist, series, genre",
@@ -153,6 +154,9 @@
     "edit": {
       "form": "Edit the media",
       "title": "Title",
+      "releaseDate": "Release date",
+      "albumReleaseDate": "Release date of the album",
+      "releaseDateHint": "A year, a month or a day: 1998, 1998-10 or 1998-10-12",
       "saved": "Saved",
       "failed": "Saving the changes failed"
     },
@@ -181,6 +185,7 @@
       "series": "Series",
       "season": "Season",
       "spotify": "Spotify",
+      "released": "Released",
       "owner": "Owner",
       "ownerYou": "{{ name }} (you)",
       "noOwner": "Nobody (admins only)"

@@ -19,10 +19,18 @@
 
 .cover {
   flex: none;
-  width: 56px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
   background: linear-gradient(160deg, color-mix(in srgb, var(--ps-accent) 30%, var(--ps-bg)), var(--ps-accent));
+}
+
+.cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 .texts {

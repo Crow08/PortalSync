@@ -19,6 +19,8 @@ import { GenericDataObject } from 'src/app/models/genericDataObject';
 import { WsService } from 'src/app/services/ws.service';
 import { SessionService } from 'src/app/services/session.service';
 import { AuthenticationService } from 'src/app/services/authentication.service';
+import { coverUrl, hideCover, showCover } from 'src/app/utils/cover';
+import { isReleaseDate, releaseDateOf, toReleaseDate } from 'src/app/utils/release-date';
 
 export type TypeFilter = 'all' | 'VIDEO' | 'SONG';
 
@@ -29,6 +31,10 @@ export type TypeFilter = 'all' | 'VIDEO' | 'SONG';
 export interface MediaEdit {
   media: Media;
   title: string;
+  /** The release date of a song as it is typed, empty for none. */
+  releaseDate: string;
+  /** The release date of the album the song had when the edit began, as it is typed. */
+  albumReleaseDate: string;
   artist: GenericDataObject[];
   album: GenericDataObject[];
   genres: GenericDataObject[];
@@ -39,7 +45,7 @@ export interface MediaEdit {
 
 const toOptions = (entities: { id: number; name: string }[] | null | undefined): GenericDataObject[] =>
   (entities ?? []).filter((entity) => !!entity).map((entity) => new GenericDataObject(entity.id, entity.name));
-export type SortMode = 'title' | 'recent' | 'playlist';
+export type SortMode = 'title' | 'recent' | 'released' | 'playlist';
 
 /** Height (px) of a row of the list, all rows must have this height (virtual scrolling). */
 const ROW_HEIGHT = 56;
@@ -195,6 +201,12 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
         case 'recent':
           matching.sort((a, b) => b.id - a.id);
           break;
+        case 'released':
+          // the newest first; what has no date (also all videos) comes last, by title
+          matching.sort(
+            (a, b) => this.released(b).localeCompare(this.released(a)) || a.title.localeCompare(b.title)
+          );
+          break;
       }
       this.filteredCache = matching;
     }
@@ -248,6 +260,14 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       : ((media as Song).artist?.name ?? this.tl.translate('common.song'));
   }
 
+  /** The picture of the media, null if it has none: the gradient with the icon stays. */
+  coverUrl(media: Media): string | null {
+    return coverUrl(media);
+  }
+
+  readonly hideCover = hideCover;
+  readonly showCover = showCover;
+
   gradient(media: Media): string {
     return TILE_GRADIENTS[media.id % TILE_GRADIENTS.length];
   }
@@ -275,6 +295,7 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
       rows.push(
         { label: 'common.artist', value: song.artist?.name ?? '' },
         { label: 'common.album', value: song.album?.name ?? '' },
+        { label: 'library.details.released', value: releaseDateOf(song) },
         { label: 'common.genres', value: (song.genres ?? []).map((genre) => genre.name).join(', ') }
       );
     }
@@ -307,6 +328,8 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     this.edit = {
       media,
       title: media.title,
+      releaseDate: song.releaseDate ?? '',
+      albumReleaseDate: song.album?.releaseDate ?? '',
       artist: toOptions([song.artist]),
       album: toOptions([song.album]),
       genres: toOptions(song.genres),
@@ -320,9 +343,36 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
     this.edit = null;
   }
 
-  /** A media needs a title. */
+  /** A media needs a title, and a release date has to be one. */
   get canSaveEdit(): boolean {
-    return !!this.edit && this.edit.title.trim() !== '' && !this.saving;
+    const edit = this.edit;
+    return (
+      !!edit &&
+      edit.title.trim() !== '' &&
+      isReleaseDate(edit.releaseDate) &&
+      (!this.editsAlbumDate || isReleaseDate(edit.albumReleaseDate)) &&
+      !this.saving
+    );
+  }
+
+  /** Whether the text is a release date (an empty one is none), for the hints of the edit mode. */
+  isReleaseDate(text: string): boolean {
+    return isReleaseDate(text);
+  }
+
+  /**
+   * Whether the edit mode offers the release date of the album: for the album the song had when the edit began (the
+   * date of another album chosen there is not known here), not for the fallback "Unknown Album" (id 1).
+   */
+  get editsAlbumDate(): boolean {
+    const edit = this.edit;
+    const album = edit && !this.isVideo(edit.media) ? (edit.media as Song).album : null;
+    return !!album && album.id !== 1 && edit?.album[0]?.id === album.id;
+  }
+
+  /** The release date of a media as the list sorts by it, empty for none. */
+  private released(media: Media): string {
+    return this.isVideo(media) ? '' : releaseDateOf(media as Song);
   }
 
   /** Saves the changes of the edit mode and shows the media as it is now. */
@@ -344,13 +394,23 @@ export class DatabaseBrowserComponent implements OnInit, OnDestroy {
           id: edit.media.id,
           type: 'SONG',
           title,
+          releaseDate: toReleaseDate(edit.releaseDate),
           artist: edit.artist[0] ?? null,
           album: edit.album[0] ?? null,
           genres: edit.genres,
           tags: edit.tags,
         });
+    // the date of the album is a property of the album, shared by its songs: it has its own request
+    const albumDate = toReleaseDate(edit.albumReleaseDate);
+    const album = (edit.media as Song).album;
+    const saveAlbum = this.editsAlbumDate && albumDate !== (album?.releaseDate ?? null);
     this.saving = true;
     request
+      .then(() =>
+        saveAlbum
+          ? this.httpHelperService.put(`/api/v1/albums/${album.id}/releaseDate`, { releaseDate: albumDate })
+          : undefined
+      )
       .then(() => {
         this.edit = null;
         this.load();

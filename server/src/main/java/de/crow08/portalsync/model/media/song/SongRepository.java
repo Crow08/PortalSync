@@ -4,4 +4,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface SongRepository extends CrudRepository<Song, Long>, PagingAndSortingRepository<Song, Long> {
+
+  /** Whether the user owns a song of the album. */
+  boolean existsByAlbum_IdAndOwnerId(long albumId, Long ownerId);
 }
